@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apexiz Weld Viewer</title>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange: #FF5500;
+  --orange-dark: #CC4400;
+  --orange-light: #FFF3EE;
+  --black: #1A1A1A;
+  --white: #FFFFFF;
+  --g1: #F5F5F5;
+  --g2: #E8E8E8;
+  --g3: #767676;
+  --g4: #4D4D4D;
+  --red: #D93025;
+  --green: #1E8E3E;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:14px;}
+body{
+  font-family:'Barlow','Segoe UI',sans-serif;
+  background:#EFEFEF;
+  color:var(--black);
+  width:100vw;height:100vh;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+}
+
+/* ── SCALE ROOT ── */
+.page{
+  width:100vw;height:100vh;
+  display:none;flex-direction:column;
+  overflow:hidden;
+}
+.page.active{display:flex;}
+
+/* ── TOP BAR ── */
+.topbar{
+  background:var(--white);
+  height:58px;min-height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;
+  border-bottom:3px solid var(--orange);
+  box-shadow:0 2px 8px rgba(0,0,0,0.07);
+  flex-shrink:0;
+  z-index:50;
+}
+.topbar-logo{height:38px;width:auto;object-fit:contain;}
+.topbar-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--orange);letter-spacing:2px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--black);}
+.topbar-user{display:flex;align-items:center;gap:8px;}
+.user-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--orange);color:var(--white);
+  font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;
+}
+.user-name{font-size:12px;font-weight:600;color:var(--g4);}
+.role-badge{
+  padding:2px 10px;border-radius:20px;
+  font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+}
+.role-badge.admin{background:#1A1A1A;color:var(--white);}
+.role-badge.engineer{background:var(--orange);color:var(--white);}
+.role-badge.customer{background:var(--g2);color:var(--g4);}
+
+/* ── FOOTER ── */
+.footer{
+  background:var(--white);
+  height:32px;min-height:32px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;letter-spacing:1px;color:var(--g3);
+  border-top:3px solid var(--orange);
+  flex-shrink:0;
+}
+.footer-dot{color:var(--orange);margin:0 8px;font-size:8px;}
+
+/* ── SCROLL BODY ── */
+.page-body{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  display:flex;flex-direction:column;
+}
+.page-body::-webkit-scrollbar{width:5px;}
+.page-body::-webkit-scrollbar-track{background:var(--g1);}
+.page-body::-webkit-scrollbar-thumb{background:var(--g2);border-radius:3px;}
+
+/* ══════════════════════════════════════════
+   AUTH PAGE
+══════════════════════════════════════════ */
+#authPage .page-body{
+  align-items:center;justify-content:center;
+  background:#EFEFEF;
+}
+.auth-card{
+  background:var(--white);
+  border-radius:10px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.12);
+  padding:40px 44px;
+  width:420px;
+  border-top:4px solid var(--orange);
+  animation:fadeUp 0.35s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.auth-logo{height:40px;margin-bottom:24px;display:block;}
+.auth-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--orange);letter-spacing:2px;margin-bottom:24px;}
+.auth-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--black);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;}
+.auth-sub{font-size:12px;color:var(--g3);margin-bottom:28px;}
+.auth-tabs{display:flex;gap:0;margin-bottom:24px;border:1.5px solid var(--g2);border-radius:6px;overflow:hidden;}
+.auth-tab{
+  flex:1;padding:8px 0;font-size:12px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;text-align:center;cursor:pointer;
+  background:var(--g1);color:var(--g3);transition:all 0.15s;border:none;
+}
+.auth-tab.active{background:var(--orange);color:var(--white);}
+.field-group{margin-bottom:14px;}
+.field-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);margin-bottom:5px;display:block;}
+.field-input{
+  width:100%;padding:10px 14px;
+  border:1.5px solid var(--g2);border-radius:6px;
+  font-family:'Barlow',sans-serif;font-size:13px;color:var(--black);
+  background:var(--white);outline:none;transition:border-color 0.15s;
+}
+.field-input:focus{border-color:var(--orange);}
+.field-select{
+  width:100%;padding:10px 14px;
+  border:1.5px solid var(--g2);border-radius:6px;
+  font-family:'Barlow',sans-serif;font-size:13px;color:var(--black);
+  background:var(--white);outline:none;cursor:pointer;
+  appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23767676' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+}
+.field-select:focus{border-color:var(--orange);}
+.auth-btn{
+  width:100%;padding:12px 0;
+  background:var(--orange);color:var(--white);
+  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  border:none;border-radius:30px;cursor:pointer;
+  transition:background 0.15s;margin-top:6px;
+}
+.auth-btn:hover{background:var(--orange-dark);}
+.auth-btn:disabled{background:var(--g2);color:var(--g3);cursor:not-allowed;}
+.auth-msg{
+  font-size:12px;font-weight:600;text-align:center;
+  margin-top:12px;padding:8px 14px;border-radius:6px;display:none;
+}
+.auth-msg.error{background:#FEE;color:var(--red);display:block;}
+.auth-msg.success{background:#EFE;color:var(--green);display:block;}
+.auth-switch{font-size:11px;color:var(--g3);text-align:center;margin-top:14px;}
+.auth-switch a{color:var(--orange);font-weight:700;cursor:pointer;text-decoration:none;}
+
+/* ══════════════════════════════════════════
+   DASHBOARD (Admin + Engineer)
+══════════════════════════════════════════ */
+#dashPage .page-body{background:#EFEFEF;padding:20px;}
+.dash-grid{
+  display:grid;grid-template-columns:280px 1fr;
+  gap:16px;height:100%;min-height:0;
+}
+
+/* Sidebar */
+.dash-sidebar{
+  background:var(--white);border-radius:8px;
+  border:1px solid var(--g2);
+  padding:16px;display:flex;flex-direction:column;gap:0;
+  overflow-y:auto;
+}
+.dash-sidebar::-webkit-scrollbar{width:4px;}
+.dash-sidebar::-webkit-scrollbar-thumb{background:var(--g2);}
+.sidebar-section{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin:14px 0 6px;display:flex;align-items:center;gap:6px;}
+.sidebar-section::before{content:"●";color:var(--orange);font-size:8px;}
+.sidebar-btn{
+  width:100%;padding:9px 12px;text-align:left;
+  background:none;border:none;border-radius:6px;
+  font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;
+  color:var(--black);cursor:pointer;transition:all 0.12s;
+  display:flex;align-items:center;gap:8px;
+}
+.sidebar-btn:hover{background:var(--orange-light);color:var(--orange);}
+.sidebar-btn.active{background:var(--orange);color:var(--white);}
+.sidebar-btn .btn-icon{font-size:14px;flex-shrink:0;}
+.sidebar-divider{height:1px;background:var(--g2);margin:8px 0;}
+.logout-btn{
+  margin-top:auto;padding:9px 12px;
+  background:none;border:1.5px solid var(--g2);border-radius:6px;
+  font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;
+  color:var(--g3);cursor:pointer;transition:all 0.12s;
+  letter-spacing:0.5px;
+}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* Main panel */
+.dash-main{
+  background:var(--white);border-radius:8px;
+  border:1px solid var(--g2);
+  padding:20px 24px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:16px;
+}
+.dash-main::-webkit-scrollbar{width:4px;}
+.dash-main::-webkit-scrollbar-thumb{background:var(--g2);}
+.panel-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:20px;font-weight:700;text-transform:uppercase;
+  letter-spacing:1.5px;color:var(--black);
+  display:flex;align-items:center;gap:10px;
+}
+.panel-title::before{content:"";width:4px;height:22px;background:var(--orange);border-radius:2px;display:block;}
+
+/* Cards row */
+.stat-row{display:flex;gap:12px;flex-shrink:0;}
+.stat-card{
+  flex:1;background:var(--g1);border-radius:8px;
+  padding:14px 16px;border:1px solid var(--g2);
+}
+.stat-num{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--orange);}
+.stat-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);margin-top:2px;}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse;font-size:12px;}
+.data-table th{
+  background:var(--black);color:var(--white);
+  padding:8px 12px;text-align:left;
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;
+}
+.data-table th:first-child{border-radius:4px 0 0 4px;}
+.data-table th:last-child{border-radius:0 4px 4px 0;}
+.data-table td{padding:9px 12px;border-bottom:1px solid var(--g2);color:var(--black);font-weight:500;vertical-align:middle;}
+.data-table tr:hover td{background:var(--orange-light);}
+.data-table tr:last-child td{border-bottom:none;}
+.tbl-badge{
+  padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:0.5px;
+  display:inline-block;
+}
+.tbl-badge.pending{background:#FFF3CD;color:#856404;}
+.tbl-badge.approved{background:#D4EDDA;color:var(--green);}
+.tbl-badge.revoked{background:#F8D7DA;color:var(--red);}
+.tbl-badge.active{background:#D4EDDA;color:var(--green);}
+.tbl-badge.inactive{background:var(--g2);color:var(--g3);}
+.tbl-btn{
+  padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;
+  border:none;cursor:pointer;transition:all 0.12s;font-family:'Barlow',sans-serif;
+  letter-spacing:0.5px;margin:0 2px;
+}
+.tbl-btn.approve{background:var(--green);color:var(--white);}
+.tbl-btn.approve:hover{background:#166834;}
+.tbl-btn.revoke{background:var(--red);color:var(--white);}
+.tbl-btn.revoke:hover{background:#A30000;}
+.tbl-btn.view{background:var(--orange);color:var(--white);}
+.tbl-btn.view:hover{background:var(--orange-dark);}
+.tbl-btn.delete{background:var(--g2);color:var(--g4);}
+.tbl-btn.delete:hover{background:var(--red);color:var(--white);}
+.tbl-btn.copy{background:var(--black);color:var(--white);}
+.tbl-btn.copy:hover{background:var(--g4);}
+
+/* Create project form */
+.create-form{
+  background:var(--g1);border-radius:8px;
+  border:1px solid var(--g2);padding:20px;
+  display:flex;flex-direction:column;gap:14px;
+}
+
+/* Folder zone */
+.folder-zone{
+  border:2px dashed var(--g2);border-radius:8px;
+  padding:28px 20px;text-align:center;cursor:pointer;
+  transition:all 0.2s;position:relative;background:var(--white);
+}
+.folder-zone:hover,.folder-zone.drag-over{border-color:var(--orange);background:var(--orange-light);}
+.folder-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.folder-zone-icon{font-size:32px;display:block;margin-bottom:8px;}
+.folder-zone-label{font-size:13px;font-weight:700;color:var(--black);margin-bottom:4px;}
+.folder-zone-sub{font-size:11px;color:var(--g3);}
+.folder-zone-status{margin-top:8px;font-size:11px;font-weight:700;color:var(--orange);min-height:16px;}
+
+/* Action btn */
+.action-btn{
+  padding:10px 24px;background:var(--orange);color:var(--white);
+  font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+  border:none;border-radius:30px;cursor:pointer;transition:background 0.15s;
+  align-self:flex-start;
+}
+.action-btn:hover{background:var(--orange-dark);}
+.action-btn:disabled{background:var(--g2);color:var(--g3);cursor:not-allowed;}
+.action-btn.secondary{background:var(--black);}
+.action-btn.secondary:hover{background:var(--g4);}
+
+/* Empty state */
+.empty-state{
+  text-align:center;padding:40px 20px;color:var(--g3);
+}
+.empty-state-icon{font-size:36px;margin-bottom:10px;display:block;}
+.empty-state-text{font-size:13px;}
+
+/* ══════════════════════════════════════════
+   WELD VIEWER PAGE
+══════════════════════════════════════════ */
+#viewerPage .page-body{
+  flex-direction:row;overflow:hidden;
+}
+.viewer-left{
+  width:340px;min-width:340px;
+  padding:16px 14px;
+  background:var(--white);
+  border-right:1px solid var(--g2);
+  display:flex;flex-direction:column;
+  overflow-y:auto;flex-shrink:0;
+}
+.viewer-left::-webkit-scrollbar{width:4px;}
+.viewer-left::-webkit-scrollbar-thumb{background:var(--g2);}
+.viewer-right{
+  flex:1;padding:16px 20px;
+  display:flex;flex-direction:column;
+  background:var(--white);overflow:hidden;min-width:0;
+}
+.overview-img{
+  height:180px;flex-shrink:0;
+  border:1px solid var(--g2);border-radius:4px;
+  background-position:center;background-repeat:no-repeat;background-size:contain;
+  background-color:var(--g1);
+  display:flex;align-items:center;justify-content:center;
+  color:#B8B8B8;font-size:12px;
+}
+.section-label{
+  display:flex;align-items:center;gap:7px;
+  color:var(--g3);font-size:10px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  margin:10px 0 6px;flex-shrink:0;
+}
+.section-label::before{content:"●";color:var(--orange);font-size:8px;flex-shrink:0;}
+.robot-cols-header{display:flex;gap:4px;margin-bottom:4px;flex-shrink:0;}
+.robot-title{
+  flex:1;text-align:center;color:var(--white);
+  font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  background:var(--black);padding:5px 0;border-radius:3px;
+}
+.weld-grid-wrap{
+  display:flex;border:1px solid var(--g2);border-radius:4px;
+  flex:1;overflow-y:auto;background:var(--white);min-height:0;
+}
+.weld-grid-wrap::-webkit-scrollbar{width:4px;}
+.weld-grid-wrap::-webkit-scrollbar-thumb{background:var(--g2);}
+.weld-col{flex:1;display:flex;flex-direction:column;}
+.weld-col:first-child{border-right:1px solid var(--g2);}
+.weld-cell{
+  height:30px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:11px;font-weight:600;
+}
+.weld-cell.weld-item{color:var(--black);cursor:pointer;transition:all 0.1s;}
+.weld-cell.weld-item:hover{background:var(--orange-light);color:var(--orange);}
+.weld-cell.weld-item.active{background:var(--orange);color:var(--white);}
+.weld-cell.tsync{color:#B8B8B8;font-style:italic;font-size:10px;font-weight:400;background:var(--g1);border-top:1px dashed var(--g2);border-bottom:1px dashed var(--g2);}
+.weld-cell.empty{background:var(--white);}
+.export-area{margin-top:10px;flex-shrink:0;}
+.export-btn{
+  padding:10px 0;background:var(--orange);color:var(--white);
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+  border:none;border-radius:30px;cursor:pointer;
+  letter-spacing:1.5px;text-transform:uppercase;transition:background 0.15s;width:100%;
+}
+.export-btn:hover{background:var(--orange-dark);}
+.export-btn:disabled{background:var(--g2);color:#B8B8B8;cursor:not-allowed;}
+.info-section{display:flex;flex-direction:column;flex-shrink:0;}
+.info-row{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--g1);gap:10px;}
+.info-label{color:var(--g3);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;min-width:150px;flex-shrink:0;}
+.info-value{color:var(--black);font-size:13px;font-weight:500;}
+.info-value.hl{color:var(--orange);font-weight:700;font-size:14px;}
+.part-dropdown{
+  padding:4px 12px;border:1.5px solid var(--orange);
+  font-weight:600;color:var(--black);border-radius:20px;
+  font-size:12px;background:var(--white);cursor:pointer;
+  font-family:'Barlow',sans-serif;
+}
+.main-img{
+  flex:1;margin-top:12px;
+  border:1px solid var(--g2);border-radius:4px;
+  background-position:center;background-repeat:no-repeat;background-size:contain;
+  background-color:var(--g1);
+  display:flex;align-items:center;justify-content:center;
+  color:#B8B8B8;font-size:12px;min-height:0;
+}
+
+/* ══════════════════════════════════════════
+   CUSTOMER VIEW PAGE
+══════════════════════════════════════════ */
+#customerPage .page-body{background:#EFEFEF;padding:20px;}
+.project-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:14px;
+}
+.project-card{
+  background:var(--white);border-radius:8px;
+  border:1px solid var(--g2);padding:16px 18px;
+  cursor:pointer;transition:all 0.15s;
+  animation:fadeUp 0.3s ease;
+}
+.project-card:hover{border-color:var(--orange);box-shadow:0 4px 16px rgba(255,85,0,0.1);transform:translateY(-2px);}
+.project-card-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--black);margin-bottom:6px;}
+.project-card-meta{font-size:11px;color:var(--g3);line-height:1.6;}
+.project-card-badge{margin-top:10px;}
+
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  z-index:200;display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(2px);
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--white);border-radius:10px;
+  box-shadow:0 16px 60px rgba(0,0,0,0.2);
+  padding:28px 32px;width:480px;max-width:95vw;
+  border-top:4px solid var(--orange);
+  animation:fadeUp 0.25s ease;
+  max-height:90vh;overflow-y:auto;
+}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;color:var(--black);}
+.modal-close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:var(--g3);margin-top:-4px;}
+.modal-close:hover{color:var(--red);}
+.share-link-box{
+  background:var(--g1);border:1px solid var(--g2);border-radius:6px;
+  padding:10px 14px;font-size:12px;font-family:monospace;
+  color:var(--g4);word-break:break-all;margin:10px 0;
+}
+.modal-btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+.info-msg{
+  background:var(--orange-light);border:1px solid var(--orange);
+  border-radius:6px;padding:10px 14px;font-size:12px;color:var(--orange-dark);
+  font-weight:600;margin:8px 0;
+}
+
+/* ══════════════════════════════════════════
+   LOADING OVERLAY
+══════════════════════════════════════════ */
+#loadingOverlay{
+  position:fixed;inset:0;background:rgba(255,255,255,0.85);
+  z-index:300;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:12px;
+}
+#loadingOverlay.show{display:flex;}
+.spinner{
+  width:36px;height:36px;
+  border:3px solid var(--g2);
+  border-top-color:var(--orange);
+  border-radius:50%;
+  animation:spin 0.7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:12px;font-weight:700;color:var(--g3);letter-spacing:1px;}
+
+/* ══════════════════════════════════════════
+   MISC
+══════════════════════════════════════════ */
+.no-data{color:var(--orange);padding:10px;font-weight:700;font-size:11px;text-align:center;}
+.divider{height:1px;background:var(--g2);margin:8px 0;}
+.flex-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.ml-auto{margin-left:auto;}
+.text-sm{font-size:12px;color:var(--g3);}
+.text-orange{color:var(--orange);font-weight:700;}
+.back-btn{
+  background:none;border:1.5px solid var(--g2);border-radius:20px;
+  padding:5px 14px;font-size:11px;font-weight:700;
+  color:var(--g3);cursor:pointer;transition:all 0.12s;
+  font-family:'Barlow',sans-serif;letter-spacing:0.5px;
+}
+.back-btn:hover{border-color:var(--orange);color:var(--orange);}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     AUTH PAGE
+══════════════════════════════ -->
+<div id="authPage" class="page active">
+  <div class="topbar">
+    <img class="topbar-logo" src="https://www.apexiz.com/images/apexiz-logo.png" alt="Apexiz"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <span class="topbar-logo-text" style="display:none">APEXIZ</span>
+    <div class="topbar-right">
+      <span class="topbar-title">Weld Viewer</span>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="auth-card">
+      <img class="auth-logo" src="https://www.apexiz.com/images/apexiz-logo.png" alt="Apexiz"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div class="auth-logo-text" style="display:none">APEXIZ</div>
+      <div class="auth-title" id="authTitle">Sign In</div>
+      <div class="auth-sub" id="authSub">Access the Apexiz Weld Viewer platform</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      <!-- Login form -->
+      <div id="loginForm">
+        <div class="field-group">
+          <label class="field-label">Email</label>
+          <input type="email" id="loginEmail" class="field-input" placeholder="your@email.com">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <input type="password" id="loginPassword" class="field-input" placeholder="••••••••">
+        </div>
+        <button class="auth-btn" onclick="doLogin()">Sign In →</button>
+        <div id="loginMsg" class="auth-msg"></div>
+      </div>
+      <!-- Register form -->
+      <div id="registerForm" style="display:none">
+        <div class="field-group">
+          <label class="field-label">Full Name</label>
+          <input type="text" id="regName" class="field-input" placeholder="John Smith">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Email</label>
+          <input type="email" id="regEmail" class="field-input" placeholder="your@email.com">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <input type="password" id="regPassword" class="field-input" placeholder="Min 6 characters">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Role</label>
+          <select id="regRole" class="field-select">
+            <option value="engineer">Engineer (Upload & manage projects)</option>
+            <option value="customer">Customer (View shared projects)</option>
+          </select>
+        </div>
+        <button class="auth-btn" onclick="doRegister()">Create Account →</button>
+        <div id="regMsg" class="auth-msg"></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL INFORMATION<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
+</div>
+
+<!-- ══════════════════════════════
+     DASHBOARD (Admin / Engineer)
+══════════════════════════════ -->
+<div id="dashPage" class="page">
+  <div class="topbar">
+    <img class="topbar-logo" src="https://www.apexiz.com/images/apexiz-logo.png" alt="Apexiz"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <span class="topbar-logo-text" style="display:none">APEXIZ</span>
+    <div class="topbar-right">
+      <span class="topbar-title">Weld Viewer</span>
+      <div class="topbar-user">
+        <div class="user-avatar" id="dashAvatar">?</div>
+        <div>
+          <div class="user-name" id="dashUserName">User</div>
+          <div class="role-badge" id="dashRoleBadge">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-body" style="flex-direction:row;padding:16px;gap:14px;overflow:hidden;">
+    <!-- Sidebar -->
+    <div class="dash-sidebar" style="width:220px;min-width:220px;flex-shrink:0;">
+      <div class="sidebar-section">Navigation</div>
+      <button class="sidebar-btn active" onclick="showPanel('overview')" id="nav-overview">
+        <span class="btn-icon">📊</span> Overview
+      </button>
+      <button class="sidebar-btn" onclick="showPanel('projects')" id="nav-projects">
+        <span class="btn-icon">📁</span> My Projects
+      </button>
+      <button class="sidebar-btn" onclick="showPanel('create')" id="nav-create" id="createNavBtn">
+        <span class="btn-icon">➕</span> New Project
+      </button>
+      <div id="adminNavSection" style="display:none">
+        <div class="sidebar-section">Admin</div>
+        <button class="sidebar-btn" onclick="showPanel('users')" id="nav-users">
+          <span class="btn-icon">👥</span> All Users
+        </button>
+        <button class="sidebar-btn" onclick="showPanel('allprojects')" id="nav-allprojects">
+          <span class="btn-icon">🗂️</span> All Projects
+        </button>
+      </div>
+      <div class="sidebar-divider"></div>
+      <button class="logout-btn" onclick="doLogout()">↩ Sign Out</button>
+    </div>
+    <!-- Main -->
+    <div class="dash-main" id="dashMain">
+      <!-- panels injected by JS -->
+    </div>
+  </div>
+  <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
+</div>
+
+<!-- ══════════════════════════════
+     WELD VIEWER PAGE
+══════════════════════════════ -->
+<div id="viewerPage" class="page">
+  <div class="topbar">
+    <img class="topbar-logo" src="https://www.apexiz.com/images/apexiz-logo.png" alt="Apexiz"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <span class="topbar-logo-text" style="display:none">APEXIZ</span>
+    <div class="topbar-right">
+      <span class="topbar-title" id="viewerProjectTitle">Weld Viewer</span>
+      <button class="back-btn" onclick="goBack()">← Back</button>
+      <div class="topbar-user">
+        <div class="user-avatar" id="viewerAvatar">?</div>
+        <div class="user-name" id="viewerUserName"></div>
+      </div>
+    </div>
+  </div>
+  <div class="page-body">
+    <!-- LEFT -->
+    <div class="viewer-left">
+      <div id="overviewImage" class="overview-img">[ Part Image ]</div>
+      <div class="section-label">Weld Overview</div>
+      <div class="robot-cols-header">
+        <div class="robot-title">Robot 1</div>
+        <div class="robot-title">Robot 2</div>
+      </div>
+      <div class="weld-grid-wrap" id="weldGrid">
+        <div class="weld-col" id="robot1Col"></div>
+        <div class="weld-col" id="robot2Col"></div>
+      </div>
+      <div class="export-area" id="exportArea">
+        <button class="export-btn" id="exportBtn" onclick="exportToPPT()">⬇ Download PPT Report</button>
+      </div>
+    </div>
+    <!-- RIGHT -->
+    <div class="viewer-right">
+      <div class="section-label">Part &amp; Weld Details</div>
+      <div class="info-section">
+        <div class="info-row">
+          <span class="info-label">Part Variant</span>
+          <select id="partDropdown" class="part-dropdown"><option>—</option></select>
+        </div>
+        <div class="info-row"><span class="info-label">Robot Name</span><span class="info-value" id="robotName">—</span></div>
+        <div class="info-row"><span class="info-label">Job Name</span><span class="info-value" id="jobName">—</span></div>
+        <div class="info-row"><span class="info-label">Positioner Angle</span><span class="info-value hl" id="positionerAngle">—</span></div>
+        <div class="info-row"><span class="info-label">Weld Number</span><span class="info-value hl" id="weldNumber">—</span></div>
+      </div>
+      <div id="mainImage" class="main-img">[ Select a weld to view image ]</div>
+    </div>
+  </div>
+  <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL INFORMATION<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
+</div>
+
+<!-- ══════════════════════════════
+     CUSTOMER PROJECT PAGE
+══════════════════════════════ -->
+<div id="customerPage" class="page">
+  <div class="topbar">
+    <img class="topbar-logo" src="https://www.apexiz.com/images/apexiz-logo.png" alt="Apexiz"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <span class="topbar-logo-text" style="display:none">APEXIZ</span>
+    <div class="topbar-right">
+      <span class="topbar-title">My Projects</span>
+      <div class="topbar-user">
+        <div class="user-avatar" id="custAvatar">?</div>
+        <div>
+          <div class="user-name" id="custUserName"></div>
+          <div class="role-badge customer">Customer</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()" style="margin-left:4px;">↩ Sign Out</button>
+    </div>
+  </div>
+  <div class="page-body" style="padding:20px;">
+    <div style="margin-bottom:16px;" class="flex-row">
+      <div class="panel-title">Accessible Projects</div>
+    </div>
+    <div id="custProjectList" class="project-grid"></div>
+  </div>
+  <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
+</div>
+
+<!-- ══════════════════════════════
+     MODALS
+══════════════════════════════ -->
+<!-- Share link modal -->
+<div id="shareModal" class="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('shareModal')">✕</button>
+    <div class="modal-title">Share Project</div>
+    <div class="text-sm" style="margin-bottom:8px;">Share this link with your customer. They must register and you approve their access.</div>
+    <div class="share-link-box" id="shareLinkBox">—</div>
+    <div class="info-msg">Customer must register, then you can approve their access from the Access Requests panel.</div>
+    <div class="modal-btns">
+      <button class="tbl-btn copy" onclick="copyShareLink()">📋 Copy Link</button>
+      <button class="tbl-btn view" onclick="closeModal('shareModal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Access requests modal -->
+<div id="accessModal" class="modal-overlay">
+  <div class="modal" style="width:560px">
+    <button class="modal-close" onclick="closeModal('accessModal')">✕</button>
+    <div class="modal-title">Access Requests — <span id="accessModalProjectName"></span></div>
+    <div id="accessModalList"></div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Loading…</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+const STATE = {
+  currentUser: null,    // { id, name, email, role }
+  projects: [],         // loaded from storage
+  users: [],
+  currentProjectId: null,
+  csvFiles: new Map(),
+  imageFiles: new Map(),
+  globalWelds1: [],
+  globalWelds2: [],
+  activeWeldCell: null,
+  LOGO_B64: null,
+};
+
+// Persistent key-value store backed by window.storage (artifact storage)
+// For a real deployment, replace these with fetch() calls to your backend API
+const DB = {
+  async get(key){ try{ const r=await window.storage.get(key,true); return r?JSON.parse(r.value):null; }catch(e){return null;} },
+  async set(key,val){ try{ await window.storage.set(key,JSON.stringify(val),true); }catch(e){} },
+  async del(key){ try{ await window.storage.delete(key,true); }catch(e){} },
+  async list(prefix){ try{ const r=await window.storage.list(prefix,true); return r?r.keys:[]; }catch(e){return[];} },
+};
+
+/* ══════════════════════════════════════════════
+   PAGES
+══════════════════════════════════════════════ */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function loading(show,text='Loading…'){
+  const el=document.getElementById('loadingOverlay');
+  document.getElementById('loadingText').innerText=text;
+  el.classList.toggle('show',show);
+}
+
+/* ══════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════ */
+function switchAuthTab(tab){
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='login'?0:1)));
+  document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
+  document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
+  document.getElementById('authTitle').innerText = tab==='login'?'Sign In':'Create Account';
+  document.getElementById('authSub').innerText = tab==='login'?'Access the Apexiz Weld Viewer platform':'Join the Apexiz platform';
+}
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('loginPassword').value;
+  const msg=document.getElementById('loginMsg');
+  msg.className='auth-msg';msg.style.display='none';
+  if(!email||!pass){showMsg('loginMsg','Please fill in all fields','error');return;}
+  loading(true,'Signing in…');
+  const users=await DB.get('users')||[];
+  const user=users.find(u=>u.email===email&&u.password===btoa(pass));
+  loading(false);
+  if(!user){showMsg('loginMsg','Invalid email or password','error');return;}
+  loginUser(user);
+}
+
+async function doRegister(){
+  const name=document.getElementById('regName').value.trim();
+  const email=document.getElementById('regEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('regPassword').value;
+  const role=document.getElementById('regRole').value;
+  const msg='regMsg';
+  if(!name||!email||!pass){showMsg(msg,'Please fill in all fields','error');return;}
+  if(pass.length<6){showMsg(msg,'Password must be at least 6 characters','error');return;}
+  loading(true,'Creating account…');
+  let users=await DB.get('users')||[];
+  // Seed admin if first user
+  if(users.length===0){
+    const admin={id:'admin_001',name:'Admin',email:'admin@apexiz.com',password:btoa('admin123'),role:'admin',createdAt:Date.now()};
+    users.push(admin);
+  }
+  if(users.find(u=>u.email===email)){loading(false);showMsg(msg,'Email already registered','error');return;}
+  const newUser={id:'u_'+Date.now(),name,email,password:btoa(pass),role,createdAt:Date.now()};
+  users.push(newUser);
+  await DB.set('users',users);
+  loading(false);
+  showMsg(msg,'Account created! Please sign in.','success');
+  setTimeout(()=>switchAuthTab('login'),1200);
+}
+
+function loginUser(user){
+  STATE.currentUser=user;
+  localStorage.setItem('apexiz_session',JSON.stringify({id:user.id,email:user.email}));
+  if(user.role==='admin'||user.role==='engineer'){
+    setupDash(user);
+    showPage('dashPage');
+  } else {
+    setupCustomer(user);
+    showPage('customerPage');
+  }
+}
+
+function doLogout(){
+  STATE.currentUser=null;
+  STATE.currentProjectId=null;
+  localStorage.removeItem('apexiz_session');
+  showPage('authPage');
+}
+
+async function tryAutoLogin(){
+  const sess=localStorage.getItem('apexiz_session');
+  if(!sess) return;
+  try{
+    const {id}=JSON.parse(sess);
+    loading(true,'Restoring session…');
+    const users=await DB.get('users')||[];
+    const user=users.find(u=>u.id===id);
+    loading(false);
+    if(user) loginUser(user);
+  }catch(e){loading(false);}
+}
+
+function showMsg(id,text,type){
+  const el=document.getElementById(id);
+  el.innerText=text;
+  el.className='auth-msg '+type;
+  el.style.display='block';
+}
+
+/* ══════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════ */
+function setupDash(user){
+  document.getElementById('dashAvatar').innerText=user.name[0].toUpperCase();
+  document.getElementById('dashUserName').innerText=user.name;
+  const badge=document.getElementById('dashRoleBadge');
+  badge.innerText=user.role.charAt(0).toUpperCase()+user.role.slice(1);
+  badge.className='role-badge '+user.role;
+  document.getElementById('adminNavSection').style.display=user.role==='admin'?'block':'none';
+  // hide "New Project" for admin
+  document.getElementById('nav-create').style.display=user.role==='admin'?'none':'flex';
+  showPanel('overview');
+}
+
+function setNavActive(panelId){
+  document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('nav-'+panelId);
+  if(btn) btn.classList.add('active');
+}
+
+async function showPanel(panel){
+  setNavActive(panel);
+  const main=document.getElementById('dashMain');
+  main.innerHTML='<div class="empty-state"><span class="empty-state-icon">⏳</span><div class="empty-state-text">Loading…</div></div>';
+  switch(panel){
+    case 'overview':    await renderOverview(main); break;
+    case 'projects':    await renderMyProjects(main); break;
+    case 'create':      renderCreateProject(main); break;
+    case 'users':       await renderUsers(main); break;
+    case 'allprojects': await renderAllProjects(main); break;
+  }
+}
+
+async function renderOverview(el){
+  const user=STATE.currentUser;
+  const projects=await getProjects();
+  const myProjects=user.role==='admin'?projects:projects.filter(p=>p.ownerId===user.id);
+  const users=user.role==='admin'?await DB.get('users')||[]:[];
+  const totalAccess=myProjects.reduce((a,p)=>{
+    const reqs=(p.accessRequests||[]);
+    return a+reqs.filter(r=>r.status==='approved').length;
+  },0);
+  const pendingCount=myProjects.reduce((a,p)=>{
+    return a+(p.accessRequests||[]).filter(r=>r.status==='pending').length;
+  },0);
+  el.innerHTML=`
+    <div class="panel-title">Overview</div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num">${myProjects.length}</div><div class="stat-label">${user.role==='admin'?'Total':'My'} Projects</div></div>
+      <div class="stat-card"><div class="stat-num">${totalAccess}</div><div class="stat-label">Active Customers</div></div>
+      <div class="stat-card"><div class="stat-num text-orange" style="color:var(--orange)">${pendingCount}</div><div class="stat-label">Pending Requests</div></div>
+      ${user.role==='admin'?`<div class="stat-card"><div class="stat-num">${users.length}</div><div class="stat-label">Total Users</div></div>`:''}
+    </div>
+    ${pendingCount>0?`<div class="info-msg">⚠️ You have <strong>${pendingCount}</strong> pending access request(s). Go to <a href="#" onclick="showPanel('projects')" style="color:var(--orange)">My Projects</a> to review.</div>`:''}
+    <div class="panel-title" style="margin-top:4px;">Recent Projects</div>
+    ${myProjects.length===0?`<div class="empty-state"><span class="empty-state-icon">📁</span><div class="empty-state-text">No projects yet. Create your first project.</div></div>`:''}
+    <table class="data-table">
+      ${myProjects.length>0?`<thead><tr><th>Project Name</th><th>Parts</th><th>Customers</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${myProjects.slice(-5).reverse().map(p=>projectRow(p)).join('')}</tbody>`:''}
+    </table>
+  `;
+}
+
+async function renderMyProjects(el){
+  const projects=await getProjects();
+  const user=STATE.currentUser;
+  const myP=user.role==='admin'?projects:projects.filter(p=>p.ownerId===user.id);
+  el.innerHTML=`
+    <div class="flex-row"><div class="panel-title">My Projects</div>
+      ${user.role!=='admin'?`<button class="action-btn" onclick="showPanel('create')" style="margin-left:auto;">+ New Project</button>`:''}
+    </div>
+    ${myP.length===0?`<div class="empty-state"><span class="empty-state-icon">📁</span><div class="empty-state-text">No projects yet.</div></div>`:`
+    <table class="data-table">
+      <thead><tr><th>Project Name</th><th>Parts</th><th>Customers</th><th>Pending</th><th>Actions</th></tr></thead>
+      <tbody>${myP.map(p=>projectRow(p)).join('')}</tbody>
+    </table>`}
+  `;
+}
+
+function projectRow(p){
+  const approved=(p.accessRequests||[]).filter(r=>r.status==='approved').length;
+  const pending=(p.accessRequests||[]).filter(r=>r.status==='pending').length;
+  return `<tr>
+    <td><strong>${p.name}</strong></td>
+    <td>${(p.parts||[]).length}</td>
+    <td><span class="tbl-badge approved">${approved}</span></td>
+    <td>${pending>0?`<span class="tbl-badge pending">${pending} pending</span>`:'—'}</td>
+    <td>
+      <button class="tbl-btn view" onclick="openProjectViewer('${p.id}')">View</button>
+      <button class="tbl-btn copy" onclick="showShareModal('${p.id}')">Share</button>
+      <button class="tbl-btn approve" onclick="showAccessModal('${p.id}')">Access (${(p.accessRequests||[]).length})</button>
+      <button class="tbl-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
+    </td>
+  </tr>`;
+}
+
+async function renderUsers(el){
+  const users=await DB.get('users')||[];
+  el.innerHTML=`
+    <div class="panel-title">All Users</div>
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+      <tbody>${users.map(u=>`<tr>
+        <td><strong>${u.name}</strong></td>
+        <td>${u.email}</td>
+        <td><span class="tbl-badge ${u.role}">${u.role}</span></td>
+        <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+        <td>${u.role!=='admin'?`<button class="tbl-btn delete" onclick="deleteUser('${u.id}')">Remove</button>`:'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  `;
+}
+
+async function renderAllProjects(el){
+  const projects=await getProjects();
+  const users=await DB.get('users')||[];
+  const getOwner=id=>{const u=users.find(u=>u.id===id);return u?u.name:'Unknown';};
+  el.innerHTML=`
+    <div class="panel-title">All Projects</div>
+    <table class="data-table">
+      <thead><tr><th>Name</th><th>Owner</th><th>Parts</th><th>Customers</th><th>Actions</th></tr></thead>
+      <tbody>${projects.map(p=>`<tr>
+        <td><strong>${p.name}</strong></td>
+        <td>${getOwner(p.ownerId)}</td>
+        <td>${(p.parts||[]).length}</td>
+        <td>${(p.accessRequests||[]).filter(r=>r.status==='approved').length}</td>
+        <td>
+          <button class="tbl-btn view" onclick="openProjectViewer('${p.id}')">View</button>
+          <button class="tbl-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>
+  `;
+}
+
+/* ══════════════════════════════════════════════
+   CREATE PROJECT
+══════════════════════════════════════════════ */
+let newProjectFiles = { csv: new Map(), images: new Map() };
+let newProjectName = '';
+
+function renderCreateProject(el){
+  newProjectFiles = { csv: new Map(), images: new Map() };
+  el.innerHTML=`
+    <div class="panel-title">Create New Project</div>
+    <div class="create-form">
+      <div>
+        <div class="section-label" style="margin-top:0;">Project Name</div>
+        <input type="text" id="newProjectName" class="field-input" placeholder="e.g. CHASSIS-A200" style="max-width:360px;">
+      </div>
+      <div>
+        <div class="section-label">Source Folder</div>
+        <div class="folder-zone" id="createFolderZone">
+          <input type="file" id="createFolderInput" webkitdirectory mozdirectory multiple>
+          <span class="folder-zone-icon">📁</span>
+          <div class="folder-zone-label">Click to select your Source folder</div>
+          <div class="folder-zone-sub">All subfolders (Weld_Data, Weld_Images, Part_Images, Logo) will be read automatically</div>
+          <div class="folder-zone-status" id="createFolderStatus"></div>
+        </div>
+      </div>
+      <div id="createScanResult" style="display:none" class="info-msg"></div>
+      <button class="action-btn" id="createProjectBtn" onclick="createProject()" disabled>Create &amp; Save Project →</button>
+    </div>
+  `;
+  document.getElementById('createFolderInput').addEventListener('change',function(e){
+    processCreateFolder(e.target.files);
+  });
+}
+
+async function processCreateFolder(files){
+  newProjectFiles = { csv: new Map(), images: new Map() };
+  const arr=Array.from(files);
+  document.getElementById('createFolderStatus').innerText='⏳ Scanning…';
+  const promises=[];
+  arr.forEach(file=>{
+    const relPath=(file.webkitRelativePath||file.name).replace(/\\/g,'/');
+    const fname=file.name;
+    const ext=fname.split('.').pop().toLowerCase();
+    if(ext==='csv'){
+      promises.push(new Promise(res=>{
+        const r=new FileReader();
+        r.onload=ev=>{newProjectFiles.csv.set(fname.toLowerCase(),{name:fname,text:ev.target.result,path:relPath});res();};
+        r.readAsText(file);
+      }));
+    } else if(['png','jpg','jpeg'].includes(ext)){
+      promises.push(new Promise(res=>{
+        const r=new FileReader();
+        r.onload=ev=>{
+          const key=fname.toLowerCase();
+          const keyNoExt=key.replace(/\.[^.]+$/,'');
+          const pathNoExt=relPath.toLowerCase().replace(/\.[^.]+$/,'');
+          const entry={name:fname,dataUrl:ev.target.result,path:relPath};
+          newProjectFiles.images.set(key,entry);
+          newProjectFiles.images.set(keyNoExt,entry);
+          newProjectFiles.images.set(pathNoExt,entry);
+          res();
+        };
+        r.readAsDataURL(file);
+      }));
+    }
+  });
+  await Promise.all(promises);
+  const parts=detectPartsFrom(newProjectFiles.csv);
+  const imgCount=new Set([...newProjectFiles.images.keys()].filter(k=>!k.includes('/'))).size;
+  document.getElementById('createFolderStatus').innerText=`✅ ${newProjectFiles.csv.size} CSV files, ~${Math.round(imgCount/2)} images, ${parts.length} part(s) detected`;
+  const scanRes=document.getElementById('createScanResult');
+  scanRes.style.display='block';
+  scanRes.innerHTML=`<strong>Detected parts:</strong> ${parts.length>0?parts.map(p=>`<span style="margin:0 4px;font-weight:700;">${p}</span>`).join('•'):'None detected — check folder structure'}`;
+  document.getElementById('createProjectBtn').disabled=newProjectFiles.csv.size===0;
+}
+
+async function createProject(){
+  const name=document.getElementById('newProjectName').value.trim().toUpperCase();
+  if(!name){alert('Please enter a project name.');return;}
+  const parts=detectPartsFrom(newProjectFiles.csv);
+  loading(true,'Saving project data…');
+
+  // Serialize CSV data and image data into project record
+  const csvData={};
+  newProjectFiles.csv.forEach((v,k)=>{csvData[k]={name:v.name,text:v.text,path:v.path};});
+  const imageData={};
+  // Only store unique images (skip duplicate no-ext keys for size)
+  const seen=new Set();
+  newProjectFiles.images.forEach((v,k)=>{
+    if(!seen.has(v.path)){seen.add(v.path);imageData[k]=v;}
+  });
+
+  const project={
+    id:'proj_'+Date.now(),
+    name,
+    ownerId:STATE.currentUser.id,
+    parts,
+    createdAt:Date.now(),
+    csvData,
+    imageData,
+    accessRequests:[], // [{userId,userName,userEmail,status,requestedAt}]
+  };
+
+  let projects=await getProjects();
+  projects.push(project);
+  await DB.set('projects',projects);
+  loading(false);
+  alert(`Project "${name}" created with ${parts.length} part(s)!`);
+  showPanel('projects');
+}
+
+async function deleteProject(id){
+  if(!confirm('Delete this project? This cannot be undone.')) return;
+  loading(true,'Deleting…');
+  let projects=await getProjects();
+  projects=projects.filter(p=>p.id!==id);
+  await DB.set('projects',projects);
+  loading(false);
+  showPanel('projects');
+}
+
+async function deleteUser(id){
+  if(!confirm('Remove this user?')) return;
+  loading(true);
+  let users=await DB.get('users')||[];
+  users=users.filter(u=>u.id!==id);
+  await DB.set('users',users);
+  loading(false);
+  showPanel('users');
+}
+
+/* ══════════════════════════════════════════════
+   SHARE & ACCESS
+══════════════════════════════════════════════ */
+function showShareModal(projectId){
+  const link=`${window.location.origin}${window.location.pathname}?project=${projectId}`;
+  document.getElementById('shareLinkBox').innerText=link;
+  document.getElementById('shareModal').currentProjectId=projectId;
+  openModal('shareModal');
+}
+function copyShareLink(){
+  const txt=document.getElementById('shareLinkBox').innerText;
+  navigator.clipboard.writeText(txt).then(()=>alert('Link copied to clipboard!'));
+}
+
+async function showAccessModal(projectId){
+  const projects=await getProjects();
+  const project=projects.find(p=>p.id===projectId);
+  if(!project) return;
+  document.getElementById('accessModalProjectName').innerText=project.name;
+  const list=document.getElementById('accessModalList');
+  const reqs=project.accessRequests||[];
+  if(reqs.length===0){
+    list.innerHTML='<div class="empty-state"><span class="empty-state-icon">👥</span><div class="empty-state-text">No access requests yet. Share the project link with customers.</div></div>';
+  } else {
+    list.innerHTML=`<table class="data-table" style="margin-top:8px;">
+      <thead><tr><th>Customer</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${reqs.map((r,i)=>`<tr>
+        <td><strong>${r.userName}</strong></td>
+        <td>${r.userEmail}</td>
+        <td><span class="tbl-badge ${r.status}">${r.status}</span></td>
+        <td>
+          ${r.status==='pending'?`<button class="tbl-btn approve" onclick="setAccessStatus('${projectId}',${i},'approved')">Approve</button>`:''}
+          ${r.status==='approved'?`<button class="tbl-btn revoke" onclick="setAccessStatus('${projectId}',${i},'revoked')">Revoke</button>`:''}
+          ${r.status==='revoked'?`<button class="tbl-btn approve" onclick="setAccessStatus('${projectId}',${i},'approved')">Re-approve</button>`:''}
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+  openModal('accessModal');
+}
+
+async function setAccessStatus(projectId,reqIdx,status){
+  loading(true);
+  let projects=await getProjects();
+  const proj=projects.find(p=>p.id===projectId);
+  if(proj&&proj.accessRequests[reqIdx]) proj.accessRequests[reqIdx].status=status;
+  await DB.set('projects',projects);
+  loading(false);
+  showAccessModal(projectId);
+  // refresh panel behind modal
+  if(STATE.currentUser.role==='admin') renderAllProjects(document.getElementById('dashMain'));
+  else renderMyProjects(document.getElementById('dashMain'));
+}
+
+/* ══════════════════════════════════════════════
+   CUSTOMER
+══════════════════════════════════════════════ */
+async function setupCustomer(user){
+  document.getElementById('custAvatar').innerText=user.name[0].toUpperCase();
+  document.getElementById('custUserName').innerText=user.name;
+
+  // Check URL for project share link
+  const params=new URLSearchParams(window.location.search);
+  const sharedProjectId=params.get('project');
+  if(sharedProjectId){
+    await requestProjectAccess(user,sharedProjectId);
+  }
+
+  loadCustomerProjects(user);
+}
+
+async function requestProjectAccess(user,projectId){
+  loading(true,'Requesting access…');
+  let projects=await getProjects();
+  const proj=projects.find(p=>p.id===projectId);
+  if(!proj){loading(false);alert('Project not found.');return;}
+  const already=proj.accessRequests.find(r=>r.userId===user.id);
+  if(already){loading(false);
+    if(already.status==='pending') alert(`Access request for "${proj.name}" is pending approval.`);
+    else if(already.status==='approved') alert(`You already have access to "${proj.name}".`);
+    else alert(`Your access to "${proj.name}" has been revoked. Contact the engineer.`);
+    return;
+  }
+  proj.accessRequests.push({userId:user.id,userName:user.name,userEmail:user.email,status:'pending',requestedAt:Date.now()});
+  await DB.set('projects',projects);
+  loading(false);
+  alert(`Access requested for project "${proj.name}". Please wait for engineer approval.`);
+  // Clear URL param
+  window.history.replaceState({},document.title,window.location.pathname);
+}
+
+async function loadCustomerProjects(user){
+  loading(true,'Loading projects…');
+  const projects=await getProjects();
+  loading(false);
+  const accessible=projects.filter(p=>{
+    const req=(p.accessRequests||[]).find(r=>r.userId===user.id);
+    return req&&req.status==='approved';
+  });
+  const listEl=document.getElementById('custProjectList');
+  if(accessible.length===0){
+    listEl.innerHTML=`<div class="empty-state" style="grid-column:1/-1;">
+      <span class="empty-state-icon">🔒</span>
+      <div class="empty-state-text">No approved projects yet.<br>Use a shared link from your engineer to request access.</div>
+    </div>`;
+    return;
+  }
+  listEl.innerHTML=accessible.map(p=>`
+    <div class="project-card" onclick="openProjectViewer('${p.id}')">
+      <div class="project-card-title">${p.name}</div>
+      <div class="project-card-meta">
+        Parts: ${(p.parts||[]).join(', ')||'—'}<br>
+        Created: ${new Date(p.createdAt).toLocaleDateString()}
+      </div>
+      <div class="project-card-badge"><span class="tbl-badge approved">✓ Access Approved</span></div>
+    </div>
+  `).join('');
+}
+
+/* ══════════════════════════════════════════════
+   VIEWER
+══════════════════════════════════════════════ */
+async function openProjectViewer(projectId){
+  loading(true,'Loading project…');
+  const projects=await getProjects();
+  const project=projects.find(p=>p.id===projectId);
+  if(!project){loading(false);alert('Project not found.');return;}
+
+  STATE.currentProjectId=projectId;
+
+  // Load files into STATE maps
+  STATE.csvFiles=new Map();
+  STATE.imageFiles=new Map();
+  Object.entries(project.csvData||{}).forEach(([k,v])=>STATE.csvFiles.set(k,v));
+  Object.entries(project.imageData||{}).forEach(([k,v])=>STATE.imageFiles.set(k,v));
+
+  // Set title
+  document.getElementById('viewerProjectTitle').innerText=project.name;
+
+  // Avatar
+  const u=STATE.currentUser;
+  document.getElementById('viewerAvatar').innerText=u.name[0].toUpperCase();
+  document.getElementById('viewerUserName').innerText=u.name;
+
+  // Hide export for customers? No — allow download per requirements
+  document.getElementById('exportArea').style.display='block';
+
+  loading(false);
+  showPage('viewerPage');
+  await loadApexizLogo();
+  loadViewerPartDropdown();
+  loadViewerWeldData();
+}
+
+function goBack(){
+  const u=STATE.currentUser;
+  if(u.role==='admin'||u.role==='engineer'){
+    showPage('dashPage');
+    showPanel('projects');
+  } else {
+    showPage('customerPage');
+  }
+}
+
+/* ── Viewer helpers ── */
+function detectPartsFrom(csvMap){
+  // Try PART_DATA.csv first
+  const pd=csvMap.get('part_data.csv');
+  if(pd){
+    const rows=pd.text.replace(/^\uFEFF/,'').split(/\r?\n/);
+    const parts=[];
+    for(let i=1;i<rows.length;i++){
+      if(!rows[i].trim()) continue;
+      const cols=rows[i].split(',');
+      const name=cols[1]?.trim();
+      if(name) parts.push(name);
+    }
+    if(parts.length) return parts;
+  }
+  const partSet=new Set();
+  csvMap.forEach((v,k)=>{
+    const m=k.match(/^(.+?)_robot[12]\.csv$/i);
+    if(m) partSet.add(m[1].toUpperCase());
+  });
+  return [...partSet];
+}
+
+function getCSVText(filename){
+  const key=filename.toLowerCase();
+  if(STATE.csvFiles.has(key)) return STATE.csvFiles.get(key).text;
+  const base=key.replace(/\.csv$/,'');
+  for(const [k,v] of STATE.csvFiles){
+    if(k.replace(/\.csv$/,'')==base) return v.text;
+  }
+  return null;
+}
+
+function findImage(nameBase){
+  if(!nameBase) return null;
+  const key=nameBase.toLowerCase();
+  for(const ext of ['png','jpg','jpeg']){
+    const e=STATE.imageFiles.get(key+'.'+ext)||STATE.imageFiles.get(key);
+    if(e) return e.dataUrl;
+  }
+  for(const [k,v] of STATE.imageFiles){
+    if(k.startsWith(key)) return v.dataUrl;
+  }
+  return null;
+}
+
+function parseCSV(text){
+  const rows=text.replace(/^\uFEFF/,'').split(/\r?\n/);
+  const welds=[];
+  for(let i=1;i<rows.length;i++){
+    if(!rows[i].trim()) continue;
+    const cols=rows[i].split(',');
+    welds.push({weldNo:cols[0]?.trim(),angle:cols[1]?.trim(),jobName:cols[2]?.trim(),imageId:cols[3]?.trim()});
+  }
+  return welds;
+}
+
+function loadViewerPartDropdown(){
+  const dd=document.getElementById('partDropdown');
+  dd.innerHTML='';
+  const parts=detectPartsFrom(STATE.csvFiles);
+  if(parts.length===0){
+    STATE.csvFiles.forEach(v=>{
+      if(v.name.toLowerCase()==='part_data.csv') return;
+      const o=document.createElement('option');
+      o.value=v.name.replace(/\.csv$/i,'');o.text=o.value;
+      dd.appendChild(o);
+    });
+  } else {
+    parts.forEach(p=>{
+      const o=document.createElement('option');
+      o.value=p;o.text=p;dd.appendChild(o);
+    });
+  }
+  dd.addEventListener('change',loadViewerWeldData);
+}
+
+function loadViewerWeldData(){
+  const part=document.getElementById('partDropdown').value;
+  document.getElementById('weldNumber').innerText='—';
+  document.getElementById('jobName').innerText='—';
+  document.getElementById('positionerAngle').innerText='—';
+  document.getElementById('robotName').innerText='—';
+  const imgEl=document.getElementById('mainImage');
+  imgEl.style.backgroundImage='none';
+  imgEl.innerText='[ Select a weld to view image ]';
+  setActiveWeld(null);
+
+  const t1=getCSVText(`${part}_Robot1.csv`)||getCSVText(`${part}_robot1.csv`);
+  const t2=getCSVText(`${part}_Robot2.csv`)||getCSVText(`${part}_robot2.csv`);
+  STATE.globalWelds1=t1?parseCSV(t1):[];
+  STATE.globalWelds2=t2?parseCSV(t2):[];
+  buildWeldGrid(STATE.globalWelds1,STATE.globalWelds2,t1,t2);
+
+  const ov=document.getElementById('overviewImage');
+  const ovImg=findImage(part);
+  if(ovImg){ov.style.backgroundImage=`url("${ovImg}")`;ov.innerText='';}
+  else{ov.style.backgroundImage='none';ov.innerText='[ Part Image ]';}
+}
+
+function splitSegs(welds){
+  const segs=[];let cur={welds:[],hasSync:false};
+  welds.forEach(w=>{
+    if(w.weldNo==='TSync'||w.weldNo==='SYNC'){cur.hasSync=true;segs.push(cur);cur={welds:[],hasSync:false};}
+    else cur.welds.push(w);
+  });
+  segs.push(cur);return segs;
+}
+
+function buildWeldGrid(w1,w2,t1,t2){
+  const c1=document.getElementById('robot1Col');
+  const c2=document.getElementById('robot2Col');
+  c1.innerHTML='';c2.innerHTML='';
+  if(!t1) c1.innerHTML='<div class="no-data">No Data</div>';
+  if(!t2) c2.innerHTML='<div class="no-data">No Data</div>';
+  if(!t1&&!t2) return;
+  const s1=splitSegs(w1),s2=splitSegs(w2);
+  const n=Math.max(s1.length,s2.length);
+  for(let s=0;s<n;s++){
+    const sg1=s1[s]||{welds:[],hasSync:false};
+    const sg2=s2[s]||{welds:[],hasSync:false};
+    const mx=Math.max(sg1.welds.length,sg2.welds.length);
+    sg1.welds.forEach(w=>c1.appendChild(makeWeldCell(w,'Robot 1')));
+    sg2.welds.forEach(w=>c2.appendChild(makeWeldCell(w,'Robot 2')));
+    for(let p=0;p<mx-sg1.welds.length;p++) c1.appendChild(mkEmpty());
+    for(let p=0;p<mx-sg2.welds.length;p++) c2.appendChild(mkEmpty());
+    if(sg1.hasSync||sg2.hasSync){
+      c1.appendChild(sg1.hasSync?mkSync():mkEmpty());
+      c2.appendChild(sg2.hasSync?mkSync():mkEmpty());
+    }
+  }
+}
+function mkSync(){const d=document.createElement('div');d.className='weld-cell tsync';d.innerText='— SYNC —';return d;}
+function mkEmpty(){const d=document.createElement('div');d.className='weld-cell empty';return d;}
+function makeWeldCell(row,robotLabel){
+  const div=document.createElement('div');
+  div.className='weld-cell weld-item';
+  div.innerText=row.weldNo;
+  div.onclick=function(){
+    setActiveWeld(div);
+    document.getElementById('weldNumber').innerText=row.weldNo||'—';
+    document.getElementById('jobName').innerText=row.jobName||'—';
+    document.getElementById('positionerAngle').innerText=row.angle?row.angle+' °':'—';
+    document.getElementById('robotName').innerText=robotLabel;
+    const imgEl=document.getElementById('mainImage');
+    const du=row.imageId?findImage(row.imageId):null;
+    if(du){imgEl.style.backgroundImage=`url("${du}")`;imgEl.innerText='';}
+    else{imgEl.style.backgroundImage='none';imgEl.innerText=row.imageId?'[ Image not found: '+row.imageId+' ]':'[ No image ]';}
+  };
+  return div;
+}
+function setActiveWeld(el){
+  if(STATE.activeWeldCell) STATE.activeWeldCell.classList.remove('active');
+  STATE.activeWeldCell=el;
+  if(el) el.classList.add('active');
+}
+
+/* ══════════════════════════════════════════════
+   PPT EXPORT
+══════════════════════════════════════════════ */
+const C={orange:"FF5500",black:"000000",white:"FFFFFF",darkGrey:"4D4D4D",medGrey:"B8B8B8",lightGrey:"CCCCCC"};
+async function exportToPPT(){
+  const btn=document.getElementById('exportBtn');
+  btn.disabled=true;btn.innerText='⏳ Generating…';
+  const part=document.getElementById('partDropdown').value;
+  const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  const pptx=new PptxGenJS();
+  pptx.layout='LAYOUT_16x10';pptx.title=`Apexiz – ${part} Weld Report`;
+  const LS={w:0.714,h:0.395},LL={w:2.25,h:1.24};
+  // Title
+  {const sl=pptx.addSlide();sl.background={color:C.white};
+   sl.addShape(pptx.shapes.RECTANGLE,{x:3.45,y:0,w:0.09,h:6.25,fill:{color:C.orange},line:{color:C.orange}});
+   if(STATE.LOGO_B64) sl.addImage({data:STATE.LOGO_B64,x:0.28,y:0.28,w:LL.w,h:LL.h});
+   sl.addText(part,{x:3.75,y:1.1,w:6,h:1.05,fontSize:52,bold:true,color:C.orange,fontFace:'Segoe UI'});
+   sl.addText('Weld Inspection Report',{x:3.75,y:2.25,w:6,h:0.6,fontSize:22,color:C.darkGrey,fontFace:'Segoe UI'});
+   sl.addShape(pptx.shapes.RECTANGLE,{x:3.75,y:2.92,w:5.2,h:0.07,fill:{color:C.orange},line:{color:C.orange}});
+   sl.addText(`Date: ${today}`,{x:3.75,y:3.14,w:6,h:0.38,fontSize:12,color:C.darkGrey,fontFace:'Segoe UI',italic:true});
+   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.88,w:10,h:0.37,fill:{color:C.orange},line:{color:C.orange}});
+   sl.addText('© 2026 Apexiz    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
+  // Overview
+  {const sl=pptx.addSlide();sl.background={color:C.white};
+   addPPTHeader(sl,pptx,'Part Overview',part);
+   const ovB64=findImage(part);
+   if(ovB64) sl.addImage({data:ovB64.replace(/^data:/,''),x:0.3,y:1,w:5.9,h:4.6,sizing:{type:'contain',w:5.9,h:4.6}});
+   else{sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1,w:5.9,h:4.6,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
+    sl.addText('[ No Part Image ]',{x:0.3,y:2.9,w:5.9,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
+   sl.addShape(pptx.shapes.RECTANGLE,{x:6.4,y:1,w:3.35,h:4.6,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
+   const r1=STATE.globalWelds1.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
+   const r2=STATE.globalWelds2.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
+   [{label:'PART VARIANT',val:part,c:C.orange,s:18},{label:'ROBOT 1 WELDS',val:String(r1),c:C.darkGrey,s:22},{label:'ROBOT 2 WELDS',val:String(r2),c:C.darkGrey,s:22},{label:'TOTAL WELDS',val:String(r1+r2),c:C.orange,s:22},{label:'REPORT DATE',val:today,c:C.darkGrey,s:12}].reduce((iy,row)=>{
+     sl.addText(row.label,{x:6.55,y:iy,w:3,h:0.25,fontSize:8,color:C.medGrey,fontFace:'Segoe UI',bold:true});
+     sl.addText(row.val,{x:6.55,y:iy+0.25,w:3,h:0.46,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true});
+     sl.addShape(pptx.shapes.RECTANGLE,{x:6.55,y:iy+0.76,w:2.9,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
+     return iy+0.88;
+   },1.12);
+   addPPTFooter(sl,pptx,LS);}
+  addRobotDiv(pptx,'Robot 1','Weld Jobs',LL);
+  addWeldSlides(pptx,STATE.globalWelds1,'R1',part,LS);
+  addRobotDiv(pptx,'Robot 2','Weld Jobs',LL);
+  addWeldSlides(pptx,STATE.globalWelds2,'R2',part,LS);
+  // End
+  {const sl=pptx.addSlide();sl.background={color:C.white};
+   sl.addShape(pptx.shapes.RECTANGLE,{x:6.5,y:0,w:0.09,h:6.25,fill:{color:C.orange},line:{color:C.orange}});
+   sl.addText('Thank You',{x:0.5,y:1.1,w:5.7,h:1.05,fontSize:52,bold:true,color:C.black,fontFace:'Segoe UI'});
+   sl.addShape(pptx.shapes.RECTANGLE,{x:0.5,y:2.22,w:4.2,h:0.07,fill:{color:C.orange},line:{color:C.orange}});
+   sl.addText('End of Weld Inspection Report',{x:0.5,y:2.42,w:5.7,h:0.48,fontSize:15,color:C.darkGrey,fontFace:'Segoe UI'});
+   sl.addText(part,{x:0.5,y:3,w:5.7,h:0.5,fontSize:18,bold:true,color:C.orange,fontFace:'Segoe UI'});
+   if(STATE.LOGO_B64) sl.addImage({data:STATE.LOGO_B64,x:6.7,y:0.3,w:LL.w,h:LL.h});
+   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.88,w:10,h:0.37,fill:{color:C.orange},line:{color:C.orange}});
+   sl.addText('© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
+  await pptx.writeFile({fileName:`Apexiz_${part}_Weld_Report.pptx`});
+  btn.disabled=false;btn.innerText='⬇ Download PPT Report';
+}
+function addRobotDiv(pptx,lbl,sub,ls){
+  const sl=pptx.addSlide();sl.background={color:C.white};
+  sl.addText(lbl,{x:0.5,y:1.6,w:9,h:1.3,fontSize:72,bold:true,color:C.black,align:'center',fontFace:'Segoe UI'});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:2.98,w:10,h:0.1,fill:{color:C.orange},line:{color:C.orange}});
+  sl.addText(sub,{x:0.5,y:3.15,w:9,h:0.65,fontSize:24,color:C.orange,align:'center',fontFace:'Segoe UI'});
+  if(STATE.LOGO_B64&&ls) sl.addImage({data:STATE.LOGO_B64,x:0.3,y:5.55-ls.h,w:ls.w,h:ls.h});
+}
+function addPPTHeader(sl,pptx,title,sub){
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.14,fill:{color:C.orange},line:{color:C.orange}});
+  sl.addText(title,{x:0.3,y:0.2,w:7,h:0.58,fontSize:24,bold:true,color:C.black,fontFace:'Segoe UI'});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:0.75,w:1.2,h:0.06,fill:{color:C.orange},line:{color:C.orange}});
+  if(sub) sl.addText(sub,{x:7.2,y:0.22,w:2.6,h:0.52,fontSize:13,bold:true,color:C.medGrey,align:'right',fontFace:'Segoe UI'});
+}
+function addPPTFooter(sl,pptx,ls){
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
+  if(STATE.LOGO_B64&&ls) sl.addImage({data:STATE.LOGO_B64,x:0.2,y:5.78,w:ls.w,h:ls.h});
+  sl.addText('© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:1.9,y:5.75,w:7.9,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
+}
+function addWeldSlides(pptx,welds,code,part,ls){
+  welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').forEach(w=>{
+    const sl=pptx.addSlide();sl.background={color:C.white};
+    addPPTHeader(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT – ${code}`);
+    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:2.55,h:4.82,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
+    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:0.07,h:4.82,fill:{color:C.orange},line:{color:C.orange}});
+    [{label:'JOB NAME',val:w.jobName||'—',c:C.black,s:12},{label:'WELD NO.',val:w.weldNo||'—',c:C.orange,s:22},{label:'ROBOT',val:code,c:C.black,s:18},{label:'POSITIONER ANGLE',val:w.angle?w.angle+' °':'—',c:C.orange,s:14}].reduce((iy,f)=>{
+      sl.addText(f.label,{x:0.2,y:iy,w:2.2,h:0.24,fontSize:7.5,color:C.medGrey,fontFace:'Segoe UI',bold:true});
+      sl.addText(f.val,{x:0.2,y:iy+0.24,w:2.2,h:f.s>18?0.58:0.44,fontSize:f.s,color:f.c,fontFace:'Segoe UI',bold:true});
+      sl.addShape(pptx.shapes.RECTANGLE,{x:0.2,y:iy+(f.s>18?0.88:0.74),w:2.1,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
+      return iy+(f.s>18?0.96:0.84);
+    },1.0);
+    const ix=2.65,iy=0.92,iw=7.1,ih=4.78;
+    const du=w.imageId?findImage(w.imageId):null;
+    if(du) sl.addImage({data:du.replace(/^data:/,''),x:ix,y:iy,w:iw,h:ih,sizing:{type:'contain',w:iw,h:ih}});
+    else{sl.addShape(pptx.shapes.RECTANGLE,{x:ix,y:iy,w:iw,h:ih,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
+     sl.addText('[ No Image Available ]',{x:ix,y:iy+2.1,w:iw,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
+    addPPTFooter(sl,pptx,ls);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   LOGO
+══════════════════════════════════════════════ */
+async function loadApexizLogo(){
+  // Check Logo/ in imageFiles
+  for(const [k,v] of STATE.imageFiles){
+    if(/logo[\/]apexiz/i.test(k)||k==='apexiz_logo'||k==='apexiz-logo'){
+      STATE.LOGO_B64=v.dataUrl.replace(/^data:/,'');return;
+    }
+  }
+  try{
+    const r=await fetch('https://www.apexiz.com/images/apexiz-logo.png');
+    if(r.ok){const b=await r.arrayBuffer();STATE.LOGO_B64='image/png;base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));}
+  }catch(e){}
+}
+
+/* ══════════════════════════════════════════════
+   DATA HELPERS
+══════════════════════════════════════════════ */
+async function getProjects(){
+  return await DB.get('projects')||[];
+}
+
+/* ══════════════════════════════════════════════
+   MODALS
+══════════════════════════════════════════════ */
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+window.addEventListener('load',async()=>{
+  // Seed admin account if none exist
+  loading(true,'Starting…');
+  let users=await DB.get('users')||[];
+  if(!users.find(u=>u.role==='admin')){
+    users.push({id:'admin_001',name:'Admin',email:'admin@apexiz.com',password:btoa('admin123'),role:'admin',createdAt:Date.now()});
+    await DB.set('users',users);
+  }
+  loading(false);
+  await tryAutoLogin();
+});
+</script>
+</body>
+</html>
