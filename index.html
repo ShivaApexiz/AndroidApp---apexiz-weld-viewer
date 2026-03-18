@@ -23,12 +23,12 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .page.active{display:flex;}
 
 /* ── TOPBAR ── */
-.topbar{background:var(--white);height:56px;min-height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:3px solid var(--orange);box-shadow:0 2px 8px rgba(0,0,0,0.07);flex-shrink:0;z-index:50;}
-.topbar-logo{height:36px;width:auto;object-fit:contain;}
+.topbar{background:var(--white);height:70px;min-height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:3px solid var(--orange);box-shadow:0 2px 8px rgba(0,0,0,0.07);flex-shrink:0;z-index:50;}
+.topbar-logo{height:57px;width:auto;object-fit:contain;}
 .topbar-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--orange);letter-spacing:2px;}
 .topbar-right{display:flex;align-items:center;gap:12px;}
-.topbar-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--black);}
-.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--orange);color:var(--white);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.topbar-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--black);}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--orange);color:var(--white);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .user-name{font-size:12px;font-weight:600;color:var(--g4);}
 .role-badge{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
 .role-badge.admin{background:var(--black);color:var(--white);}
@@ -36,8 +36,8 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .role-badge.customer{background:var(--g2);color:var(--g4);}
 
 /* ── FOOTER ── */
-.footer{background:var(--white);height:30px;min-height:30px;display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:1px;color:var(--g3);border-top:3px solid var(--orange);flex-shrink:0;}
-.footer-dot{color:var(--orange);margin:0 8px;font-size:7px;}
+.footer{background:var(--white);height:40px;min-height:40px;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:1px;color:var(--g3);border-top:3px solid var(--orange);flex-shrink:0;}
+.footer-dot{color:var(--orange);margin:0 10px;font-size:8px;}
 
 /* ── PAGE BODY ── */
 .page-body{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;}
@@ -136,34 +136,59 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 
 /* ══ WELD VIEWER ══ */
 #viewerPage .page-body{flex-direction:row;overflow:hidden;}
-.viewer-left{width:320px;min-width:320px;padding:14px 12px;background:var(--white);border-right:1px solid var(--g2);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;}
-.viewer-left::-webkit-scrollbar{width:3px;}
-.viewer-left::-webkit-scrollbar-thumb{background:var(--g2);}
-.viewer-right{flex:1;padding:14px 18px;display:flex;flex-direction:column;background:var(--white);overflow:hidden;min-width:0;}
-.overview-img{height:170px;flex-shrink:0;border:1px solid var(--g2);border-radius:4px;background-position:center;background-repeat:no-repeat;background-size:contain;background-color:var(--g1);display:flex;align-items:center;justify-content:center;color:#B8B8B8;font-size:11px;}
+.viewer-left{
+  width:400px;min-width:400px;
+  padding:24px 20px;
+  background:var(--white);
+  border-right:1px solid var(--g2);
+  display:flex;flex-direction:column;
+  overflow-y:auto;flex-shrink:0;
+}
+.viewer-left::-webkit-scrollbar{width:4px;}
+.viewer-left::-webkit-scrollbar-track{background:var(--g1);}
+.viewer-left::-webkit-scrollbar-thumb{background:var(--g2);border-radius:2px;}
+.viewer-right{flex:1;padding:24px 28px;display:flex;flex-direction:column;background:var(--white);overflow:hidden;min-width:0;}
+.overview-img{
+  height:260px;flex-shrink:0;
+  border:1px solid var(--g2);border-radius:4px;
+  background-position:center;background-repeat:no-repeat;background-size:contain;
+  background-color:var(--g1);
+  display:flex;align-items:center;justify-content:center;color:#B8B8B8;font-size:13px;
+}
 .robot-cols-hdr{display:flex;gap:4px;margin-bottom:4px;flex-shrink:0;}
-.robot-title{flex:1;text-align:center;color:var(--white);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--black);padding:5px 0;border-radius:3px;}
-.weld-grid-wrap{display:flex;border:1px solid var(--g2);border-radius:4px;flex:1;overflow-y:auto;background:var(--white);min-height:0;}
-.weld-grid-wrap::-webkit-scrollbar{width:3px;}
-.weld-grid-wrap::-webkit-scrollbar-thumb{background:var(--g2);}
+.robot-title{flex:1;text-align:center;color:var(--white);font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;background:var(--black);padding:6px 0;border-radius:3px;}
+.weld-grid-wrap{
+  display:flex;border:1px solid var(--g2);border-radius:4px;
+  height:230px;overflow-y:auto;background:var(--white);flex-shrink:0;
+}
+.weld-grid-wrap::-webkit-scrollbar{width:4px;}
+.weld-grid-wrap::-webkit-scrollbar-track{background:var(--g1);}
+.weld-grid-wrap::-webkit-scrollbar-thumb{background:var(--g2);border-radius:2px;}
 .weld-col{flex:1;display:flex;flex-direction:column;}
 .weld-col:first-child{border-right:1px solid var(--g2);}
-.weld-cell{height:29px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:600;}
+.weld-cell{height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:600;}
 .weld-cell.weld-item{color:var(--black);cursor:pointer;transition:all 0.1s;}
-.weld-cell.weld-item:hover{background:var(--orange-light);color:var(--orange);}
+.weld-cell.weld-item:hover{background:#FFF0EB;color:var(--orange);}
 .weld-cell.weld-item.active{background:var(--orange);color:var(--white);}
-.weld-cell.tsync{color:#B8B8B8;font-style:italic;font-size:10px;font-weight:400;background:var(--g1);border-top:1px dashed var(--g2);border-bottom:1px dashed var(--g2);}
+.weld-cell.tsync{color:#B8B8B8;font-style:italic;font-size:11px;font-weight:400;background:var(--g1);border-top:1px dashed var(--g2);border-bottom:1px dashed var(--g2);}
 .weld-cell.empty{background:var(--white);}
-.export-btn{width:100%;padding:9px 0;background:var(--orange);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;border:none;border-radius:30px;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:background 0.15s;margin-top:8px;flex-shrink:0;}
+.export-btn{width:100%;padding:11px 0;background:var(--orange);color:var(--white);font-size:13px;font-weight:700;border:none;border-radius:20px;cursor:pointer;letter-spacing:0.8px;text-transform:uppercase;transition:background 0.15s;margin-top:16px;flex-shrink:0;}
 .export-btn:hover{background:var(--orange-dark);}
 .export-btn:disabled{background:var(--g2);color:#B8B8B8;cursor:not-allowed;}
 .info-section{display:flex;flex-direction:column;flex-shrink:0;}
-.info-row{display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--g1);gap:10px;}
-.info-label{color:var(--g3);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;min-width:148px;flex-shrink:0;}
-.info-value{color:var(--black);font-size:13px;font-weight:500;}
-.info-value.hl{color:var(--orange);font-weight:700;}
-.part-dd{padding:4px 11px;border:1.5px solid var(--orange);font-weight:600;color:var(--black);border-radius:20px;font-size:12px;background:var(--white);cursor:pointer;font-family:'Barlow',sans-serif;}
-.main-img{flex:1;margin-top:10px;border:1px solid var(--g2);border-radius:4px;background-position:center;background-repeat:no-repeat;background-size:contain;background-color:var(--g1);display:flex;align-items:center;justify-content:center;color:#B8B8B8;font-size:12px;min-height:0;}
+.info-row{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--g1);gap:12px;}
+.info-label{color:var(--g3);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;min-width:170px;flex-shrink:0;}
+.info-value{color:var(--black);font-size:14px;font-weight:500;}
+.info-value.hl{color:var(--orange);font-weight:700;font-size:15px;}
+.part-dd{padding:5px 14px;border:1.5px solid var(--orange);font-weight:600;color:var(--black);border-radius:20px;font-size:13px;background:var(--white);cursor:pointer;transition:border-color 0.15s;}
+.part-dd:focus{outline:none;border-color:var(--orange-dark);}
+.main-img{
+  flex:1;margin-top:16px;min-height:420px;
+  border:1px solid var(--g2);border-radius:4px;
+  background-position:center;background-repeat:no-repeat;background-size:contain;
+  background-color:var(--g1);
+  display:flex;align-items:center;justify-content:center;color:#B8B8B8;font-size:13px;
+}
 
 /* ══ CUSTOMER ══ */
 #customerPage .page-body{background:#EFEFEF;padding:18px;}
@@ -1032,32 +1057,52 @@ async function exportToPPT(){
   const btn=document.getElementById('exportBtn');
   btn.disabled=true;btn.innerText='⏳ Generating…';
   const part=document.getElementById('partDropdown').value;
+  const projName=document.getElementById('viewerTitle').innerText||part;
   const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
   const pptx=new PptxGenJS();
-  pptx.layout='LAYOUT_16x10';pptx.title=`Apexiz – ${part} Weld Report`;
+  pptx.layout='LAYOUT_16x10';pptx.title=`Apexiz – ${projName} – ${part} Weld Report`;
   const LS={w:0.714,h:0.395},LL={w:2.25,h:1.24};
 
+  // Fetch image as base64 — handles Supabase public URLs via XMLHttpRequest to avoid CORS issues
   async function imgB64(url){
     if(!url) return null;
-    try{const r=await fetch(url);if(!r.ok) return null;const b=await r.arrayBuffer();
-    const mime=url.toLowerCase().includes('.png')?'image/png':'image/jpeg';
-    return mime+';base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));}catch(e){return null;}
+    return new Promise(resolve=>{
+      const xhr=new XMLHttpRequest();
+      xhr.open('GET',url,true);
+      xhr.responseType='arraybuffer';
+      xhr.onload=function(){
+        if(xhr.status===200){
+          const bytes=new Uint8Array(xhr.response);
+          let bin='';for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+          const ext=url.split('?')[0].toLowerCase();
+          const mime=ext.endsWith('.png')?'image/png':'image/jpeg';
+          resolve(mime+';base64,'+btoa(bin));
+        } else resolve(null);
+      };
+      xhr.onerror=()=>resolve(null);
+      xhr.send();
+    });
   }
 
-  // Title slide
+  // Title slide — with Project Name
   {const sl=pptx.addSlide();sl.background={color:C.white};
    sl.addShape(pptx.shapes.RECTANGLE,{x:3.45,y:0,w:0.09,h:6.25,fill:{color:C.orange},line:{color:C.orange}});
    if(S.logob64) sl.addImage({data:S.logob64,x:0.28,y:0.28,w:LL.w,h:LL.h});
-   sl.addText(part,{x:3.75,y:1.1,w:6,h:1.05,fontSize:52,bold:true,color:C.orange,fontFace:'Segoe UI'});
-   sl.addText('Weld Inspection Report',{x:3.75,y:2.25,w:6,h:0.6,fontSize:22,color:C.darkGrey,fontFace:'Segoe UI'});
-   sl.addShape(pptx.shapes.RECTANGLE,{x:3.75,y:2.92,w:5.2,h:0.07,fill:{color:C.orange},line:{color:C.orange}});
+   [{c:C.orange,x:0.42},{c:C.darkGrey,x:0.82},{c:C.darkGrey,x:1.22}].forEach(d=>{
+     sl.addShape(pptx.shapes.OVAL,{x:d.x,y:5.18,w:0.22,h:0.22,fill:{color:d.c},line:{color:'none'}});
+   });
+   sl.addText(projName,{x:3.75,y:0.7,w:6,h:0.72,fontSize:32,bold:true,color:C.darkGrey,fontFace:'Segoe UI'});
+   sl.addText(part,{x:3.75,y:1.4,w:6,h:0.9,fontSize:46,bold:true,color:C.orange,fontFace:'Segoe UI'});
+   sl.addText('Weld Inspection Report',{x:3.75,y:2.38,w:6,h:0.55,fontSize:20,color:C.darkGrey,fontFace:'Segoe UI'});
+   sl.addShape(pptx.shapes.RECTANGLE,{x:3.75,y:2.98,w:5.2,h:0.07,fill:{color:C.orange},line:{color:C.orange}});
    sl.addText('Date: '+today,{x:3.75,y:3.14,w:6,h:0.38,fontSize:12,color:C.darkGrey,fontFace:'Segoe UI',italic:true});
+   sl.addText('CONFIDENTIAL  •  FOR INTERNAL USE ONLY',{x:3.75,y:3.6,w:6,h:0.35,fontSize:10,color:C.medGrey,fontFace:'Segoe UI',italic:true});
    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.88,w:10,h:0.37,fill:{color:C.orange},line:{color:C.orange}});
    sl.addText('© 2026 Apexiz    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
 
   // Overview slide
   {const sl=pptx.addSlide();sl.background={color:C.white};
-   pptHdr(sl,pptx,'Part Overview',part);
+   pptHdr(sl,pptx,'Part Overview',projName+' — '+part);
    const ovUrl=findImg(part);const ovB64=await imgB64(ovUrl);
    if(ovB64) sl.addImage({data:ovB64,x:0.3,y:1,w:5.9,h:4.6,sizing:{type:'contain',w:5.9,h:4.6}});
    else{sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1,w:5.9,h:4.6,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
@@ -1065,11 +1110,13 @@ async function exportToPPT(){
    sl.addShape(pptx.shapes.RECTANGLE,{x:6.4,y:1,w:3.35,h:4.6,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
    const r1=S.welds1.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
    const r2=S.welds2.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
-   [{l:'PART VARIANT',v:part,c:C.orange,s:18},{l:'ROBOT 1 WELDS',v:''+r1,c:C.darkGrey,s:22},{l:'ROBOT 2 WELDS',v:''+r2,c:C.darkGrey,s:22},{l:'TOTAL WELDS',v:''+(r1+r2),c:C.orange,s:22},{l:'REPORT DATE',v:today,c:C.darkGrey,s:12}]
-   .reduce((iy,row)=>{sl.addText(row.l,{x:6.55,y:iy,w:3,h:0.25,fontSize:8,color:C.medGrey,fontFace:'Segoe UI',bold:true});
-    sl.addText(row.v,{x:6.55,y:iy+0.25,w:3,h:0.46,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true});
-    sl.addShape(pptx.shapes.RECTANGLE,{x:6.55,y:iy+0.76,w:2.9,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
-    return iy+0.88;},1.12);
+   [{l:'PROJECT',v:projName,c:C.darkGrey,s:14},{l:'PART VARIANT',v:part,c:C.orange,s:18},{l:'ROBOT 1 WELDS',v:''+r1,c:C.darkGrey,s:22},{l:'ROBOT 2 WELDS',v:''+r2,c:C.darkGrey,s:22},{l:'TOTAL WELDS',v:''+(r1+r2),c:C.orange,s:22},{l:'REPORT DATE',v:today,c:C.darkGrey,s:11}]
+   .reduce((iy,row)=>{
+     sl.addText(row.l,{x:6.55,y:iy,w:3,h:0.22,fontSize:8,color:C.medGrey,fontFace:'Segoe UI',bold:true});
+     sl.addText(row.v,{x:6.55,y:iy+0.22,w:3,h:row.s>16?0.46:0.38,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true});
+     sl.addShape(pptx.shapes.RECTANGLE,{x:6.55,y:iy+0.72,w:2.9,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
+     return iy+0.78;
+   },1.06);
    pptFtr(sl,pptx,LS);}
 
   robotDiv(pptx,'Robot 1','Weld Jobs',LL);
@@ -1077,18 +1124,23 @@ async function exportToPPT(){
   robotDiv(pptx,'Robot 2','Weld Jobs',LL);
   await weldSlides(pptx,S.welds2,'R2',part,LS,imgB64);
 
-  // End slide
+  // End slide — with Project Name
   {const sl=pptx.addSlide();sl.background={color:C.white};
    sl.addShape(pptx.shapes.RECTANGLE,{x:6.5,y:0,w:0.09,h:6.25,fill:{color:C.orange},line:{color:C.orange}});
    sl.addText('Thank You',{x:0.5,y:1.1,w:5.7,h:1.05,fontSize:52,bold:true,color:C.black,fontFace:'Segoe UI'});
    sl.addShape(pptx.shapes.RECTANGLE,{x:0.5,y:2.22,w:4.2,h:0.07,fill:{color:C.orange},line:{color:C.orange}});
-   sl.addText('End of Weld Inspection Report',{x:0.5,y:2.42,w:5.7,h:0.48,fontSize:15,color:C.darkGrey,fontFace:'Segoe UI'});
-   sl.addText(part,{x:0.5,y:3,w:5.7,h:0.5,fontSize:18,bold:true,color:C.orange,fontFace:'Segoe UI'});
+   sl.addText('End of Weld Inspection Report',{x:0.5,y:2.42,w:5.7,h:0.42,fontSize:15,color:C.darkGrey,fontFace:'Segoe UI'});
+   sl.addText(projName,{x:0.5,y:2.9,w:5.7,h:0.44,fontSize:18,bold:true,color:C.darkGrey,fontFace:'Segoe UI'});
+   sl.addText(part,{x:0.5,y:3.36,w:5.7,h:0.44,fontSize:16,bold:true,color:C.orange,fontFace:'Segoe UI'});
+   sl.addText('www.apexiz.com',{x:0.5,y:3.9,w:4.0,h:0.36,fontSize:12,color:C.darkGrey,fontFace:'Segoe UI',italic:true});
    if(S.logob64) sl.addImage({data:S.logob64,x:6.7,y:0.3,w:LL.w,h:LL.h});
+   [{c:C.darkGrey,x:7.1},{c:C.darkGrey,x:7.52},{c:C.orange,x:7.94}].forEach(d=>{
+     sl.addShape(pptx.shapes.OVAL,{x:d.x,y:5.18,w:0.22,h:0.22,fill:{color:d.c},line:{color:'none'}});
+   });
    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.88,w:10,h:0.37,fill:{color:C.orange},line:{color:C.orange}});
-   sl.addText('© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
+   sl.addText('© 2026 Apexiz    CONFIDENTIAL INFORMATION    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
 
-  await pptx.writeFile({fileName:`Apexiz_${part}_Weld_Report.pptx`});
+  await pptx.writeFile({fileName:`Apexiz_${projName}_${part}_Weld_Report.pptx`});
   btn.disabled=false;btn.innerText='⬇ Download PPT Report';
 }
 
