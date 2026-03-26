@@ -269,6 +269,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
         <input type="hidden" id="regInviteToken" value="">
         <input type="hidden" id="regInvitedBy" value="">
         <input type="hidden" id="regInviteProjectId" value="">
+        <input type="hidden" id="regRoleHidden" value="">
         <button class="auth-btn" onclick="doRegister()">Create Account →</button>
         <div id="regMsg" class="auth-msg"></div>
       </div>
@@ -462,23 +463,29 @@ async function doRegister(){
   const name=document.getElementById('regName').value.trim();
   const email=document.getElementById('regEmail').value.trim();
   const pass=document.getElementById('regPassword').value;
-  const role=document.getElementById('regRole').value;
   const inviteToken=document.getElementById('regInviteToken').value;
   const invitedBy=document.getElementById('regInvitedBy').value;
   const inviteProjectId=document.getElementById('regInviteProjectId').value;
+  // Role: always read from the hidden field when invite present (disabled select value is unreliable),
+  // otherwise read from the visible select
+  const role=inviteToken
+    ? document.getElementById('regRoleHidden').value
+    : document.getElementById('regRole').value;
   if(!name||!email||!pass){showMsg('regMsg','Please fill in all fields','error');return;}
   if(pass.length<6){showMsg('regMsg','Password must be at least 6 characters','error');return;}
   loading(true,'Creating account…');
   const {data,error}=await sb.auth.signUp({email,password:pass});
   if(error){loading(false);showMsg('regMsg',error.message,'error');return;}
   const userId=data.user.id;
+  // Sign out immediately so auto-login doesn't fire routeUser before profile exists
+  await sb.auth.signOut();
   // Build profile insert
   const profileInsert={id:userId,name,role};
   if(role==='engineer'&&invitedBy) profileInsert.company_admin_id=invitedBy;
   if(role==='company_admin'&&invitedBy) profileInsert.invited_by_admin=invitedBy;
-  // Get company_name from invite if available
+  // Get company_name from invite
   if(inviteToken){
-    const {data:inv}=await sb.from('invitations').select('company_name').eq('token',inviteToken).single();
+    const {data:inv}=await sb.from('invitations').select('company_name,project_id').eq('token',inviteToken).single();
     if(inv?.company_name) profileInsert.company_name=inv.company_name;
   }
   const {error:pe}=await sb.from('profiles').insert(profileInsert);
@@ -493,7 +500,7 @@ async function doRegister(){
   }
   loading(false);
   showMsg('regMsg','Account created! Please sign in.','success');
-  setTimeout(()=>switchTab('login'),1200);
+  setTimeout(()=>switchTab('login'),1400);
 }
 
 async function afterAuth(authUser){
@@ -1166,18 +1173,24 @@ async function deleteProject(id){
 }
 
 async function deleteUser(id){
-  if(!confirm('Remove this user? This will delete their profile. Their auth account will be deactivated.')) return;
+  if(!confirm('Remove this user? This will delete their profile and all associated data.')) return;
   loading(true,'Removing user…');
-  // Delete all access_requests for this user
-  await sb.from('access_requests').delete().eq('user_id',id);
-  // Unlink any engineers that reported to this user (if company admin)
-  await sb.from('profiles').update({company_admin_id:null}).eq('company_admin_id',id);
-  // Delete the profile row
-  const {error}=await sb.from('profiles').delete().eq('id',id);
+  // 1. Remove access requests for this user
+  const {error:e1}=await sb.from('access_requests').delete().eq('user_id',id);
+  if(e1) console.warn('access_requests delete:',e1.message);
+  // 2. Revoke any invitations they created
+  const {error:e2}=await sb.from('invitations').delete().eq('invited_by',id);
+  if(e2) console.warn('invitations delete:',e2.message);
+  // 3. Unlink engineers that belong to this company admin
+  const {error:e3}=await sb.from('profiles').update({company_admin_id:null}).eq('company_admin_id',id);
+  if(e3) console.warn('unlink engineers:',e3.message);
+  // 4. Delete the profile (this is the critical step — blocks login)
+  const {error:e4}=await sb.from('profiles').delete().eq('id',id);
   loading(false);
-  if(error){alert('Error removing user: '+error.message);return;}
-  // Note: Auth user deletion requires service role key (server-side).
-  // Profile deletion is sufficient — user cannot log in without a profile.
+  if(e4){
+    alert('Could not remove user profile: '+e4.message+'\n\nMake sure your Supabase RLS policy allows admin deletes on the profiles table.');
+    return;
+  }
   showPanel('users');
 }
 
@@ -1653,6 +1666,8 @@ async function handleInviteToken(token){
   const roleSelect=document.getElementById('regRole');
   roleSelect.value=invite.role;
   roleSelect.disabled=true;
+  // Also store role in hidden field — disabled selects are unreliable in JS reads
+  document.getElementById('regRoleHidden').value=invite.role;
   document.getElementById('regEmail').value=invite.email||'';
   document.getElementById('regInviteToken').value=token;
   document.getElementById('regInvitedBy').value=invite.invited_by||'';
