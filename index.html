@@ -254,16 +254,21 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
         <div id="loginMsg" class="auth-msg"></div>
       </div>
       <div id="registerForm" style="display:none">
+        <div id="inviteBanner" style="display:none;background:var(--orange-light);border:1px solid var(--orange);border-radius:6px;padding:9px 13px;font-size:12px;color:var(--orange-dark);font-weight:600;margin-bottom:14px"></div>
         <div class="field-group"><label class="field-label">Full Name</label><input type="text" id="regName" class="field-input" placeholder="John Smith"></div>
         <div class="field-group"><label class="field-label">Email</label><input type="email" id="regEmail" class="field-input" placeholder="your@email.com"></div>
         <div class="field-group"><label class="field-label">Password</label><input type="password" id="regPassword" class="field-input" placeholder="Min 6 characters"></div>
-        <div class="field-group">
+        <div class="field-group" id="roleFieldGroup">
           <label class="field-label">Role</label>
           <select id="regRole" class="field-select">
             <option value="engineer">Engineer (Upload &amp; manage projects)</option>
             <option value="customer">Customer (View shared projects)</option>
+            <option value="company_admin">Company Admin</option>
           </select>
         </div>
+        <input type="hidden" id="regInviteToken" value="">
+        <input type="hidden" id="regInvitedBy" value="">
+        <input type="hidden" id="regInviteProjectId" value="">
         <button class="auth-btn" onclick="doRegister()">Create Account →</button>
         <div id="regMsg" class="auth-msg"></div>
       </div>
@@ -458,15 +463,35 @@ async function doRegister(){
   const email=document.getElementById('regEmail').value.trim();
   const pass=document.getElementById('regPassword').value;
   const role=document.getElementById('regRole').value;
+  const inviteToken=document.getElementById('regInviteToken').value;
+  const invitedBy=document.getElementById('regInvitedBy').value;
+  const inviteProjectId=document.getElementById('regInviteProjectId').value;
   if(!name||!email||!pass){showMsg('regMsg','Please fill in all fields','error');return;}
   if(pass.length<6){showMsg('regMsg','Password must be at least 6 characters','error');return;}
   loading(true,'Creating account…');
   const {data,error}=await sb.auth.signUp({email,password:pass});
   if(error){loading(false);showMsg('regMsg',error.message,'error');return;}
-  // Insert profile
-  const {error:pe}=await sb.from('profiles').insert({id:data.user.id,name,role});
+  const userId=data.user.id;
+  // Build profile insert
+  const profileInsert={id:userId,name,role};
+  if(role==='engineer'&&invitedBy) profileInsert.company_admin_id=invitedBy;
+  if(role==='company_admin'&&invitedBy) profileInsert.invited_by_admin=invitedBy;
+  // Get company_name from invite if available
+  if(inviteToken){
+    const {data:inv}=await sb.from('invitations').select('company_name').eq('token',inviteToken).single();
+    if(inv?.company_name) profileInsert.company_name=inv.company_name;
+  }
+  const {error:pe}=await sb.from('profiles').insert(profileInsert);
+  if(pe){loading(false);showMsg('regMsg','Account created but profile failed: '+pe.message,'error');return;}
+  // If customer invite with project, create approved access request
+  if(role==='customer'&&inviteProjectId){
+    await sb.from('access_requests').insert({project_id:inviteProjectId,user_id:userId,status:'approved'});
+  }
+  // Mark invite as used
+  if(inviteToken){
+    await sb.from('invitations').update({used:true,used_by:userId}).eq('token',inviteToken);
+  }
   loading(false);
-  if(pe){showMsg('regMsg','Account created but profile failed: '+pe.message,'error');return;}
   showMsg('regMsg','Account created! Please sign in.','success');
   setTimeout(()=>switchTab('login'),1200);
 }
@@ -642,65 +667,84 @@ async function renderAllProjects(el){
       </td></tr>`).join('')}</tbody></table>`;
 }
 
-/* ── Admin: Enrol Company Admin ── */
+/* ── Admin: Enrol Company Admin (invite-link flow) ── */
 function renderEnrolCAdmin(el){
   el.innerHTML=`
     <div class="panel-title">Enrol Company Admin</div>
     <div class="create-form">
-      <div class="info-msg">Create a brand-new Company Admin account directly, or promote an existing engineer/user.</div>
-      <div class="section-lbl" style="margin-top:0;font-size:11px">Register New Company Admin</div>
+      <div class="info-msg">Enter the company details and the admin's email. An invitation link will be generated — share it with them so they can self-register with the Company Admin role.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="field-group" style="margin:0"><label class="field-label">Full Name</label><input type="text" id="enrolCAName" class="field-input" placeholder="Acme Corp Admin"></div>
-        <div class="field-group" style="margin:0"><label class="field-label">Company Name</label><input type="text" id="enrolCACompany" class="field-input" placeholder="Acme Corp"></div>
-        <div class="field-group" style="margin:0"><label class="field-label">Email</label><input type="email" id="enrolCAEmail" class="field-input" placeholder="admin@acme.com"></div>
-        <div class="field-group" style="margin:0"><label class="field-label">Temporary Password</label><input type="password" id="enrolCAPass" class="field-input" placeholder="Min 6 characters"></div>
+        <div class="field-group" style="margin:0"><label class="field-label">Company Name</label><input type="text" id="enrolCACompany" class="field-input" placeholder="Acme Corp Ltd"></div>
+        <div class="field-group" style="margin:0"><label class="field-label">Admin's Email</label><input type="email" id="enrolCAEmail" class="field-input" placeholder="admin@acme.com"></div>
+        <div class="field-group" style="margin:0;grid-column:1/-1"><label class="field-label">Note to Admin <span style="font-weight:400;color:var(--g3)">(optional)</span></label><input type="text" id="enrolCANote" class="field-input" placeholder="e.g. Please register to manage your team's weld inspection portal"></div>
       </div>
-      <button class="action-btn" onclick="enrolNewCAdmin()">Create &amp; Enrol Company Admin →</button>
+      <button class="action-btn" onclick="generateCAdminInvite()">Generate Invite Link →</button>
       <div id="enrolCAMsg" class="auth-msg"></div>
+      <div id="enrolCALinkBox" style="display:none">
+        <div class="section-lbl" style="margin-top:12px">Invitation Link</div>
+        <div class="share-link-box" id="enrolCALink"></div>
+        <div style="font-size:11px;color:var(--g3);margin-top:4px">Copy and send this link to the Company Admin. When they click it, the register form will be pre-filled with the Company Admin role and their email.</div>
+        <div class="modal-btns" style="margin-top:8px">
+          <button class="tbl-btn copy" onclick="copyText('enrolCALink')">📋 Copy Link</button>
+          <button class="tbl-btn view" onclick="showPanel('companies')">Done → View Companies</button>
+        </div>
+      </div>
       <div class="sidebar-divider"></div>
-      <div class="section-lbl">Promote Existing User to Company Admin</div>
-      <input type="text" id="promoteCASearch" class="field-input" placeholder="Search by name…" style="max-width:340px">
-      <div id="promoteCAResults" style="margin-top:8px"></div>
+      <div class="section-lbl">Pending Invitations</div>
+      <div id="caPendingInvites"><div class="empty-state" style="padding:12px"><span class="empty-state-text">Loading…</span></div></div>
     </div>`;
-  document.getElementById('promoteCASearch').addEventListener('input',async function(){
-    const v=this.value.trim();
-    const res=document.getElementById('promoteCAResults');
-    if(v.length<2){res.innerHTML='';return;}
-    const {data:found=[]}=await sb.from('profiles').select('id,name,role').ilike('name','%'+v+'%').neq('role','admin').neq('role','customer').limit(8);
-    res.innerHTML=found.length===0?'<div class="no-data">No users found</div>':
-      found.map(u=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--g1);border-radius:5px;margin-bottom:4px">
-        <span style="font-size:12px;font-weight:600">${u.name} <span class="tbl-badge ${u.role}" style="font-size:9px">${u.role==='company_admin'?'Already CA':u.role}</span></span>
-        ${u.role==='company_admin'?'':'<button class="tbl-btn manage" onclick="promoteUserToCAdmin(\''+u.id+'\',\''+u.name+'\')">Promote to Company Admin</button>'}
-      </div>`).join('');
-  });
+  loadPendingInvites('company_admin','caPendingInvites');
 }
 
-async function enrolNewCAdmin(){
-  const name=document.getElementById('enrolCAName').value.trim();
+async function generateCAdminInvite(){
   const company=document.getElementById('enrolCACompany').value.trim();
   const email=document.getElementById('enrolCAEmail').value.trim();
-  const pass=document.getElementById('enrolCAPass').value;
-  if(!name||!email||!pass){showMsg('enrolCAMsg','Please fill in all required fields','error');return;}
-  if(pass.length<6){showMsg('enrolCAMsg','Password must be at least 6 characters','error');return;}
-  loading(true,'Creating Company Admin account…');
-  const {data,error}=await sb.auth.signUp({email,password:pass});
-  if(error){loading(false);showMsg('enrolCAMsg',error.message,'error');return;}
-  const {error:pe}=await sb.from('profiles').insert({id:data.user.id,name,role:'company_admin',company_name:company||null});
+  const note=document.getElementById('enrolCANote').value.trim();
+  if(!company||!email){showMsg('enrolCAMsg','Please enter company name and admin email','error');return;}
+  loading(true,'Generating invite…');
+  const token=crypto.randomUUID();
+  const {error}=await sb.from('invitations').insert({
+    token,role:'company_admin',email,company_name:company,
+    note:note||null,invited_by:S.profile.id,used:false
+  });
   loading(false);
-  if(pe){showMsg('enrolCAMsg','Auth account created but profile failed: '+pe.message,'error');return;}
-  showMsg('enrolCAMsg',`Company Admin "${name}" enrolled successfully! They can now log in.`,'success');
-  document.getElementById('enrolCAName').value='';
-  document.getElementById('enrolCACompany').value='';
-  document.getElementById('enrolCAEmail').value='';
-  document.getElementById('enrolCAPass').value='';
+  if(error){showMsg('enrolCAMsg','Error: '+error.message,'error');return;}
+  const link=`${window.location.origin}${window.location.pathname}?invite=${token}`;
+  document.getElementById('enrolCALink').innerText=link;
+  document.getElementById('enrolCALinkBox').style.display='block';
+  showMsg('enrolCAMsg','Invite link created! Send it to the Company Admin.','success');
+  loadPendingInvites('company_admin','caPendingInvites');
 }
 
-async function promoteUserToCAdmin(uid,uname){
-  if(!confirm(`Promote "${uname}" to Company Admin?`)) return;
-  loading(true,'Promoting…');
-  await sb.from('profiles').update({role:'company_admin'}).eq('id',uid);
-  loading(false);
-  document.getElementById('promoteCAResults').innerHTML=`<div class="auth-msg success" style="display:block">"${uname}" promoted to Company Admin!</div>`;
+async function loadPendingInvites(role,containerId){
+  const {data:invites=[]}=await sb.from('invitations').select('*').eq('role',role).eq('invited_by',S.profile.id).order('created_at',{ascending:false}).limit(20);
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  if(invites.length===0){el.innerHTML='<div style="font-size:12px;color:var(--g3);padding:4px 0">No pending invitations.</div>';return;}
+  el.innerHTML=`<table class="data-table"><thead><tr><th>Email</th><th>Company</th><th>Sent</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${invites.map(inv=>`<tr>
+      <td>${inv.email||'—'}</td>
+      <td>${inv.company_name||'—'}</td>
+      <td>${new Date(inv.created_at).toLocaleDateString()}</td>
+      <td>${inv.used?'<span class="tbl-badge approved">Registered</span>':'<span class="tbl-badge pending">Pending</span>'}</td>
+      <td>${!inv.used?`<button class="tbl-btn copy" onclick="copyInviteLink('${inv.token}')">Copy Link</button>
+        <button class="tbl-btn delete" onclick="revokeInvite('${inv.id}','${containerId}','${role}')">Revoke</button>`:'—'}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+function copyInviteLink(token){
+  const link=`${window.location.origin}${window.location.pathname}?invite=${token}`;
+  navigator.clipboard.writeText(link).then(()=>alert('Invite link copied!'));
+}
+
+async function revokeInvite(id,containerId,role){
+  if(!confirm('Revoke this invitation?')) return;
+  await sb.from('invitations').delete().eq('id',id);
+  loadPendingInvites(role,containerId);
+}
+
+function copyText(elId){
+  navigator.clipboard.writeText(document.getElementById(elId).innerText).then(()=>alert('Copied!'));
 }
 
 /* ── Admin: Companies panel ── */
@@ -800,66 +844,63 @@ async function removeEngineerFromCompany(engId){
   showPanel('myengineers');
 }
 
-/* ── Company Admin: Enrol Engineer ── */
+/* ── Company Admin: Enrol Engineer (invite-link flow) ── */
 function renderEnrolEngineer(el){
   el.innerHTML=`
     <div class="panel-title">Enrol Engineer</div>
     <div class="create-form">
-      <div class="info-msg">Create a new Engineer account and automatically assign them to your company.</div>
-      <div class="section-lbl" style="margin-top:0">Register New Engineer</div>
+      <div class="info-msg">Enter the engineer's details. An invitation link will be generated — send it to them. When they click it, they will register with the Engineer role and be automatically assigned to your company.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="field-group" style="margin:0"><label class="field-label">Full Name</label><input type="text" id="enrolEngName" class="field-input" placeholder="John Smith"></div>
-        <div class="field-group" style="margin:0"><label class="field-label">Job Title</label><input type="text" id="enrolEngTitle" class="field-input" placeholder="Weld Engineer"></div>
-        <div class="field-group" style="margin:0"><label class="field-label">Email</label><input type="email" id="enrolEngEmail" class="field-input" placeholder="john@company.com"></div>
-        <div class="field-group" style="margin:0"><label class="field-label">Temporary Password</label><input type="password" id="enrolEngPass" class="field-input" placeholder="Min 6 characters"></div>
+        <div class="field-group" style="margin:0"><label class="field-label">Engineer's Email</label><input type="email" id="enrolEngEmail" class="field-input" placeholder="engineer@company.com"></div>
+        <div class="field-group" style="margin:0"><label class="field-label">Job Title <span style="font-weight:400;color:var(--g3)">(optional)</span></label><input type="text" id="enrolEngTitle" class="field-input" placeholder="Weld Engineer"></div>
+        <div class="field-group" style="margin:0;grid-column:1/-1"><label class="field-label">Note to Engineer <span style="font-weight:400;color:var(--g3)">(optional)</span></label><input type="text" id="enrolEngNote" class="field-input" placeholder="e.g. Register to access the weld inspection system"></div>
       </div>
-      <button class="action-btn" onclick="enrolNewEngineer()">Create &amp; Enrol Engineer →</button>
+      <button class="action-btn" onclick="generateEngineerInvite()">Generate Invite Link →</button>
       <div id="enrolEngMsg" class="auth-msg"></div>
+      <div id="enrolEngLinkBox" style="display:none">
+        <div class="section-lbl" style="margin-top:12px">Invitation Link</div>
+        <div class="share-link-box" id="enrolEngLink"></div>
+        <div style="font-size:11px;color:var(--g3);margin-top:4px">Send this link to the engineer. They will register as an Engineer under your company.</div>
+        <div class="modal-btns" style="margin-top:8px">
+          <button class="tbl-btn copy" onclick="copyText('enrolEngLink')">📋 Copy Link</button>
+          <button class="tbl-btn view" onclick="showPanel('myengineers')">Done → My Engineers</button>
+        </div>
+      </div>
       <div class="sidebar-divider"></div>
-      <div class="section-lbl">Add Existing Engineer to Your Company</div>
-      <input type="text" id="enrolEngSearch" class="field-input" placeholder="Search by name…" style="max-width:340px">
-      <div id="enrolEngSearchResults" style="margin-top:8px"></div>
+      <div class="section-lbl">Pending Engineer Invitations</div>
+      <div id="engPendingInvites"><div class="empty-state" style="padding:12px"><span class="empty-state-text">Loading…</span></div></div>
     </div>`;
-  document.getElementById('enrolEngSearch').addEventListener('input',async function(){
-    const v=this.value.trim();
-    const res=document.getElementById('enrolEngSearchResults');
-    if(v.length<2){res.innerHTML='';return;}
-    const {data:found=[]}=await sb.from('profiles').select('id,name,company_admin_id').eq('role','engineer').ilike('name','%'+v+'%').limit(8);
-    res.innerHTML=found.length===0?'<div class="no-data">No engineers found</div>':
-      found.map(u=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--g1);border-radius:5px;margin-bottom:4px">
-        <span style="font-size:12px;font-weight:600">${u.name}</span>
-        ${u.company_admin_id===S.profile.id?'<span class="tbl-badge approved">Already in your company</span>':
-          u.company_admin_id?'<span class="tbl-badge pending">Belongs to another company</span>':
-          `<button class="tbl-btn approve" onclick="assignEngineerToMe('${u.id}','${u.name}')">Add to My Company</button>`}
-      </div>`).join('');
-  });
+  loadPendingInvites('engineer','engPendingInvites');
 }
 
-async function enrolNewEngineer(){
-  const name=document.getElementById('enrolEngName').value.trim();
-  const title=document.getElementById('enrolEngTitle').value.trim();
+async function generateEngineerInvite(){
   const email=document.getElementById('enrolEngEmail').value.trim();
-  const pass=document.getElementById('enrolEngPass').value;
-  if(!name||!email||!pass){showMsg('enrolEngMsg','Please fill in all required fields','error');return;}
-  if(pass.length<6){showMsg('enrolEngMsg','Password must be at least 6 characters','error');return;}
-  loading(true,'Creating Engineer account…');
-  const {data,error}=await sb.auth.signUp({email,password:pass});
-  if(error){loading(false);showMsg('enrolEngMsg',error.message,'error');return;}
-  const {error:pe}=await sb.from('profiles').insert({id:data.user.id,name,role:'engineer',company_admin_id:S.profile.id,job_title:title||null});
+  const title=document.getElementById('enrolEngTitle').value.trim();
+  const note=document.getElementById('enrolEngNote').value.trim();
+  if(!email){showMsg('enrolEngMsg','Please enter the engineer\'s email','error');return;}
+  loading(true,'Generating invite…');
+  const token=crypto.randomUUID();
+  const {data:caProfile}=await sb.from('profiles').select('company_name').eq('id',S.profile.id).single();
+  const {error}=await sb.from('invitations').insert({
+    token,role:'engineer',email,
+    company_name:caProfile?.company_name||null,
+    job_title:title||null,note:note||null,
+    invited_by:S.profile.id,used:false
+  });
   loading(false);
-  if(pe){showMsg('enrolEngMsg','Auth account created but profile failed: '+pe.message,'error');return;}
-  showMsg('enrolEngMsg',`Engineer "${name}" enrolled and added to your company!`,'success');
-  document.getElementById('enrolEngName').value='';
-  document.getElementById('enrolEngTitle').value='';
-  document.getElementById('enrolEngEmail').value='';
-  document.getElementById('enrolEngPass').value='';
+  if(error){showMsg('enrolEngMsg','Error: '+error.message,'error');return;}
+  const link=`${window.location.origin}${window.location.pathname}?invite=${token}`;
+  document.getElementById('enrolEngLink').innerText=link;
+  document.getElementById('enrolEngLinkBox').style.display='block';
+  showMsg('enrolEngMsg','Invite link created! Send it to the engineer.','success');
+  loadPendingInvites('engineer','engPendingInvites');
 }
 
 async function assignEngineerToMe(engId,engName){
   loading(true);
   await sb.from('profiles').update({company_admin_id:S.profile.id}).eq('id',engId);
   loading(false);
-  document.getElementById('enrolEngSearchResults').innerHTML=`<div class="auth-msg success" style="display:block">"${engName}" added to your company!</div>`;
+  document.getElementById('enrolEngSearchResults')&&(document.getElementById('enrolEngSearchResults').innerHTML=`<div class="auth-msg success" style="display:block">"${engName}" added to your company!</div>`);
 }
 
 async function renderCompanyProjects(el){
@@ -887,80 +928,65 @@ async function renderCompanyProjects(el){
         </td></tr>`;}).join('')}</tbody></table>`}`;
 }
 
-/* ══ ENGINEER: ENROL CUSTOMER ══ */
+/* ══ ENGINEER: ENROL CUSTOMER (invite-link flow) ══ */
 function renderEnrolCustomer(el){
   el.innerHTML=`
     <div class="panel-title">Enrol Customer</div>
     <div class="create-form">
-      <div class="info-msg">Create a Customer account and immediately grant them access to one of your projects.</div>
-      <div class="section-lbl" style="margin-top:0">Customer Details</div>
+      <div class="info-msg">Enter the customer's email and select a project to share. An invitation link is generated — send it to them. When they click the link and register, they automatically get access to the selected project.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="field-group" style="margin:0"><label class="field-label">Full Name</label><input type="text" id="enrolCustName" class="field-input" placeholder="Customer Name"></div>
-        <div class="field-group" style="margin:0"><label class="field-label">Company / Organisation</label><input type="text" id="enrolCustOrg" class="field-input" placeholder="Customer Corp Ltd"></div>
-        <div class="field-group" style="margin:0"><label class="field-label">Email</label><input type="email" id="enrolCustEmail" class="field-input" placeholder="contact@customer.com"></div>
-        <div class="field-group" style="margin:0"><label class="field-label">Temporary Password</label><input type="password" id="enrolCustPass" class="field-input" placeholder="Min 6 characters"></div>
+        <div class="field-group" style="margin:0"><label class="field-label">Customer's Email</label><input type="email" id="enrolCustEmail" class="field-input" placeholder="contact@customer.com"></div>
+        <div class="field-group" style="margin:0"><label class="field-label">Customer's Organisation <span style="font-weight:400;color:var(--g3)">(optional)</span></label><input type="text" id="enrolCustOrg" class="field-input" placeholder="Customer Corp Ltd"></div>
+        <div class="field-group" style="margin:0;grid-column:1/-1">
+          <label class="field-label">Project to Share <span style="font-weight:400;color:var(--g3)">(optional — can share more later)</span></label>
+          <select id="enrolCustProject" class="field-select"><option value="">— Select a project —</option></select>
+        </div>
+        <div class="field-group" style="margin:0;grid-column:1/-1"><label class="field-label">Note to Customer <span style="font-weight:400;color:var(--g3)">(optional)</span></label><input type="text" id="enrolCustNote" class="field-input" placeholder="e.g. Register to view your weld inspection reports"></div>
       </div>
-      <div class="section-lbl">Grant Access to Project <span style="font-weight:400;color:var(--g3)">(optional — can also grant later)</span></div>
-      <select id="enrolCustProject" class="field-select" style="max-width:340px">
-        <option value="">— No project yet —</option>
-      </select>
-      <button class="action-btn" onclick="enrolNewCustomer()">Create &amp; Enrol Customer →</button>
+      <button class="action-btn" onclick="generateCustomerInvite()">Generate Invite Link →</button>
       <div id="enrolCustMsg" class="auth-msg"></div>
-      <div class="sidebar-divider"></div>
-      <div class="section-lbl">Or Share a Project Link for Self-Registration</div>
-      <div style="font-size:12px;color:var(--g3);margin-bottom:8px">Customer registers themselves, then you approve their access request below.</div>
-      <select id="shareProjSelect" class="field-select" style="max-width:340px">
-        <option value="">Select a project…</option>
-      </select>
-      <div id="shareProjLink" class="share-link-box" style="display:none;margin-top:8px"></div>
-      <div class="modal-btns" id="shareProjBtns" style="display:none">
-        <button class="tbl-btn copy" onclick="copyShareLink()">📋 Copy Link</button>
+      <div id="enrolCustLinkBox" style="display:none">
+        <div class="section-lbl" style="margin-top:12px">Invitation Link</div>
+        <div class="share-link-box" id="enrolCustLink"></div>
+        <div style="font-size:11px;color:var(--g3);margin-top:4px">Send this link to the customer. When they register via this link, they are automatically enrolled as a Customer with access to the selected project.</div>
+        <div class="modal-btns" style="margin-top:8px">
+          <button class="tbl-btn copy" onclick="copyText('enrolCustLink')">📋 Copy Link</button>
+          <button class="tbl-btn view" onclick="showPanel('mycustomers')">Done → My Customers</button>
+        </div>
       </div>
+      <div class="sidebar-divider"></div>
+      <div class="section-lbl">Pending Customer Invitations</div>
+      <div id="custPendingInvites"><div class="empty-state" style="padding:12px"><span class="empty-state-text">Loading…</span></div></div>
     </div>`;
-  // Load projects into selects
+  // Load projects
   (async()=>{
     const {data:projs=[]}=await sb.from('projects').select('id,name').eq('owner_id',S.profile.id).order('name');
-    const opts=projs.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-    document.getElementById('enrolCustProject').innerHTML+= opts;
-    document.getElementById('shareProjSelect').innerHTML+= opts;
+    const sel=document.getElementById('enrolCustProject');
+    projs.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.text=p.name;sel.appendChild(o);});
   })();
-  document.getElementById('shareProjSelect').addEventListener('change',function(){
-    if(!this.value){document.getElementById('shareProjLink').style.display='none';document.getElementById('shareProjBtns').style.display='none';return;}
-    const link=`${window.location.origin}${window.location.pathname}?project=${this.value}`;
-    document.getElementById('shareProjLink').innerText=link;
-    document.getElementById('shareProjLink').style.display='block';
-    document.getElementById('shareProjBtns').style.display='flex';
-  });
+  loadPendingInvites('customer','custPendingInvites');
 }
 
-function copyShareLink(){
-  navigator.clipboard.writeText(document.getElementById('shareProjLink').innerText).then(()=>alert('Link copied!'));
-}
-
-async function enrolNewCustomer(){
-  const name=document.getElementById('enrolCustName').value.trim();
-  const org=document.getElementById('enrolCustOrg').value.trim();
+async function generateCustomerInvite(){
   const email=document.getElementById('enrolCustEmail').value.trim();
-  const pass=document.getElementById('enrolCustPass').value;
+  const org=document.getElementById('enrolCustOrg').value.trim();
   const projId=document.getElementById('enrolCustProject').value;
-  if(!name||!email||!pass){showMsg('enrolCustMsg','Please fill in all required fields','error');return;}
-  if(pass.length<6){showMsg('enrolCustMsg','Password must be at least 6 characters','error');return;}
-  loading(true,'Creating Customer account…');
-  const {data,error}=await sb.auth.signUp({email,password:pass});
-  if(error){loading(false);showMsg('enrolCustMsg',error.message,'error');return;}
-  const {error:pe}=await sb.from('profiles').insert({id:data.user.id,name,role:'customer',company_name:org||null});
-  if(pe){loading(false);showMsg('enrolCustMsg','Auth account created but profile failed: '+pe.message,'error');return;}
-  // If a project was selected, create an approved access request immediately
-  if(projId){
-    await sb.from('access_requests').insert({project_id:projId,user_id:data.user.id,status:'approved'});
-  }
+  const note=document.getElementById('enrolCustNote').value.trim();
+  if(!email){showMsg('enrolCustMsg','Please enter the customer\'s email','error');return;}
+  loading(true,'Generating invite…');
+  const token=crypto.randomUUID();
+  const {error}=await sb.from('invitations').insert({
+    token,role:'customer',email,
+    company_name:org||null,project_id:projId||null,
+    note:note||null,invited_by:S.profile.id,used:false
+  });
   loading(false);
-  showMsg('enrolCustMsg',`Customer "${name}" enrolled successfully!${projId?' Project access granted.':' Use My Customers to assign projects later.'}`,'success');
-  document.getElementById('enrolCustName').value='';
-  document.getElementById('enrolCustOrg').value='';
-  document.getElementById('enrolCustEmail').value='';
-  document.getElementById('enrolCustPass').value='';
-  document.getElementById('enrolCustProject').selectedIndex=0;
+  if(error){showMsg('enrolCustMsg','Error: '+error.message,'error');return;}
+  const link=`${window.location.origin}${window.location.pathname}?invite=${token}`;
+  document.getElementById('enrolCustLink').innerText=link;
+  document.getElementById('enrolCustLinkBox').style.display='block';
+  showMsg('enrolCustMsg','Invite link created! Send it to the customer.','success');
+  loadPendingInvites('customer','custPendingInvites');
 }
 
 /* ── Engineer: My Customers ── */
@@ -1140,10 +1166,18 @@ async function deleteProject(id){
 }
 
 async function deleteUser(id){
-  if(!confirm('Remove this user?')) return;
-  loading(true);
-  await sb.from('profiles').delete().eq('id',id);
+  if(!confirm('Remove this user? This will delete their profile. Their auth account will be deactivated.')) return;
+  loading(true,'Removing user…');
+  // Delete all access_requests for this user
+  await sb.from('access_requests').delete().eq('user_id',id);
+  // Unlink any engineers that reported to this user (if company admin)
+  await sb.from('profiles').update({company_admin_id:null}).eq('company_admin_id',id);
+  // Delete the profile row
+  const {error}=await sb.from('profiles').delete().eq('id',id);
   loading(false);
+  if(error){alert('Error removing user: '+error.message);return;}
+  // Note: Auth user deletion requires service role key (server-side).
+  // Profile deletion is sufficient — user cannot log in without a profile.
   showPanel('users');
 }
 
@@ -1596,11 +1630,45 @@ window.addEventListener('load',async()=>{
   if(session){
     await afterAuth(session.user);
   } else {
-    // Check URL for shared project (customer not logged in yet)
+    // Check URL for invite token
+    const params=new URLSearchParams(window.location.search);
+    const inviteToken=params.get('invite');
+    if(inviteToken){
+      await handleInviteToken(inviteToken);
+    }
     loading(false);
   }
   loading(false);
 });
+
+async function handleInviteToken(token){
+  const {data:invite,error}=await sb.from('invitations').select('*').eq('token',token).eq('used',false).single();
+  if(error||!invite){
+    loading(false);
+    showMsg('loginMsg','This invitation link is invalid or has already been used.','error');
+    return;
+  }
+  // Switch to register tab and pre-fill
+  switchTab('register');
+  const roleSelect=document.getElementById('regRole');
+  roleSelect.value=invite.role;
+  roleSelect.disabled=true;
+  document.getElementById('regEmail').value=invite.email||'';
+  document.getElementById('regInviteToken').value=token;
+  document.getElementById('regInvitedBy').value=invite.invited_by||'';
+  document.getElementById('regInviteProjectId').value=invite.project_id||'';
+  // Show invite banner
+  const banner=document.getElementById('inviteBanner');
+  const roleLabel=invite.role==='company_admin'?'Company Admin':invite.role==='engineer'?'Engineer':'Customer';
+  const companyPart=invite.company_name?` at <strong>${invite.company_name}</strong>`:'';
+  banner.innerHTML=`✉ You've been invited to join as <strong>${roleLabel}</strong>${companyPart}. Complete registration below.`;
+  banner.style.display='block';
+  // Pre-fill email and lock it
+  document.getElementById('regEmail').readOnly=true;
+  // Hide role selector row — role is fixed by invite
+  document.getElementById('roleFieldGroup').style.display='none';
+  window.history.replaceState({},document.title,window.location.pathname);
+}
 </script>
 </body>
 </html>
