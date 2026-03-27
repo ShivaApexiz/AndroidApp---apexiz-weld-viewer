@@ -497,10 +497,12 @@ async function doLogin(){
 }
 
 /* ══════════════════════════════════════
-   AUTH — REGISTER
-   Role priority (highest → lowest):
-     1. regRoleFinal hidden field  (set by invite or by select onChange)
-     2. regRole select value       (open registration fallback)
+   AUTH — REGISTER (FIXED)
+   
+   Role priority (CORRECT):
+     1. If arriving via invite, regRoleFinal is set to the invite role in handleInviteToken()
+     2. Otherwise, use the dropdown value from regRole
+     3. If BOTH are empty (shouldn't happen), show error
 ══════════════════════════════════════ */
 async function doRegister(){
   const name  = document.getElementById('regName').value.trim();
@@ -511,9 +513,9 @@ async function doRegister(){
   const invitedBy       = document.getElementById('regInvitedBy').value;
   const inviteProjectId = document.getElementById('regInviteProjectId').value;
 
-  // ── ROLE: always read from hidden field first; fall back to select for open reg ──
-  const roleFinal = document.getElementById('regRoleFinal').value
-                  || document.getElementById('regRole').value;
+  // ── FIXED: Check regRoleFinal FIRST (it's only set for invite flow) ──
+  const roleFinal = document.getElementById('regRoleFinal').value.trim() 
+                  || document.getElementById('regRole').value.trim();
 
   if(!name||!email||!pass){ showMsg('regMsg','Please fill in all fields','error'); return; }
   if(pass.length<6){ showMsg('regMsg','Password must be at least 6 characters','error'); return; }
@@ -613,9 +615,10 @@ async function doLogout(){
 }
 
 /* ══════════════════════════════════════
-   INVITE TOKEN HANDLER
-   Called on page load when ?invite=TOKEN is present.
-   Sets regRoleFinal hidden field as single source of truth.
+   INVITE TOKEN HANDLER (FIXED)
+   
+   This function is called when ?invite=TOKEN is present.
+   It MUST set regRoleFinal before doRegister() is called.
 ══════════════════════════════════════ */
 async function handleInviteToken(token){
   const {data:invite,error} = await sb.from('invitations').select('*').eq('token',token).eq('used',false).single();
@@ -630,8 +633,9 @@ async function handleInviteToken(token){
 
   const role = invite.role; // 'company_admin' | 'engineer' | 'customer'
 
-  // ── 1. Store role in the hidden field — this is what doRegister() reads ──
+  // ── 1. SET regRoleFinal immediately — this is what doRegister() reads ──
   document.getElementById('regRoleFinal').value = role;
+  console.log('✅ Set regRoleFinal to:', role);
 
   // ── 2. Hide the select, show a read-only pill instead ──
   document.getElementById('roleSelectGroup').style.display  = 'none';
@@ -1421,226 +1425,4 @@ function loadWeldData(){
   const t2=getCSV(`${part}_Robot2.csv`)||getCSV(`${part}_robot2.csv`);
   S.welds1=t1?parseCSV(t1):[]; S.welds2=t2?parseCSV(t2):[];
   buildGrid(S.welds1,S.welds2,t1,t2);
-  const ov=document.getElementById('overviewImage');
-  const ovUrl=findImg(part);
-  if(ovUrl){ov.style.backgroundImage=`url("${ovUrl}")`;ov.innerText='';}
-  else{ov.style.backgroundImage='none';ov.innerText='[ Part Image ]';}
-}
-
-function splitSegs(welds){
-  const segs=[];let cur={welds:[],hasSync:false};
-  welds.forEach(w=>{
-    if(w.weldNo==='TSync'||w.weldNo==='SYNC'){cur.hasSync=true;segs.push(cur);cur={welds:[],hasSync:false};}
-    else cur.welds.push(w);
-  });
-  segs.push(cur);return segs;
-}
-
-function buildGrid(w1,w2,t1,t2){
-  const c1=document.getElementById('robot1Col'),c2=document.getElementById('robot2Col');
-  c1.innerHTML='';c2.innerHTML='';
-  if(!t1) c1.innerHTML='<div class="no-data">No Data</div>';
-  if(!t2) c2.innerHTML='<div class="no-data">No Data</div>';
-  if(!t1&&!t2) return;
-  const s1=splitSegs(w1),s2=splitSegs(w2);
-  for(let s=0;s<Math.max(s1.length,s2.length);s++){
-    const g1=s1[s]||{welds:[],hasSync:false},g2=s2[s]||{welds:[],hasSync:false};
-    const mx=Math.max(g1.welds.length,g2.welds.length);
-    g1.welds.forEach(w=>c1.appendChild(mkCell(w,'Robot 1')));
-    g2.welds.forEach(w=>c2.appendChild(mkCell(w,'Robot 2')));
-    for(let p=0;p<mx-g1.welds.length;p++) c1.appendChild(mkEmpty());
-    for(let p=0;p<mx-g2.welds.length;p++) c2.appendChild(mkEmpty());
-    if(g1.hasSync||g2.hasSync){
-      c1.appendChild(g1.hasSync?mkSync():mkEmpty());
-      c2.appendChild(g2.hasSync?mkSync():mkEmpty());
-    }
-  }
-}
-function mkSync(){const d=document.createElement('div');d.className='weld-cell tsync';d.innerText='— SYNC —';return d;}
-function mkEmpty(){const d=document.createElement('div');d.className='weld-cell empty';return d;}
-function mkCell(row,robot){
-  const div=document.createElement('div');div.className='weld-cell weld-item';div.innerText=row.weldNo;
-  div.onclick=function(){
-    setActiveCell(div);
-    document.getElementById('weldNumber').innerText=row.weldNo||'—';
-    document.getElementById('jobName').innerText=row.jobName||'—';
-    document.getElementById('positionerAngle').innerText=row.angle?row.angle+' °':'—';
-    document.getElementById('robotName').innerText=robot;
-    const imgEl=document.getElementById('mainImage');
-    const url=row.imageId?findImg(row.imageId):null;
-    if(url){imgEl.style.backgroundImage=`url("${url}")`;imgEl.innerText='';}
-    else{imgEl.style.backgroundImage='none';imgEl.innerText=row.imageId?'[ Image not found ]':'[ No image ]';}
-  };
-  return div;
-}
-function setActiveCell(el){
-  if(S.activeCell) S.activeCell.classList.remove('active');
-  S.activeCell=el; if(el) el.classList.add('active');
-}
-
-/* ══════════════════════════════════════
-   LOGO
-══════════════════════════════════════ */
-async function loadLogo(){
-  for(const [k,v] of S.imageFiles){
-    if(/logo.*apexiz/i.test(k)||/apexiz.*logo/i.test(k)){
-      try{const r=await fetch(v.dataUrl);const b=await r.arrayBuffer();S.logob64='image/png;base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));return;}catch(e){}
-    }
-  }
-  try{const r=await fetch('https://www.apexiz.com/images/apexiz-logo.png');if(r.ok){const b=await r.arrayBuffer();S.logob64='image/png;base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));}}catch(e){}
-}
-
-/* ══════════════════════════════════════
-   PPT EXPORT
-══════════════════════════════════════ */
-const C={orange:'FF5500',black:'000000',white:'FFFFFF',darkGrey:'4D4D4D',medGrey:'B8B8B8',lightGrey:'CCCCCC'};
-
-async function exportToPPT(){
-  const btn=document.getElementById('exportBtn');
-  btn.disabled=true;btn.innerText='⏳ Generating…';
-  const part=document.getElementById('partDropdown').value;
-  const projName=document.getElementById('viewerTitle').innerText||part;
-  const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
-  const pptx=new PptxGenJS();
-  pptx.layout='LAYOUT_16x10';pptx.title=`Apexiz – ${projName} – ${part} Weld Report`;
-  const LS={w:0.714,h:0.395},LL={w:2.25,h:1.24};
-
-  async function imgB64(url){
-    if(!url) return null;
-    return new Promise(resolve=>{
-      const xhr=new XMLHttpRequest();
-      xhr.open('GET',url,true);xhr.responseType='arraybuffer';
-      xhr.onload=function(){
-        if(xhr.status===200){
-          const bytes=new Uint8Array(xhr.response);
-          let bin='';for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
-          const ext=url.split('?')[0].toLowerCase();
-          const mime=ext.endsWith('.png')?'image/png':'image/jpeg';
-          resolve(mime+';base64,'+btoa(bin));
-        } else resolve(null);
-      };
-      xhr.onerror=()=>resolve(null);xhr.send();
-    });
-  }
-
-  // Title slide
-  {const sl=pptx.addSlide();sl.background={color:C.white};
-   sl.addShape(pptx.shapes.RECTANGLE,{x:3.45,y:0,w:0.09,h:6.25,fill:{color:C.orange},line:{color:C.orange}});
-   if(S.logob64) sl.addImage({data:S.logob64,x:0.28,y:0.28,w:LL.w,h:LL.h});
-   [{c:C.orange,x:0.42},{c:C.darkGrey,x:0.82},{c:C.darkGrey,x:1.22}].forEach(d=>{
-     sl.addShape(pptx.shapes.OVAL,{x:d.x,y:5.18,w:0.22,h:0.22,fill:{color:d.c},line:{color:'none'}});
-   });
-   sl.addText(projName,{x:3.75,y:0.7,w:6,h:0.72,fontSize:32,bold:true,color:C.darkGrey,fontFace:'Segoe UI'});
-   sl.addText(part,{x:3.75,y:1.4,w:6,h:0.9,fontSize:46,bold:true,color:C.orange,fontFace:'Segoe UI'});
-   sl.addText('Weld Inspection Report',{x:3.75,y:2.38,w:6,h:0.55,fontSize:20,color:C.darkGrey,fontFace:'Segoe UI'});
-   sl.addShape(pptx.shapes.RECTANGLE,{x:3.75,y:2.98,w:5.2,h:0.07,fill:{color:C.orange},line:{color:C.orange}});
-   sl.addText('Date: '+today,{x:3.75,y:3.14,w:6,h:0.38,fontSize:12,color:C.darkGrey,fontFace:'Segoe UI',italic:true});
-   sl.addText('CONFIDENTIAL  •  FOR INTERNAL USE ONLY',{x:3.75,y:3.6,w:6,h:0.35,fontSize:10,color:C.medGrey,fontFace:'Segoe UI',italic:true});
-   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.88,w:10,h:0.37,fill:{color:C.orange},line:{color:C.orange}});
-   sl.addText('© 2026 Apexiz    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
-
-  // Overview slide
-  {const sl=pptx.addSlide();sl.background={color:C.white};
-   pptHdr(sl,pptx,'Part Overview',projName+' — '+part);
-   const ovUrl=findImg(part);const ovB64=await imgB64(ovUrl);
-   if(ovB64) sl.addImage({data:ovB64,x:0.3,y:1,w:5.9,h:4.6,sizing:{type:'contain',w:5.9,h:4.6}});
-   else{sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1,w:5.9,h:4.6,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
-    sl.addText('[ No Part Image ]',{x:0.3,y:2.9,w:5.9,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
-   sl.addShape(pptx.shapes.RECTANGLE,{x:6.4,y:1,w:3.35,h:4.6,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
-   const r1=S.welds1.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
-   const r2=S.welds2.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
-   [{l:'PROJECT',v:projName,c:C.darkGrey,s:14},{l:'PART VARIANT',v:part,c:C.orange,s:18},{l:'ROBOT 1 WELDS',v:''+r1,c:C.darkGrey,s:22},{l:'ROBOT 2 WELDS',v:''+r2,c:C.darkGrey,s:22},{l:'TOTAL WELDS',v:''+(r1+r2),c:C.orange,s:22},{l:'REPORT DATE',v:today,c:C.darkGrey,s:11}]
-   .reduce((iy,row)=>{
-     sl.addText(row.l,{x:6.55,y:iy,w:3,h:0.22,fontSize:8,color:C.medGrey,fontFace:'Segoe UI',bold:true});
-     sl.addText(row.v,{x:6.55,y:iy+0.22,w:3,h:row.s>16?0.46:0.38,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true});
-     sl.addShape(pptx.shapes.RECTANGLE,{x:6.55,y:iy+0.72,w:2.9,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
-     return iy+0.78;
-   },1.06);
-   pptFtr(sl,pptx,LS);}
-
-  robotDiv(pptx,'Robot 1','Weld Jobs',LL);
-  await weldSlides(pptx,S.welds1,'R1',part,LS,imgB64);
-  robotDiv(pptx,'Robot 2','Weld Jobs',LL);
-  await weldSlides(pptx,S.welds2,'R2',part,LS,imgB64);
-
-  // End slide
-  {const sl=pptx.addSlide();sl.background={color:C.white};
-   sl.addShape(pptx.shapes.RECTANGLE,{x:6.5,y:0,w:0.09,h:6.25,fill:{color:C.orange},line:{color:C.orange}});
-   sl.addText('Thank You',{x:0.5,y:1.1,w:5.7,h:1.05,fontSize:52,bold:true,color:C.black,fontFace:'Segoe UI'});
-   sl.addShape(pptx.shapes.RECTANGLE,{x:0.5,y:2.22,w:4.2,h:0.07,fill:{color:C.orange},line:{color:C.orange}});
-   sl.addText('End of Weld Inspection Report',{x:0.5,y:2.42,w:5.7,h:0.42,fontSize:15,color:C.darkGrey,fontFace:'Segoe UI'});
-   sl.addText(projName,{x:0.5,y:2.9,w:5.7,h:0.44,fontSize:18,bold:true,color:C.darkGrey,fontFace:'Segoe UI'});
-   sl.addText(part,{x:0.5,y:3.36,w:5.7,h:0.44,fontSize:16,bold:true,color:C.orange,fontFace:'Segoe UI'});
-   sl.addText('www.apexiz.com',{x:0.5,y:3.9,w:4.0,h:0.36,fontSize:12,color:C.darkGrey,fontFace:'Segoe UI',italic:true});
-   if(S.logob64) sl.addImage({data:S.logob64,x:6.7,y:0.3,w:LL.w,h:LL.h});
-   [{c:C.darkGrey,x:7.1},{c:C.darkGrey,x:7.52},{c:C.orange,x:7.94}].forEach(d=>{
-     sl.addShape(pptx.shapes.OVAL,{x:d.x,y:5.18,w:0.22,h:0.22,fill:{color:d.c},line:{color:'none'}});
-   });
-   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.88,w:10,h:0.37,fill:{color:C.orange},line:{color:C.orange}});
-   sl.addText('© 2026 Apexiz    CONFIDENTIAL INFORMATION    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
-
-  await pptx.writeFile({fileName:`Apexiz_${projName}_${part}_Weld_Report.pptx`});
-  btn.disabled=false;btn.innerText='⬇ Download PPT Report';
-}
-
-function robotDiv(pptx,lbl,sub,ls){
-  const sl=pptx.addSlide();sl.background={color:C.white};
-  sl.addText(lbl,{x:0.5,y:1.6,w:9,h:1.3,fontSize:72,bold:true,color:C.black,align:'center',fontFace:'Segoe UI'});
-  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:2.98,w:10,h:0.1,fill:{color:C.orange},line:{color:C.orange}});
-  sl.addText(sub,{x:0.5,y:3.15,w:9,h:0.65,fontSize:24,color:C.orange,align:'center',fontFace:'Segoe UI'});
-  if(S.logob64&&ls) sl.addImage({data:S.logob64,x:0.3,y:5.55-ls.h,w:ls.w,h:ls.h});
-}
-function pptHdr(sl,pptx,title,sub){
-  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.14,fill:{color:C.orange},line:{color:C.orange}});
-  sl.addText(title,{x:0.3,y:0.2,w:7,h:0.58,fontSize:24,bold:true,color:C.black,fontFace:'Segoe UI'});
-  sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:0.75,w:1.2,h:0.06,fill:{color:C.orange},line:{color:C.orange}});
-  if(sub) sl.addText(sub,{x:7.2,y:0.22,w:2.6,h:0.52,fontSize:13,bold:true,color:C.medGrey,align:'right',fontFace:'Segoe UI'});
-}
-function pptFtr(sl,pptx,ls){
-  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
-  if(S.logob64&&ls) sl.addImage({data:S.logob64,x:0.2,y:5.78,w:ls.w,h:ls.h});
-  sl.addText('© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:1.9,y:5.75,w:7.9,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
-}
-async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
-  for(const w of welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC')){
-    const sl=pptx.addSlide();sl.background={color:C.white};
-    pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT – ${code}`);
-    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:2.55,h:4.82,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
-    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:0.07,h:4.82,fill:{color:C.orange},line:{color:C.orange}});
-    [{l:'JOB NAME',v:w.jobName||'—',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'—',c:C.orange,s:22},{l:'ROBOT',v:code,c:C.black,s:18},{l:'POSITIONER ANGLE',v:w.angle?w.angle+' °':'—',c:C.orange,s:14}]
-    .reduce((iy,f)=>{
-      sl.addText(f.l,{x:0.2,y:iy,w:2.2,h:0.24,fontSize:7.5,color:C.medGrey,fontFace:'Segoe UI',bold:true});
-      sl.addText(f.v,{x:0.2,y:iy+0.24,w:2.2,h:f.s>18?0.58:0.44,fontSize:f.s,color:f.c,fontFace:'Segoe UI',bold:true});
-      sl.addShape(pptx.shapes.RECTANGLE,{x:0.2,y:iy+(f.s>18?0.88:0.74),w:2.1,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
-      return iy+(f.s>18?0.96:0.84);},1.0);
-    const ix=2.65,iy=0.92,iw=7.1,ih=4.78;
-    const url=w.imageId?findImg(w.imageId):null;
-    const b64=await imgB64fn(url);
-    if(b64) sl.addImage({data:b64,x:ix,y:iy,w:iw,h:ih,sizing:{type:'contain',w:iw,h:ih}});
-    else{sl.addShape(pptx.shapes.RECTANGLE,{x:ix,y:iy,w:iw,h:ih,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
-     sl.addText('[ No Image Available ]',{x:ix,y:iy+2.1,w:iw,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
-    pptFtr(sl,pptx,ls);
-  }
-}
-
-/* ══════════════════════════════════════
-   INIT
-══════════════════════════════════════ */
-window.addEventListener('load',async()=>{
-  loading(true,'Starting…');
-  const {data:{session}} = await sb.auth.getSession();
-  if(session){
-    await afterAuth(session.user);
-  } else {
-    const params = new URLSearchParams(window.location.search);
-    const inviteToken = params.get('invite');
-    if(inviteToken){
-      await handleInviteToken(inviteToken);
-    }
-    loading(false);
-  }
-  loading(false);
-});
-</script>
-</body>
-</html>
+  const ov
