@@ -476,11 +476,22 @@ function showMsg(id,txt,type){ const e=document.getElementById(id); e.innerText=
 /* ══════════════════════════════════════
    AUTH — TAB SWITCH
 ══════════════════════════════════════ */
-function switchTab(tab){
+function switchTab(tab, fromInvite=false){
   document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='login'?0:1)));
   document.getElementById('loginForm').style.display     = tab==='login'    ? 'block' : 'none';
   document.getElementById('registerForm').style.display  = tab==='register' ? 'block' : 'none';
   document.getElementById('authTitle').innerText = tab==='login' ? 'Sign In' : 'Create Account';
+  // When switching to register manually (no invite), clear any stale invite state
+  if(tab==='register' && !fromInvite && !sessionStorage.getItem('inviteToken')){
+    document.getElementById('regRoleFinal').value       = '';
+    document.getElementById('regInviteToken').value     = '';
+    document.getElementById('regInvitedBy').value       = '';
+    document.getElementById('regInviteProjectId').value = '';
+    document.getElementById('regEmail').readOnly        = false;
+    document.getElementById('roleSelectGroup').style.display  = 'block';
+    document.getElementById('roleDisplayGroup').style.display = 'none';
+    document.getElementById('inviteBanner').style.display     = 'none';
+  }
 }
 
 /* ══════════════════════════════════════
@@ -517,8 +528,9 @@ async function doRegister(){
   const invitedBy       = document.getElementById('regInvitedBy').value;
   const inviteProjectId = document.getElementById('regInviteProjectId').value;
 
-  // ── ROLE: hidden field wins (set by invite); fall back to select for open reg ──
-  const roleFinal = document.getElementById('regRoleFinal').value
+  // ── ROLE priority: sessionStorage (most reliable) > hidden field > select ──
+  const roleFinal = sessionStorage.getItem('inviteRole')
+                  || document.getElementById('regRoleFinal').value
                   || document.getElementById('regRole').value;
 
   if(!name||!email||!pass){ showMsg('regMsg','Please fill in all fields','error'); return; }
@@ -558,6 +570,14 @@ async function doRegister(){
     if(inviteToken){
       await sb.from('invitations').update({used:true, used_by:userId}).eq('token',inviteToken);
     }
+
+    // Clear invite from sessionStorage — it's been used
+    sessionStorage.removeItem('inviteToken');
+    sessionStorage.removeItem('inviteRole');
+    sessionStorage.removeItem('inviteEmail');
+    sessionStorage.removeItem('invitedBy');
+    sessionStorage.removeItem('inviteProjectId');
+    sessionStorage.removeItem('inviteCompany');
 
     loading(false);
     showMsg('regMsg','Account created! Please sign in.','success');
@@ -623,6 +643,8 @@ function routeUser(profile){
 async function doLogout(){
   await sb.auth.signOut();
   S.user = null; S.profile = null;
+  // Clear any pending invite (shouldn't exist but clean up just in case)
+  sessionStorage.clear();
   showPage('authPage');
 }
 
@@ -639,41 +661,60 @@ async function handleInviteToken(token){
     return;
   }
 
-  // Switch to Register tab
-  switchTab('register');
-
   const role = invite.role; // 'company_admin' | 'engineer' | 'customer'
-
-  // ── 1. Store role in the hidden field — this is what doRegister() reads ──
-  document.getElementById('regRoleFinal').value = role;
-
-  // ── 2. Hide the select, show a read-only pill instead ──
-  document.getElementById('roleSelectGroup').style.display  = 'none';
-  document.getElementById('roleDisplayGroup').style.display = 'block';
-
   const roleLabels = { company_admin:'Company Admin', engineer:'Engineer', customer:'Customer' };
   const roleIcons  = { company_admin:'🏢', engineer:'🔧', customer:'👤' };
-  const pill = document.getElementById('rolePillDisplay');
-  pill.className   = 'role-pill-display '+role;
-  pill.innerHTML   = `${roleIcons[role]||''} <strong>${roleLabels[role]||role}</strong> <span style="font-weight:400;font-size:11px;opacity:0.7">(fixed by invitation)</span>`;
 
-  // ── 3. Pre-fill & lock email ──
-  document.getElementById('regEmail').value    = invite.email || '';
+  // ── Persist invite data in sessionStorage so it survives tab switches ──
+  sessionStorage.setItem('inviteToken',     token);
+  sessionStorage.setItem('inviteRole',      role);
+  sessionStorage.setItem('inviteEmail',     invite.email     || '');
+  sessionStorage.setItem('invitedBy',       invite.invited_by|| '');
+  sessionStorage.setItem('inviteProjectId', invite.project_id|| '');
+  sessionStorage.setItem('inviteCompany',   invite.company_name||'');
+
+  // Switch to Register tab (fromInvite=true so it won't clear the stored state)
+  switchTab('register', true);
+  applyInviteToForm();
+
+  // Clean URL so token isn't re-processed on refresh
+  window.history.replaceState({},document.title,window.location.pathname);
+}
+
+// Applies invite data from sessionStorage into the register form
+function applyInviteToForm(){
+  const token   = sessionStorage.getItem('inviteToken');
+  if(!token) return; // no active invite
+  const role    = sessionStorage.getItem('inviteRole')      || '';
+  const email   = sessionStorage.getItem('inviteEmail')     || '';
+  const by      = sessionStorage.getItem('invitedBy')       || '';
+  const projId  = sessionStorage.getItem('inviteProjectId') || '';
+  const company = sessionStorage.getItem('inviteCompany')   || '';
+  const roleLabels = { company_admin:'Company Admin', engineer:'Engineer', customer:'Customer' };
+  const roleIcons  = { company_admin:'🏢', engineer:'🔧', customer:'👤' };
+
+  // 1. Set the hidden role field — single source of truth
+  document.getElementById('regRoleFinal').value       = role;
+  document.getElementById('regInviteToken').value     = token;
+  document.getElementById('regInvitedBy').value       = by;
+  document.getElementById('regInviteProjectId').value = projId;
+
+  // 2. Lock email
+  document.getElementById('regEmail').value    = email;
   document.getElementById('regEmail').readOnly = true;
 
-  // ── 4. Store invite context in hidden fields ──
-  document.getElementById('regInviteToken').value     = token;
-  document.getElementById('regInvitedBy').value       = invite.invited_by || '';
-  document.getElementById('regInviteProjectId').value = invite.project_id || '';
+  // 3. Hide select, show role pill
+  document.getElementById('roleSelectGroup').style.display  = 'none';
+  document.getElementById('roleDisplayGroup').style.display = 'block';
+  const pill = document.getElementById('rolePillDisplay');
+  pill.className = 'role-pill-display '+role;
+  pill.innerHTML = `${roleIcons[role]||''} <strong>${roleLabels[role]||role}</strong> <span style="font-weight:400;font-size:11px;opacity:0.7">(fixed by invitation)</span>`;
 
-  // ── 5. Show invite banner ──
-  const companyPart = invite.company_name ? ` at <strong>${invite.company_name}</strong>` : '';
-  const banner      = document.getElementById('inviteBanner');
-  banner.innerHTML  = `✉ You've been invited to join as <strong>${roleLabels[role]||role}</strong>${companyPart}. Complete registration below.`;
+  // 4. Show banner
+  const companyPart = company ? ` at <strong>${company}</strong>` : '';
+  const banner = document.getElementById('inviteBanner');
+  banner.innerHTML = `✉ You've been invited to join as <strong>${roleLabels[role]||role}</strong>${companyPart}. Complete registration below.`;
   banner.style.display = 'block';
-
-  // Clean URL
-  window.history.replaceState({},document.title,window.location.pathname);
 }
 
 /* ══════════════════════════════════════
@@ -1676,9 +1717,19 @@ window.addEventListener('load',async()=>{
       // afterAuth calls loading(false) internally
     } else {
       const params = new URLSearchParams(window.location.search);
-      const inviteToken = params.get('invite');
-      if(inviteToken){
-        await handleInviteToken(inviteToken);
+      const urlInviteToken = params.get('invite');
+
+      if(urlInviteToken){
+        // Fresh invite link click — process from URL
+        await handleInviteToken(urlInviteToken);
+      } else {
+        // Check if there's a pending invite in sessionStorage
+        // (user reloaded or navigated back while mid-registration)
+        const storedToken = sessionStorage.getItem('inviteToken');
+        if(storedToken){
+          switchTab('register', true);
+          applyInviteToForm();
+        }
       }
       loading(false);
     }
