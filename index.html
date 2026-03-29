@@ -491,9 +491,15 @@ async function doLogin(){
   const pass  = document.getElementById('loginPassword').value;
   if(!email||!pass){ showMsg('loginMsg','Please fill in all fields','error'); return; }
   loading(true,'Signing in…');
-  const {data,error} = await sb.auth.signInWithPassword({email,password:pass});
-  if(error){ loading(false); showMsg('loginMsg',error.message,'error'); return; }
-  await afterAuth(data.user);
+  try {
+    const {data,error} = await sb.auth.signInWithPassword({email,password:pass});
+    if(error){ loading(false); showMsg('loginMsg',error.message,'error'); return; }
+    // afterAuth will call loading(false)
+    await afterAuth(data.user);
+  } catch(e) {
+    loading(false);
+    showMsg('loginMsg','Unexpected error: '+e.message,'error');
+  }
 }
 
 /* ══════════════════════════════════════
@@ -511,7 +517,7 @@ async function doRegister(){
   const invitedBy       = document.getElementById('regInvitedBy').value;
   const inviteProjectId = document.getElementById('regInviteProjectId').value;
 
-  // ── ROLE: always read from hidden field first; fall back to select for open reg ──
+  // ── ROLE: hidden field wins (set by invite); fall back to select for open reg ──
   const roleFinal = document.getElementById('regRoleFinal').value
                   || document.getElementById('regRole').value;
 
@@ -520,43 +526,46 @@ async function doRegister(){
   if(!roleFinal){ showMsg('regMsg','Could not determine role. Please try again.','error'); return; }
 
   loading(true,'Creating account…');
+  try {
+    const {data,error} = await sb.auth.signUp({email,password:pass});
+    if(error){ loading(false); showMsg('regMsg',error.message,'error'); return; }
 
-  const {data,error} = await sb.auth.signUp({email,password:pass});
-  if(error){ loading(false); showMsg('regMsg',error.message,'error'); return; }
+    const userId = data.user?.id;
+    if(!userId){ loading(false); showMsg('regMsg','Registration failed — no user ID returned. The email may already be registered.','error'); return; }
 
-  const userId = data.user.id;
+    // Sign out immediately so session doesn't fire before profile exists
+    await sb.auth.signOut();
 
-  // Sign out immediately so auto-login doesn't fire routeUser before profile exists
-  await sb.auth.signOut();
+    // Build profile
+    const profileInsert = { id: userId, name, role: roleFinal };
+    if(roleFinal === 'engineer'      && invitedBy) profileInsert.company_admin_id = invitedBy;
+    if(roleFinal === 'company_admin' && invitedBy) profileInsert.invited_by_admin = invitedBy;
 
-  // Build profile insert
-  const profileInsert = { id: userId, name, role: roleFinal };
+    if(inviteToken){
+      const {data:inv} = await sb.from('invitations').select('company_name').eq('token',inviteToken).single();
+      if(inv?.company_name) profileInsert.company_name = inv.company_name;
+    }
 
-  if(roleFinal === 'engineer'     && invitedBy) profileInsert.company_admin_id  = invitedBy;
-  if(roleFinal === 'company_admin'&& invitedBy) profileInsert.invited_by_admin  = invitedBy;
+    const {error:pe} = await sb.from('profiles').insert(profileInsert);
+    if(pe){ loading(false); showMsg('regMsg','Account created but profile save failed: '+pe.message,'error'); return; }
 
-  // Carry company_name from invite record
-  if(inviteToken){
-    const {data:inv} = await sb.from('invitations').select('company_name,project_id').eq('token',inviteToken).single();
-    if(inv?.company_name) profileInsert.company_name = inv.company_name;
+    // Auto-approve project access for customer invites
+    if(roleFinal === 'customer' && inviteProjectId){
+      await sb.from('access_requests').insert({project_id:inviteProjectId, user_id:userId, status:'approved'});
+    }
+
+    // Mark invite used
+    if(inviteToken){
+      await sb.from('invitations').update({used:true, used_by:userId}).eq('token',inviteToken);
+    }
+
+    loading(false);
+    showMsg('regMsg','Account created! Please sign in.','success');
+    setTimeout(()=>switchTab('login'), 1400);
+  } catch(e) {
+    loading(false);
+    showMsg('regMsg','Unexpected error: '+e.message,'error');
   }
-
-  const {error:pe} = await sb.from('profiles').insert(profileInsert);
-  if(pe){ loading(false); showMsg('regMsg','Account created but profile failed: '+pe.message,'error'); return; }
-
-  // Auto-approve project access for customer invites that include a project
-  if(roleFinal === 'customer' && inviteProjectId){
-    await sb.from('access_requests').insert({project_id:inviteProjectId, user_id:userId, status:'approved'});
-  }
-
-  // Mark invite as used
-  if(inviteToken){
-    await sb.from('invitations').update({used:true, used_by:userId}).eq('token',inviteToken);
-  }
-
-  loading(false);
-  showMsg('regMsg','Account created! Please sign in.','success');
-  setTimeout(()=>switchTab('login'), 1400);
 }
 
 /* ══════════════════════════════════════
@@ -564,8 +573,12 @@ async function doRegister(){
 ══════════════════════════════════════ */
 async function afterAuth(authUser){
   const {data:profile,error} = await sb.from('profiles').select('*').eq('id',authUser.id).single();
-  loading(false);
-  if(error||!profile){ showMsg('loginMsg','Profile not found. Please register.','error'); await sb.auth.signOut(); return; }
+  if(error||!profile){
+    loading(false);
+    showMsg('loginMsg','Profile not found. Please register.','error');
+    await sb.auth.signOut();
+    return;
+  }
   S.user = authUser; S.profile = profile;
 
   const params   = new URLSearchParams(window.location.search);
@@ -574,6 +587,7 @@ async function afterAuth(authUser){
     await requestAccess(sharedId);
     window.history.replaceState({},document.title,window.location.pathname);
   }
+  loading(false);
   routeUser(profile);
 }
 
@@ -1010,6 +1024,33 @@ async function generateEngineerInvite(){
   document.getElementById('enrolEngLinkBox').style.display = 'block';
   showMsg('enrolEngMsg','Invite link created! Send it to the engineer.','success');
   loadPendingInvites('engineer','engPendingInvites');
+}
+
+/* ── Company Admin: Company Projects ── */
+async function renderCompanyProjects(el){
+  const uid=S.profile.id;
+  const {data:myEngs=[]}=await sb.from('profiles').select('id').eq('company_admin_id',uid);
+  const engIds=myEngs.map(e=>e.id); engIds.push(uid);
+  const {data:projects=[]}=await sb.from('projects')
+    .select('id,name,created_at,parts,owner_id,access_requests(id,status),profiles(name)')
+    .in('owner_id',engIds).order('created_at',{ascending:false});
+  el.innerHTML=`<div class="panel-title">All Company Projects</div>
+    ${projects.length===0?'<div class="empty-state"><span class="empty-state-icon">📁</span><div class="empty-state-text">No company projects yet.</div></div>':`
+    <table class="data-table"><thead><tr><th>Project</th><th>Engineer</th><th>Parts</th><th>Customers</th><th>Pending</th><th>Actions</th></tr></thead>
+    <tbody>${projects.map(p=>{
+      const approved=(p.access_requests||[]).filter(r=>r.status==='approved').length;
+      const pending=(p.access_requests||[]).filter(r=>r.status==='pending').length;
+      return `<tr>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.profiles?.name||'—'}</td>
+        <td>${(p.parts||[]).length}</td>
+        <td><span class="tbl-badge approved">${approved}</span></td>
+        <td>${pending>0?`<span class="tbl-badge pending">${pending}</span>`:'—'}</td>
+        <td>
+          <button class="tbl-btn view" onclick="openViewer('${p.id}')">View</button>
+          <button class="tbl-btn manage" onclick="showAccess('${p.id}','${p.name}')">Access</button>
+          <button class="tbl-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
+        </td></tr>`;}).join('')}</tbody></table>`}`;
 }
 
 /* ── Engineer: Enrol Customer ── */
@@ -1628,18 +1669,23 @@ async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
 ══════════════════════════════════════ */
 window.addEventListener('load',async()=>{
   loading(true,'Starting…');
-  const {data:{session}} = await sb.auth.getSession();
-  if(session){
-    await afterAuth(session.user);
-  } else {
-    const params = new URLSearchParams(window.location.search);
-    const inviteToken = params.get('invite');
-    if(inviteToken){
-      await handleInviteToken(inviteToken);
+  try {
+    const {data:{session}} = await sb.auth.getSession();
+    if(session){
+      await afterAuth(session.user);
+      // afterAuth calls loading(false) internally
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      const inviteToken = params.get('invite');
+      if(inviteToken){
+        await handleInviteToken(inviteToken);
+      }
+      loading(false);
     }
+  } catch(e) {
+    console.error('Init error:',e);
     loading(false);
   }
-  loading(false);
 });
 </script>
 </body>
