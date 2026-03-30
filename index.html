@@ -661,19 +661,11 @@ async function doRegister(){
 async function afterAuth(authUser){
   const {data:profile,error} = await sb.from('profiles').select('*').eq('id',authUser.id).single();
   if(error||!profile){
-    loading(false);
-    showMsg('loginMsg','Profile not found. Please register.','error');
-    await sb.auth.signOut();
-    return;
-  }
-  // Block removed users
-  if(profile.status === 'removed'){
     await sb.auth.signOut();
     loading(false);
-    showMsg('loginMsg','⚠️ Your account has been removed. Please contact your administrator.','error');
+    showMsg('loginMsg','Account not found or has been removed. Please contact your administrator.','error');
     return;
   }
-
   S.user = authUser; S.profile = profile;
 
   const params   = new URLSearchParams(window.location.search);
@@ -939,24 +931,18 @@ function projRow(p){
 async function renderUsers(el){
   const {data:users=[]}=await sb.from('profiles').select('*').order('created_at');
   el.innerHTML=`<div class="panel-title">All Users</div>
-    <table class="data-table"><thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Company</th><th>Actions</th></tr></thead>
+    <table class="data-table"><thead><tr><th>Name</th><th>Role</th><th>Company</th><th>Actions</th></tr></thead>
     <tbody>${users.map(u=>`<tr>
       <td>
         <strong>${u.name}</strong>
         <div style="font-size:10px;color:var(--g3);margin-top:2px">${u.email||''}</div>
       </td>
       <td><span class="tbl-badge ${u.role}">${u.role==='company_admin'?'Company Admin':u.role}</span></td>
-      <td>${u.status==='removed'
-        ? '<span class="tbl-badge revoked">Removed</span>'
-        : '<span class="tbl-badge approved">Active</span>'}</td>
       <td>${u.company_name||'—'}</td>
       <td style="white-space:nowrap">
         ${u.role!=='admin'?`
           <button class="tbl-btn copy" onclick="sendPasswordReset('${u.id}','${(u.email||'').replace(/'/g,"\'")}')">Reset PWD</button>
-          ${u.status==='removed'
-            ? `<button class="tbl-btn approve" onclick="restoreUser('${u.id}')">Restore</button>`
-            : `<button class="tbl-btn delete" onclick="deleteUser('${u.id}')">Remove</button>`
-          }
+          <button class="tbl-btn delete" onclick="deleteUser('${u.id}')">Remove</button>
         `:'—'}
       </td>
     </tr>`).join('')}</tbody></table>
@@ -1445,25 +1431,36 @@ async function deleteProject(id){
 }
 
 async function deleteUser(id){
-  if(!confirm('Remove this user? They will be blocked from logging in.')) return;
+  if(!confirm('Remove this user? This deletes their profile and blocks login. This cannot be undone.')) return;
   loading(true,'Removing user…');
-  // Revoke all access requests
-  await sb.from('access_requests').update({status:'revoked'}).eq('user_id',id);
-  // Unlink any engineers under this user (if company_admin)
-  await sb.from('profiles').update({company_admin_id:null}).eq('company_admin_id',id);
-  // Mark profile as removed — blocks login in afterAuth()
-  const {error}=await sb.from('profiles').update({status:'removed'}).eq('id',id);
-  loading(false);
-  if(error){ showMsg('usersMsg','Remove failed: '+error.message,'error'); return; }
-  showPanel('users');
-}
 
-async function restoreUser(id){
-  if(!confirm('Restore this user? They will be able to log in again.')) return;
-  loading(true,'Restoring…');
-  const {error}=await sb.from('profiles').update({status:'active'}).eq('id',id);
+  const errors = [];
+
+  // 1. Revoke all their project access
+  const {error:e1} = await sb.from('access_requests').delete().eq('user_id',id);
+  if(e1) errors.push('access_requests: '+e1.message);
+
+  // 2. Delete invitations they created
+  const {error:e2} = await sb.from('invitations').delete().eq('invited_by',id);
+  if(e2) errors.push('invitations: '+e2.message);
+
+  // 3. Unlink any engineers/admins assigned to them
+  const {error:e3} = await sb.from('profiles').update({company_admin_id:null}).eq('company_admin_id',id);
+  if(e3) errors.push('unlink: '+e3.message);
+
+  // 4. Delete the profile row — this is the key step that blocks login
+  //    afterAuth() will show "Profile not found" if they try to log in again
+  const {error:e4} = await sb.from('profiles').delete().eq('id',id);
+
   loading(false);
-  if(error){ showMsg('usersMsg','Restore failed: '+error.message,'error'); return; }
+
+  if(e4){
+    // Profile delete failed — show exact error so we know if it's RLS
+    alert('Could not remove user profile:\n\n'+e4.message+'\n\nCheck your Supabase RLS policy allows admin to delete from profiles table.\n\nRun this in Supabase SQL editor:\nCREATE POLICY "Admin can delete profiles" ON profiles FOR DELETE USING (true);');
+    return;
+  }
+
+  if(errors.length) console.warn('Minor errors during user removal:', errors);
   showPanel('users');
 }
 
