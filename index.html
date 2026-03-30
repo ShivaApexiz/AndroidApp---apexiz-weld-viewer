@@ -265,7 +265,30 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
         <div class="field-group"><label class="field-label">Email</label><input type="email" id="loginEmail" class="field-input" placeholder="your@email.com"></div>
         <div class="field-group"><label class="field-label">Password</label><input type="password" id="loginPassword" class="field-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
         <button class="auth-btn" onclick="doLogin()">Sign In →</button>
+        <div style="text-align:center;margin-top:10px">
+          <button onclick="showForgotPassword()" style="background:none;border:none;color:var(--orange);font-size:11px;font-weight:700;cursor:pointer;text-decoration:underline;font-family:'Barlow',sans-serif">Forgot Password?</button>
+        </div>
         <div id="loginMsg" class="auth-msg"></div>
+      </div>
+
+      <!-- FORGOT PASSWORD FORM -->
+      <div id="forgotForm" style="display:none">
+        <div style="font-size:12px;color:var(--g3);margin-bottom:14px">Enter your email address and we'll send you a link to reset your password.</div>
+        <div class="field-group"><label class="field-label">Email</label><input type="email" id="forgotEmail" class="field-input" placeholder="your@email.com"></div>
+        <button class="auth-btn" onclick="doForgotPassword()">Send Reset Link →</button>
+        <div style="text-align:center;margin-top:10px">
+          <button onclick="showLoginForm()" style="background:none;border:none;color:var(--g3);font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif">← Back to Login</button>
+        </div>
+        <div id="forgotMsg" class="auth-msg"></div>
+      </div>
+
+      <!-- RESET PASSWORD FORM (shown when arriving from reset email link) -->
+      <div id="resetForm" style="display:none">
+        <div style="font-size:12px;color:var(--g3);margin-bottom:14px">Enter your new password below.</div>
+        <div class="field-group"><label class="field-label">New Password</label><input type="password" id="resetNewPassword" class="field-input" placeholder="Min 6 characters"></div>
+        <div class="field-group"><label class="field-label">Confirm Password</label><input type="password" id="resetConfirmPassword" class="field-input" placeholder="Repeat new password"></div>
+        <button class="auth-btn" onclick="doResetPassword()">Set New Password →</button>
+        <div id="resetMsg" class="auth-msg"></div>
       </div>
 
       <!-- REGISTER FORM -->
@@ -574,8 +597,8 @@ async function doRegister(){
 
     // ── User is now signed in. Do ALL db work while authenticated, THEN sign out. ──
 
-    // Build profile data
-    const profileData = { id: userId, name, role: roleFinal };
+    // Build profile data — store email so admin can send password resets
+    const profileData = { id: userId, name, email, role: roleFinal };
     if(roleFinal === 'engineer'      && invitedByFinal) profileData.company_admin_id = invitedByFinal;
     if(roleFinal === 'company_admin' && invitedByFinal) profileData.invited_by_admin = invitedByFinal;
     if(inviteCompany) profileData.company_name = inviteCompany;
@@ -643,6 +666,14 @@ async function afterAuth(authUser){
     await sb.auth.signOut();
     return;
   }
+  // Block removed users
+  if(profile.status === 'removed'){
+    await sb.auth.signOut();
+    loading(false);
+    showMsg('loginMsg','⚠️ Your account has been removed. Please contact your administrator.','error');
+    return;
+  }
+
   S.user = authUser; S.profile = profile;
 
   const params   = new URLSearchParams(window.location.search);
@@ -689,6 +720,66 @@ async function doLogout(){
   S.user = null; S.profile = null;
   INVITE.clear();
   showPage('authPage');
+}
+
+/* ══════════════════════════════════════
+   PASSWORD RESET FLOW
+══════════════════════════════════════ */
+function showForgotPassword(){
+  document.getElementById('loginForm').style.display   = 'none';
+  document.getElementById('forgotForm').style.display  = 'block';
+  document.getElementById('resetForm').style.display   = 'none';
+  document.getElementById('authTitle').innerText = 'Reset Password';
+  // Hide tabs during forgot flow
+  document.querySelector('.auth-tabs').style.display = 'none';
+}
+
+function showLoginForm(){
+  document.getElementById('loginForm').style.display   = 'block';
+  document.getElementById('forgotForm').style.display  = 'none';
+  document.getElementById('resetForm').style.display   = 'none';
+  document.getElementById('authTitle').innerText = 'Sign In';
+  document.querySelector('.auth-tabs').style.display = 'flex';
+}
+
+function showResetForm(){
+  document.getElementById('loginForm').style.display   = 'none';
+  document.getElementById('forgotForm').style.display  = 'none';
+  document.getElementById('resetForm').style.display   = 'block';
+  document.getElementById('authTitle').innerText = 'Set New Password';
+  document.querySelector('.auth-tabs').style.display = 'none';
+}
+
+async function doForgotPassword(){
+  const email = document.getElementById('forgotEmail').value.trim();
+  if(!email){ showMsg('forgotMsg','Please enter your email address','error'); return; }
+  loading(true,'Sending reset email…');
+  const {error} = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname + '?reset=1'
+  });
+  loading(false);
+  if(error){ showMsg('forgotMsg',error.message,'error'); return; }
+  showMsg('forgotMsg','✅ Reset link sent! Check your inbox (and spam folder).','success');
+}
+
+async function doResetPassword(){
+  const newPass  = document.getElementById('resetNewPassword').value;
+  const confPass = document.getElementById('resetConfirmPassword').value;
+  if(!newPass||!confPass){ showMsg('resetMsg','Please fill in both fields','error'); return; }
+  if(newPass.length<6){ showMsg('resetMsg','Password must be at least 6 characters','error'); return; }
+  if(newPass!==confPass){ showMsg('resetMsg','Passwords do not match','error'); return; }
+  loading(true,'Updating password…');
+  const {error} = await sb.auth.updateUser({password: newPass});
+  loading(false);
+  if(error){ showMsg('resetMsg','Failed: '+error.message,'error'); return; }
+  showMsg('resetMsg','✅ Password updated! Signing you in…','success');
+  // Sign out so the user logs in fresh with new password
+  setTimeout(async()=>{
+    await sb.auth.signOut();
+    window.history.replaceState({},document.title,window.location.pathname);
+    showLoginForm();
+    showMsg('loginMsg','Password updated! Please sign in with your new password.','success');
+  },1500);
 }
 
 /* ══════════════════════════════════════
@@ -848,14 +939,28 @@ function projRow(p){
 async function renderUsers(el){
   const {data:users=[]}=await sb.from('profiles').select('*').order('created_at');
   el.innerHTML=`<div class="panel-title">All Users</div>
-    <table class="data-table"><thead><tr><th>Name</th><th>ID</th><th>Role</th><th>Company Admin</th><th>Actions</th></tr></thead>
+    <table class="data-table"><thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Company</th><th>Actions</th></tr></thead>
     <tbody>${users.map(u=>`<tr>
-      <td><strong>${u.name}</strong></td>
-      <td style="font-size:10px;color:var(--g3)">${u.id.slice(0,16)}…</td>
+      <td>
+        <strong>${u.name}</strong>
+        <div style="font-size:10px;color:var(--g3);margin-top:2px">${u.email||''}</div>
+      </td>
       <td><span class="tbl-badge ${u.role}">${u.role==='company_admin'?'Company Admin':u.role}</span></td>
-      <td>${u.company_admin_id?`<span class="tbl-badge company_admin">Assigned</span>`:'—'}</td>
-      <td>${u.role!=='admin'?`<button class="tbl-btn delete" onclick="deleteUser('${u.id}')">Remove</button>`:'—'}</td>
-    </tr>`).join('')}</tbody></table>`;
+      <td>${u.status==='removed'
+        ? '<span class="tbl-badge revoked">Removed</span>'
+        : '<span class="tbl-badge approved">Active</span>'}</td>
+      <td>${u.company_name||'—'}</td>
+      <td style="white-space:nowrap">
+        ${u.role!=='admin'?`
+          <button class="tbl-btn copy" onclick="sendPasswordReset('${u.id}','${(u.email||'').replace(/'/g,"\'")}')">Reset PWD</button>
+          ${u.status==='removed'
+            ? `<button class="tbl-btn approve" onclick="restoreUser('${u.id}')">Restore</button>`
+            : `<button class="tbl-btn delete" onclick="deleteUser('${u.id}')">Remove</button>`
+          }
+        `:'—'}
+      </td>
+    </tr>`).join('')}</tbody></table>
+    <div id="usersMsg" class="auth-msg" style="margin-top:10px"></div>`;
 }
 
 async function renderAllProjects(el){
@@ -1340,15 +1445,38 @@ async function deleteProject(id){
 }
 
 async function deleteUser(id){
-  if(!confirm('Remove this user? This will delete their profile and all associated data.')) return;
+  if(!confirm('Remove this user? They will be blocked from logging in.')) return;
   loading(true,'Removing user…');
-  await sb.from('access_requests').delete().eq('user_id',id);
-  await sb.from('invitations').delete().eq('invited_by',id);
+  // Revoke all access requests
+  await sb.from('access_requests').update({status:'revoked'}).eq('user_id',id);
+  // Unlink any engineers under this user (if company_admin)
   await sb.from('profiles').update({company_admin_id:null}).eq('company_admin_id',id);
-  const {error:e4}=await sb.from('profiles').delete().eq('id',id);
+  // Mark profile as removed — blocks login in afterAuth()
+  const {error}=await sb.from('profiles').update({status:'removed'}).eq('id',id);
   loading(false);
-  if(e4){ alert('Could not remove user profile: '+e4.message); return; }
+  if(error){ showMsg('usersMsg','Remove failed: '+error.message,'error'); return; }
   showPanel('users');
+}
+
+async function restoreUser(id){
+  if(!confirm('Restore this user? They will be able to log in again.')) return;
+  loading(true,'Restoring…');
+  const {error}=await sb.from('profiles').update({status:'active'}).eq('id',id);
+  loading(false);
+  if(error){ showMsg('usersMsg','Restore failed: '+error.message,'error'); return; }
+  showPanel('users');
+}
+
+async function sendPasswordReset(id, email){
+  if(!email){ showMsg('usersMsg','No email found for this user.','error'); return; }
+  if(!confirm('Send password reset email to: '+email+'?')) return;
+  loading(true,'Sending reset email…');
+  const {error}=await sb.auth.resetPasswordForEmail(email,{
+    redirectTo: window.location.origin+window.location.pathname+'?reset=1'
+  });
+  loading(false);
+  if(error){ showMsg('usersMsg','Failed to send reset email: '+error.message,'error'); return; }
+  showMsg('usersMsg','✅ Password reset email sent to '+email,'success');
 }
 
 /* ══════════════════════════════════════
@@ -1746,20 +1874,34 @@ async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
 window.addEventListener('load',async()=>{
   loading(true,'Starting…');
   try {
+    // Listen for PASSWORD_RECOVERY event — fired when user arrives from reset email
+    sb.auth.onAuthStateChange((event, session)=>{
+      if(event === 'PASSWORD_RECOVERY'){
+        loading(false);
+        showPage('authPage');
+        showResetForm();
+      }
+    });
+
     const {data:{session}} = await sb.auth.getSession();
     if(session){
-      await afterAuth(session.user);
-      // afterAuth calls loading(false) internally
+      // Check if this is a password reset session
+      const params = new URLSearchParams(window.location.search);
+      if(params.get('reset')==='1'){
+        // User arrived via reset email link — show reset form, don't auto-login
+        loading(false);
+        showPage('authPage');
+        showResetForm();
+      } else {
+        await afterAuth(session.user);
+        // afterAuth calls loading(false) internally
+      }
     } else {
       const params = new URLSearchParams(window.location.search);
       const urlInviteToken = params.get('invite');
-
       if(urlInviteToken){
-        // Fresh invite link click — process from URL
         await handleInviteToken(urlInviteToken);
       }
-      // Note: INVITE object is in-memory only, so page reload clears it.
-      // The user must use the original invite link again if they reload.
       loading(false);
     }
   } catch(e) {
