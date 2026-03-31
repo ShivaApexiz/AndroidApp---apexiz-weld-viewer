@@ -1041,15 +1041,53 @@ async function loadPendingInvites(role,containerId){
   const el=document.getElementById(containerId);
   if(!el) return;
   if(invites.length===0){ el.innerHTML='<div style="font-size:12px;color:var(--g3);padding:4px 0">No pending invitations.</div>'; return; }
-  el.innerHTML=`<table class="data-table"><thead><tr><th>Email</th><th>Company</th><th>Sent</th><th>Status</th><th>Actions</th></tr></thead>
+
+  const registeredIds = invites.filter(i=>i.used).map(i=>i.id);
+  const hasRegistered = registeredIds.length > 0;
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;flex-wrap:wrap;gap:6px">
+      <span style="font-size:11px;color:var(--g3);font-weight:600">${invites.length} invitation(s) — ${registeredIds.length} registered</span>
+      ${hasRegistered ? `<button class="tbl-btn delete" onclick="clearRegisteredInvites('${containerId}','${role}')"
+        style="font-size:10px;padding:4px 12px">
+        🗑 Clear Registered (${registeredIds.length})
+      </button>` : ''}
+    </div>
+    <table class="data-table"><thead><tr><th>Email</th><th>Company</th><th>Sent</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody>${invites.map(inv=>`<tr>
       <td>${inv.email||'—'}</td>
       <td>${inv.company_name||'—'}</td>
       <td>${new Date(inv.created_at).toLocaleDateString()}</td>
-      <td>${inv.used?'<span class="tbl-badge approved">Registered</span>':'<span class="tbl-badge pending">Pending</span>'}</td>
-      <td>${!inv.used?`<button class="tbl-btn copy" onclick="copyInviteLink('${inv.token}')">Copy Link</button>
-        <button class="tbl-btn delete" onclick="revokeInvite('${inv.id}','${containerId}','${role}')">Revoke</button>`:'—'}</td>
+      <td>${inv.used
+        ? '<span class="tbl-badge approved">Registered</span>'
+        : '<span class="tbl-badge pending">Pending</span>'}</td>
+      <td>${!inv.used
+        ? `<button class="tbl-btn copy" onclick="copyInviteLink('${inv.token}')">Copy Link</button>
+           <button class="tbl-btn delete" onclick="revokeInvite('${inv.id}','${containerId}','${role}')">Revoke</button>`
+        : `<button class="tbl-btn delete" onclick="clearSingleInvite('${inv.id}','${containerId}','${role}')">Clear</button>`}
+      </td>
     </tr>`).join('')}</tbody></table>`;
+}
+
+async function clearRegisteredInvites(containerId, role){
+  if(!confirm('Clear all Registered invitations from this list?')) return;
+  loading(true,'Clearing…');
+  // Fetch the IDs of used invites for this role by this user
+  const {data:used=[]} = await sb.from('invitations').select('id')
+    .eq('role',role).eq('invited_by',S.profile.id).eq('used',true);
+  if(used.length){
+    const ids = used.map(i=>i.id);
+    await sb.from('invitations').delete().in('id', ids);
+  }
+  loading(false);
+  loadPendingInvites(role, containerId);
+}
+
+async function clearSingleInvite(id, containerId, role){
+  loading(true,'Clearing…');
+  await sb.from('invitations').delete().eq('id', id);
+  loading(false);
+  loadPendingInvites(role, containerId);
 }
 
 function copyInviteLink(token){
