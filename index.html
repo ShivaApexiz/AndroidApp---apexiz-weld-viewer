@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="mobile-builder.css">
 <style>
 :root{
   --orange:#FF5500;--orange-dark:#CC4400;--orange-light:#FFF3EE;
@@ -138,6 +139,55 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .folder-zone-label{font-size:13px;font-weight:700;color:var(--black);margin-bottom:3px;}
 .folder-zone-sub{font-size:11px;color:var(--g3);}
 .folder-zone-status{margin-top:6px;font-size:11px;font-weight:700;color:var(--orange);min-height:16px;}
+.mobile-upload-box{background:var(--white);border:1px solid var(--g2);border-radius:8px;padding:14px;}
+.mobile-upload-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.mobile-upload-hint{font-size:11px;color:var(--g3);line-height:1.5;}
+.mobile-upload-note{font-size:11px;font-weight:600;color:var(--orange-dark);background:var(--orange-light);border:1px solid var(--orange);border-radius:6px;padding:9px 11px;}
+.create-switcher{display:flex;gap:8px;flex-wrap:wrap;}
+.seg-btn{padding:8px 14px;border-radius:999px;border:1.5px solid var(--g2);background:var(--white);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--g4);cursor:pointer;}
+.seg-btn.active{background:var(--orange);border-color:var(--orange);color:var(--white);}
+.mobile-builder-shell{display:flex;flex-direction:column;gap:14px;}
+.mobile-shell-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.mobile-shell-copy{font-size:12px;color:var(--g3);max-width:560px;line-height:1.6;}
+.queue-pill{padding:6px 10px;border-radius:999px;background:var(--black);color:var(--white);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.builder-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;align-items:start;}
+.builder-card{background:var(--white);border:1px solid var(--g2);border-radius:16px;padding:16px;box-shadow:0 10px 24px rgba(26,26,26,0.06);}
+.builder-subtitle{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--black);}
+.builder-note{font-size:11px;color:var(--g3);line-height:1.5;margin-top:4px;}
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.summary-tile{background:linear-gradient(180deg,#fff8f4 0%,#ffffff 100%);border:1px solid #ffd5bf;border-radius:14px;padding:12px;}
+.summary-value{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--orange);}
+.summary-label{font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--g3);}
+.builder-list{display:flex;flex-direction:column;gap:10px;max-height:560px;overflow:auto;padding-right:4px;}
+.builder-item{border:1px solid var(--g2);border-radius:14px;padding:12px;background:#fff;}
+.builder-item.active{border-color:var(--orange);box-shadow:0 0 0 2px rgba(255,85,0,0.12);}
+.builder-item-head{display:flex;justify-content:space-between;gap:10px;align-items:center;}
+.builder-item-title{font-size:13px;font-weight:700;color:var(--black);}
+.builder-item-meta{font-size:11px;color:var(--g3);margin-top:4px;line-height:1.5;}
+.mini-btn{padding:6px 10px;border:none;border-radius:999px;background:var(--g1);color:var(--g4);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
+.mini-btn.primary{background:var(--orange);color:var(--white);}
+.mini-btn.dark{background:var(--black);color:var(--white);}
+.mini-btn.warn{background:#F8D7DA;color:var(--red);}
+.builder-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.field-inline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.annotation-shell{display:flex;flex-direction:column;gap:10px;}
+.annotation-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.tool-chip{padding:7px 11px;border-radius:999px;border:1.5px solid var(--g2);background:var(--white);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--g4);cursor:pointer;}
+.tool-chip.active{background:var(--black);border-color:var(--black);color:var(--white);}
+.color-swatch{width:28px;height:28px;border-radius:50%;border:2px solid var(--white);box-shadow:0 0 0 1px var(--g2);cursor:pointer;}
+.color-swatch.active{box-shadow:0 0 0 2px var(--orange);}
+.canvas-wrap{position:relative;border-radius:18px;overflow:hidden;background:#f4f4f4;border:1px solid var(--g2);min-height:280px;}
+.annotation-canvas{display:block;width:100%;height:auto;touch-action:none;background:#f4f4f4;}
+.annotation-tip{font-size:11px;color:var(--g3);line-height:1.5;}
+.image-preview{width:100%;aspect-ratio:4/3;border-radius:14px;border:1px solid var(--g2);background:#f7f7f7;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.image-preview img{width:100%;height:100%;object-fit:contain;}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--orange);color:var(--white);font-size:11px;font-weight:700;margin-right:8px;}
+.queue-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.queue-row{padding:10px 12px;border:1px solid var(--g2);border-radius:12px;background:#fff;}
+.queue-row strong{display:block;font-size:12px;color:var(--black);}
+.queue-row span{display:block;font-size:11px;color:var(--g3);margin-top:3px;}
+.native-panel{background:linear-gradient(180deg,#1f1f1f 0%,#2a2a2a 100%);border-radius:18px;color:var(--white);padding:16px;border:1px solid rgba(255,255,255,0.08);}
+.native-panel .builder-note{color:rgba(255,255,255,0.72);}
 .action-btn{padding:9px 22px;background:var(--orange);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border:none;border-radius:30px;cursor:pointer;transition:background 0.15s;align-self:flex-start;}
 .action-btn:hover{background:var(--orange-dark);}
 .action-btn:disabled{background:var(--g2);color:var(--g3);cursor:not-allowed;}
@@ -238,6 +288,32 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .back-btn{background:none;border:1.5px solid var(--g2);border-radius:20px;padding:5px 13px;font-size:11px;font-weight:700;color:var(--g3);cursor:pointer;transition:all 0.12s;font-family:'Barlow',sans-serif;}
 .back-btn:hover{border-color:var(--orange);color:var(--orange);}
 .flex-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+@media (max-width:768px){
+  .mobile-upload-grid{grid-template-columns:1fr;}
+  .field-inline,.summary-grid{grid-template-columns:1fr;}
+}
+
+@media (max-width:900px){
+  body{background:#e7e7e7;}
+  .topbar{height:auto;min-height:64px;padding:12px 16px;align-items:flex-start;}
+  .topbar-right{width:100%;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .topbar-title{font-size:18px;}
+  #dashPage .page-body{padding:0;gap:0;flex-direction:column;overflow:auto;background:#efefef;}
+  .dash-sidebar{width:100%;min-width:0;border-radius:0;border-left:none;border-right:none;border-top:none;padding:10px 12px;flex-direction:row;gap:8px;overflow-x:auto;overflow-y:hidden;position:sticky;top:0;z-index:30;}
+  .sidebar-section,.sidebar-divider{display:none;}
+  .sidebar-btn,.logout-btn{width:auto;flex:0 0 auto;white-space:nowrap;}
+  .dash-main{border-radius:20px 20px 0 0;padding:16px;min-height:calc(100vh - 170px);}
+  .stat-row{flex-direction:column;}
+  .data-table{display:block;overflow-x:auto;white-space:nowrap;}
+  .builder-grid{grid-template-columns:1fr;}
+  #viewerPage .page-body{flex-direction:column;}
+  .viewer-left,.viewer-right{width:100%;min-width:0;border-right:none;padding:16px;}
+  .viewer-left{border-bottom:1px solid var(--g2);}
+  .main-img{min-height:260px;}
+  .project-grid{grid-template-columns:1fr;}
+  .footer{font-size:10px;padding:0 10px;text-align:center;}
+}
 </style>
 </head>
 <body>
@@ -374,6 +450,12 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
     </div>
     <div class="dash-main" id="dashMain"></div>
   </div>
+  <div class="mobile-bottom-nav" id="mobileBottomNav">
+    <button class="mobile-nav-btn active" data-panel="overview" onclick="showPanel('overview')"><span class="mobile-nav-icon nav-home"></span><strong>Home</strong></button>
+    <button class="mobile-nav-btn" data-panel="projects" onclick="showPanel('projects')"><span class="mobile-nav-icon nav-projects"></span><strong>Projects</strong></button>
+    <button class="mobile-nav-btn mobile-nav-create" data-panel="create" onclick="showPanel('create')"><span class="mobile-nav-plus">+</span></button>
+    <button class="mobile-nav-btn" data-panel="mycustomers" onclick="showPanel('mycustomers')"><span class="mobile-nav-icon nav-customers"></span><strong>Customers</strong></button>
+  </div>
   <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
 </div>
 
@@ -405,7 +487,9 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
         <div class="info-row"><span class="info-label">Part Variant</span><select id="partDropdown" class="part-dd"><option>—</option></select></div>
         <div class="info-row"><span class="info-label">Robot Name</span><span class="info-value" id="robotName">—</span></div>
         <div class="info-row"><span class="info-label">Job Name</span><span class="info-value" id="jobName">—</span></div>
-        <div class="info-row"><span class="info-label">Positioner Angle</span><span class="info-value hl" id="positionerAngle">—</span></div>
+        <div class="info-row"><span class="info-label">Workpiece Positioner Angle</span><span class="info-value hl" id="workpiecePositionerAngleView">—</span></div>
+        <div class="info-row"><span class="info-label">Robot Positioner Values</span><span class="info-value" id="robotPositionerValuesView">—</span></div>
+        <div class="info-row"><span class="info-label">Workpiece Positioner Values</span><span class="info-value" id="workpiecePositionerValuesView">—</span></div>
         <div class="info-row"><span class="info-label">Weld Number</span><span class="info-value hl" id="weldNumber">—</span></div>
       </div>
       <div id="mainImage" class="main-img">[ Select a weld to view image ]</div>
@@ -485,7 +569,13 @@ const S = {
   activeCell: null,
   logob64: null,
   currentProjectId: null,
+  createMode: 'builder',
+  mobileDraft: null,
+  pendingUploads: [],
+  annotationSession: null,
 };
+window.S = S;
+window.sb = sb;
 
 // In-memory invite state — avoids sessionStorage (blocked by tracking prevention)
 const INVITE = {
@@ -945,6 +1035,7 @@ function projRow(p){
     <td>${pending>0?`<span class="tbl-badge pending">${pending}</span>`:'—'}</td>
     <td>
       <button class="tbl-btn view" onclick="openViewer('${p.id}')">View</button>
+      <button class="tbl-btn manage" onclick="editProject('${p.id}')">Edit</button>
       <button class="tbl-btn copy" onclick="showShare('${p.id}')">Share</button>
       <button class="tbl-btn manage" onclick="showAccess('${p.id}','${p.name}')">Access</button>
       <button class="tbl-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
@@ -1404,16 +1495,58 @@ function renderCreateProject(el){
         </div>
         <div class="upload-progress" id="uploadProgress" style="display:none"><div class="upload-progress-bar" id="uploadBar"></div></div>
       </div>
+      <div class="mobile-upload-box">
+        <div class="section-lbl" style="margin-top:0">Android / Mobile Upload</div>
+        <div class="mobile-upload-note">Use this option on Android if folder selection is not available. Pick the CSV files and images separately, then upload them as one project.</div>
+        <div class="mobile-upload-grid" style="margin-top:12px">
+          <div>
+            <label class="field-label" for="createCsvInput">CSV Files</label>
+            <input type="file" id="createCsvInput" class="field-input" accept=".csv,text/csv" multiple>
+            <div class="mobile-upload-hint" style="margin-top:6px">Select all weld CSV files such as part data and robot CSVs.</div>
+          </div>
+          <div>
+            <label class="field-label" for="createImageInput">Images</label>
+            <input type="file" id="createImageInput" class="field-input" accept="image/png,image/jpeg" multiple>
+            <div class="mobile-upload-hint" style="margin-top:6px">Select the weld images, part images, and logo files used by the viewer.</div>
+          </div>
+        </div>
+        <div class="mobile-upload-hint" style="margin-top:10px">Desktop engineers can keep using the folder picker above. Android engineers can upload with these two file pickers instead.</div>
+      </div>
       <div id="scanResult" style="display:none" class="info-msg"></div>
       <button class="action-btn" id="createProjBtn" onclick="createProject()" disabled>Create &amp; Upload Project →</button>
     </div>`;
   document.getElementById('createFolderInput').addEventListener('change',e=>processNewFolder(e.target.files));
+  document.getElementById('createCsvInput').addEventListener('change',processMobileSelection);
+  document.getElementById('createImageInput').addEventListener('change',processMobileSelection);
+}
+
+async function processMobileSelection(){
+  const csvInput=document.getElementById('createCsvInput');
+  const imageInput=document.getElementById('createImageInput');
+  const mergedFiles=[
+    ...Array.from(csvInput?.files||[]),
+    ...Array.from(imageInput?.files||[])
+  ];
+  const status=mergedFiles.length
+    ? `Mobile selection ready: ${(csvInput?.files||[]).length} CSV file(s) and ${(imageInput?.files||[]).length} image(s)`
+    : '';
+  await processSelectedFiles(mergedFiles,status);
 }
 
 async function processNewFolder(files){
+  await processSelectedFiles(files,'Desktop folder ready');
+}
+
+async function processSelectedFiles(files,statusText=''){
   newFiles = { csv: new Map(), images: new Map() };
-  const arr=Array.from(files);
-  document.getElementById('createStatus').innerText='⏳ Scanning…';
+  const arr=Array.from(files||[]);
+  document.getElementById('createStatus').innerText=arr.length?'⏳ Scanning…':'';
+  if(arr.length===0){
+    document.getElementById('createStatus').innerText='';
+    document.getElementById('scanResult').style.display='none';
+    document.getElementById('createProjBtn').disabled=true;
+    return;
+  }
   const promises=[];
   arr.forEach(file=>{
     const rel=(file.webkitRelativePath||file.name).replace(/\\/g,'/');
@@ -1439,7 +1572,9 @@ async function processNewFolder(files){
   await Promise.all(promises);
   const parts=detectParts(newFiles.csv);
   const imgCount=new Set([...newFiles.images.values()].map(v=>v.path)).size;
-  document.getElementById('createStatus').innerText=`✅ ${newFiles.csv.size} CSV files · ${imgCount} images · ${parts.length} part(s)`;
+  document.getElementById('createStatus').innerText=statusText
+    ? `${statusText} • ✅ ${newFiles.csv.size} CSV files · ${imgCount} images · ${parts.length} part(s)`
+    : `✅ ${newFiles.csv.size} CSV files · ${imgCount} images · ${parts.length} part(s)`;
   const sr=document.getElementById('scanResult');
   sr.style.display='block';
   sr.innerHTML=`<strong>Detected parts:</strong> ${parts.length>0?parts.join(' · '):'None — check folder structure'}`;
@@ -1476,6 +1611,2292 @@ async function createProject(){
   btn.disabled=false; btn.innerText='Create & Upload Project →';
   alert(`Project "${name}" created!\n${csvEntries.length} CSV files · ${uniqueImages.length} images uploaded.`);
   showPanel('projects');
+}
+
+/* Mobile-first project creation override */
+let projectWizardState = null;
+let projectQueueState = JSON.parse(localStorage.getItem('weldViewerCreateQueue') || '[]');
+
+function resetProjectWizardState(){
+  projectWizardState = {
+    projectName: '',
+    partNumber: '',
+    partCount: 1,
+    partNames: ['PART-1'],
+    selectedPartIndex: 0,
+    partImageByPart: {},
+    setupStep: 'setup',
+    robotPositionerEnabled: 'N',
+    robotPositionerAxes: '',
+    robotPositionerAxisNames: [],
+    workpiecePositionerEnabled: 'N',
+    workpiecePositionerAxes: '',
+    workpiecePositionerAxisNames: [],
+    robotCount: 1,
+    currentRobot: 'Robot 1',
+    partImageDataUrl: '',
+    recordsByRobot: {'Robot 1': []},
+    selectedRecordIndex: {'Robot 1': -1},
+    drawTool: 'freehand',
+    drawColor: '#ff5a00',
+    drawing: false,
+    startX: 0,
+    startY: 0,
+    baseImage: null
+  };
+}
+
+function renderCreateProject(el){
+  resetProjectWizardState();
+  el.innerHTML = `
+    <div class="panel-title">Create New Project</div>
+    <div class="create-form mobile-project-builder">
+      <div class="mobile-builder-head">
+        <div class="mobile-builder-sub">Engineer flow: robots, part, weld capture, annotation, next weld.</div>
+        <div class="mobile-builder-queue">Offline Queue: <strong id="queueCount">${projectQueueState.length}</strong></div>
+      </div>
+      <div class="mobile-builder-grid">
+        <label class="field-label" for="newProjName">Project Name</label>
+        <input id="newProjName" class="field-input" type="text" placeholder="e.g. ONEROBOT">
+        <label class="field-label" for="robotCount">Number of Robots</label>
+        <input id="robotCount" class="field-input" type="number" min="1" max="12" value="1">
+        <label class="field-label" for="robotSelect">Select Robot</label>
+        <select id="robotSelect" class="field-select"></select>
+        <label class="field-label" for="partNumber">Part Number</label>
+        <input id="partNumber" class="field-input" type="text" placeholder="e.g. PART-1001">
+        <label class="field-label" for="partImageInput">Part Image</label>
+        <input id="partImageInput" class="field-input" type="file" accept="image/*" capture="environment">
+        <label class="field-label" for="jobNumber">Job Number</label>
+        <input id="jobNumber" class="field-input" type="text" placeholder="e.g. JOB-24">
+        <label class="field-label" for="positionerAngle">Positioner Angle</label>
+        <input id="positionerAngle" class="field-input" type="number" step="0.1" placeholder="e.g. 45">
+        <label class="field-label" for="weldNumber">Weld Number</label>
+        <input id="weldNumber" class="field-input" type="number" min="1" placeholder="e.g. 1">
+        <label class="field-label" for="weldImageInput">Weld Image (Camera or Gallery)</label>
+        <input id="weldImageInput" class="field-input" type="file" accept="image/*" capture="environment">
+      </div>
+      <div class="annotate-wrap">
+        <div class="annotate-tools">
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('freehand')">Draw</button>
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('lineArrow')">Line Arrow</button>
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('splineArrow')">Spline Arrow</button>
+          <button class="tbl-btn revoke" type="button" onclick="clearAnnotationCanvas()">Clear</button>
+          <button class="tbl-btn" type="button" onclick="stampWeldNumber()">Stamp Weld No</button>
+          <input id="drawColor" type="color" value="#ff5a00" aria-label="Draw Color">
+        </div>
+        <canvas id="weldCanvas" width="1000" height="600"></canvas>
+      </div>
+      <div class="builder-actions">
+        <button class="action-btn" type="button" onclick="saveCurrentWeld()">Save Weld</button>
+        <button class="action-btn sec" type="button" onclick="goToNextWeld()">Next Weld</button>
+        <button class="action-btn sec" type="button" onclick="prevSavedWeld()">Prev Saved</button>
+        <button class="action-btn sec" type="button" onclick="nextSavedWeld()">Next Saved</button>
+        <button class="action-btn sec" type="button" onclick="deleteCurrentWeld()">Delete Weld</button>
+      </div>
+      <div id="weldList" class="queue-list"></div>
+      <div id="scanResult" class="info-msg" style="display:none"></div>
+      <div class="builder-actions">
+        <button class="action-btn" id="createProjBtn" type="button" onclick="createProject()">Create and Upload Project</button>
+        <button class="action-btn sec" type="button" onclick="syncQueuedProjects()">Sync Offline Queue</button>
+      </div>
+    </div>
+  `;
+  initProjectBuilderBindings();
+}
+
+function initProjectBuilderBindings(){
+  renderRobotSelectorOptions();
+  const canvas = document.getElementById('weldCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f6f6f6';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const robotCount = document.getElementById('robotCount');
+  const robotSelect = document.getElementById('robotSelect');
+  const drawColor = document.getElementById('drawColor');
+  const projectName = document.getElementById('newProjName');
+  const partNumber = document.getElementById('partNumber');
+  const annotationText = document.getElementById('annotationText');
+  const stampStyle = document.getElementById('stampStyle');
+  const stampFont = document.getElementById('stampFont');
+  const partImageInput = document.getElementById('partImageInput');
+  const weldImageInput = document.getElementById('weldImageInput');
+
+  robotCount.addEventListener('input', () => {
+    projectWizardState.robotCount = Math.max(1, parseInt(robotCount.value || '1', 10));
+    renderRobotSelectorOptions();
+  });
+  robotSelect.addEventListener('change', () => {
+    projectWizardState.currentRobot = robotSelect.value;
+    ensureRobotBucket(projectWizardState.currentRobot);
+    renderWeldAxisFields();
+    refreshWeldList();
+    loadSelectedWeldRecord();
+  });
+  drawColor.addEventListener('input', () => { projectWizardState.drawColor = drawColor.value; });
+  projectName.addEventListener('input', () => { projectWizardState.projectName = projectName.value.trim().toUpperCase(); });
+  partNumber.addEventListener('input', () => { projectWizardState.partNumber = partNumber.value.trim().toUpperCase(); });
+  partImageInput.addEventListener('change', async ev => {
+    const f = ev.target.files && ev.target.files[0];
+    if(!f) return;
+    projectWizardState.partImageDataUrl = await fileToDataUrl(f);
+    updateCreateStatus('Part image loaded.');
+  });
+  weldImageInput.addEventListener('change', async ev => {
+    const f = ev.target.files && ev.target.files[0];
+    if(!f) return;
+    const dataUrl = await fileToDataUrl(f);
+    const img = new Image();
+    img.onload = () => {
+      projectWizardState.baseImage = img;
+      clearAnnotationCanvas();
+    };
+    img.src = dataUrl;
+  });
+
+  const pos = ev => {
+    const r = canvas.getBoundingClientRect();
+    return {x: (ev.clientX - r.left) * (canvas.width / r.width), y: (ev.clientY - r.top) * (canvas.height / r.height)};
+  };
+  canvas.addEventListener('pointerdown', ev => {
+    const p = pos(ev);
+    projectWizardState.drawing = true;
+    projectWizardState.startX = p.x;
+    projectWizardState.startY = p.y;
+    if(projectWizardState.drawTool === 'freehand'){
+      ctx.strokeStyle = projectWizardState.drawColor;
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    }
+  });
+  canvas.addEventListener('pointermove', ev => {
+    if(!projectWizardState.drawing || projectWizardState.drawTool !== 'freehand') return;
+    const p = pos(ev);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  });
+  canvas.addEventListener('pointerup', ev => {
+    if(!projectWizardState.drawing) return;
+    const p = pos(ev);
+    if(projectWizardState.drawTool === 'lineArrow') drawArrowOnCanvas(ctx, projectWizardState.startX, projectWizardState.startY, p.x, p.y, projectWizardState.drawColor);
+    if(projectWizardState.drawTool === 'splineArrow') drawSplineArrowOnCanvas(ctx, projectWizardState.startX, projectWizardState.startY, p.x, p.y, projectWizardState.drawColor);
+    projectWizardState.drawing = false;
+  });
+}
+
+function renderRobotSelectorOptions(){
+  const dd = document.getElementById('robotSelect');
+  if(!dd) return;
+  dd.innerHTML = '';
+  for(let i=1;i<=projectWizardState.robotCount;i++){
+    const name = `Robot ${i}`;
+    ensureRobotBucket(name);
+    const op = document.createElement('option');
+    op.value = name;
+    op.textContent = name;
+    dd.appendChild(op);
+  }
+  if(!projectWizardState.recordsByRobot[projectWizardState.currentRobot]){
+    projectWizardState.currentRobot = 'Robot 1';
+  }
+  dd.value = projectWizardState.currentRobot;
+  refreshWeldList();
+}
+
+function ensureRobotBucket(robotName){
+  if(!projectWizardState.recordsByRobot[robotName]) projectWizardState.recordsByRobot[robotName] = [];
+  if(typeof projectWizardState.selectedRecordIndex[robotName] !== 'number') projectWizardState.selectedRecordIndex[robotName] = -1;
+}
+
+function setDrawTool(tool){
+  projectWizardState.drawTool = tool;
+}
+
+function drawArrowOnCanvas(ctx, x1, y1, x2, y2, color){
+  const head = 20;
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - head * Math.cos(a - Math.PI / 7), y2 - head * Math.sin(a - Math.PI / 7));
+  ctx.lineTo(x2 - head * Math.cos(a + Math.PI / 7), y2 - head * Math.sin(a + Math.PI / 7));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawSplineArrowOnCanvas(ctx, x1, y1, x2, y2, color){
+  const cx = (x1 + x2) / 2;
+  const cy = (y1 + y2) / 2 - 80;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.quadraticCurveTo(cx, cy, x2, y2);
+  ctx.stroke();
+  drawArrowOnCanvas(ctx, cx, cy, x2, y2, color);
+}
+
+function clearAnnotationCanvas(){
+  const canvas = document.getElementById('weldCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if(projectWizardState.baseImage){
+    ctx.drawImage(projectWizardState.baseImage, 0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.fillStyle = '#f6f6f6';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+function stampWeldNumber(){
+  const weldNo = (document.getElementById('weldNumber').value || '').trim();
+  if(!weldNo) return alert('Enter weld number first.');
+  const canvas = document.getElementById('weldCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = projectWizardState.drawColor;
+  ctx.font = 'bold 42px Arial';
+  ctx.fillText(`W${weldNo}`, 24, 58);
+}
+
+function fileToDataUrl(file){
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+function updateCreateStatus(msg){
+  const el = document.getElementById('scanResult');
+  if(!el) return;
+  el.style.display = 'block';
+  el.innerHTML = msg;
+}
+
+function getCurrentRobotRecords(){
+  ensureRobotBucket(projectWizardState.currentRobot);
+  return projectWizardState.recordsByRobot[projectWizardState.currentRobot];
+}
+
+function saveCurrentWeld(){
+  const partNo = (document.getElementById('partNumber').value || '').trim().toUpperCase();
+  const jobNo = (document.getElementById('jobNumber').value || '').trim();
+  const angle = (document.getElementById('positionerAngle').value || '').trim();
+  const weldNo = (document.getElementById('weldNumber').value || '').trim();
+  if(!partNo) return alert('Part number is required.');
+  if(!weldNo) return alert('Weld number is required.');
+  const canvas = document.getElementById('weldCanvas');
+  const records = getCurrentRobotRecords();
+  const idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  const record = {partNo, jobNo, angle, weldNo, imageDataUrl: canvas.toDataURL('image/png')};
+  if(idx >= 0 && idx < records.length){
+    records[idx] = record;
+  } else {
+    records.push(record);
+    projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = records.length - 1;
+  }
+  refreshWeldList();
+  updateCreateStatus(`Saved weld ${weldNo} for ${projectWizardState.currentRobot}.`);
+}
+
+function loadRecordToForm(index){
+  const records = getCurrentRobotRecords();
+  if(index < 0 || index >= records.length) return;
+  const r = records[index];
+  const partIndex = Math.max(0, projectWizardState.partNames.indexOf(r.partNo || projectWizardState.partNames[0]));
+  projectWizardState.selectedPartIndex = partIndex;
+  renderPartSelector();
+  document.getElementById('partNumber').value = r.partNo || '';
+  document.getElementById('jobNumber').value = r.jobNo || '';
+  document.getElementById('positionerAngle').value = r.angle || '';
+  document.getElementById('weldNumber').value = r.weldNo || '';
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = index;
+  const img = new Image();
+  img.onload = () => {
+    projectWizardState.baseImage = img;
+    clearAnnotationCanvas();
+  };
+  img.src = r.imageDataUrl;
+}
+
+function loadSelectedWeldRecord(){
+  const idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  if(idx >= 0) loadRecordToForm(idx);
+}
+
+function refreshWeldList(){
+  const list = document.getElementById('weldList');
+  if(!list) return;
+  const records = getCurrentRobotRecords();
+  if(records.length === 0){
+    list.innerHTML = `<div class="queue-row"><strong>${projectWizardState.currentRobot}</strong><span>No welds saved yet.</span></div>`;
+    return;
+  }
+  list.innerHTML = records.map((r, i) => `
+    <div class="queue-row" onclick="loadRecordToForm(${i})" style="cursor:pointer">
+      <strong>${projectWizardState.currentRobot} - Weld ${r.weldNo}</strong>
+      <span>Part: ${r.partNo} | Job: ${r.jobNo || '-'} | Angle: ${r.angle || '-'}</span>
+    </div>
+  `).join('');
+}
+
+function goToNextWeld(){
+  saveCurrentWeld();
+  document.getElementById('jobNumber').value = '';
+  document.getElementById('positionerAngle').value = '';
+  const weld = document.getElementById('weldNumber');
+  weld.value = String((parseInt(weld.value || '0', 10) || 0) + 1);
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = -1;
+  clearAnnotationCanvas();
+}
+
+function prevSavedWeld(){
+  const records = getCurrentRobotRecords();
+  if(records.length === 0) return;
+  let idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  idx = idx <= 0 ? records.length - 1 : idx - 1;
+  loadRecordToForm(idx);
+}
+
+function nextSavedWeld(){
+  const records = getCurrentRobotRecords();
+  if(records.length === 0) return;
+  let idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  idx = idx >= records.length - 1 ? 0 : idx + 1;
+  loadRecordToForm(idx);
+}
+
+function deleteCurrentWeld(){
+  const records = getCurrentRobotRecords();
+  const idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  if(idx < 0 || idx >= records.length) return alert('Select a saved weld to delete.');
+  records.splice(idx, 1);
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = -1;
+  refreshWeldList();
+  clearAnnotationCanvas();
+  updateCreateStatus('Weld deleted.');
+}
+
+function dataUrlToBlob(dataUrl){
+  const parts = dataUrl.split(',');
+  const mime = (parts[0].match(/:(.*?);/) || [])[1] || 'image/png';
+  const binary = atob(parts[1]);
+  const arr = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) arr[i] = binary.charCodeAt(i);
+  return new Blob([arr], {type: mime});
+}
+
+function buildProjectPayload(){
+  const projectName = (document.getElementById('newProjName').value || '').trim().toUpperCase();
+  const partNo = (document.getElementById('partNumber').value || projectWizardState.partNumber || '').trim().toUpperCase();
+  if(!projectName) throw new Error('Project name is required.');
+  if(!partNo) throw new Error('Part number is required.');
+  const parts = [partNo];
+  const csvEntries = [];
+  const imageEntries = [];
+  const partImageName = `${partNo}_part.png`;
+  const robots = [];
+  for(let i=1;i<=projectWizardState.robotCount;i++) robots.push(`Robot ${i}`);
+  csvEntries.push({
+    name: 'part_data.csv',
+    text: `PART_NO,PART_NAME,PART_IMAGE,ROBOTS\n${partNo},${partNo},${partImageName},"${robots.join('|')}"\n`
+  });
+  if(projectWizardState.partImageDataUrl){
+    imageEntries.push({name: partImageName, dataUrl: projectWizardState.partImageDataUrl, contentType: 'image/png'});
+  }
+  for(let i=1;i<=projectWizardState.robotCount;i++){
+    const robot = `Robot ${i}`;
+    ensureRobotBucket(robot);
+    const rows = ['WeldNo,PositionerAngle,JobName,ImageId'];
+    const records = projectWizardState.recordsByRobot[robot];
+    records.forEach(r => {
+      const imageBase = `${partNo.toLowerCase()}_robot${i}_weld${r.weldNo}`;
+      rows.push(`${r.weldNo},${r.angle || ''},${r.jobNo || ''},${imageBase}`);
+      imageEntries.push({name: `${imageBase}.png`, dataUrl: r.imageDataUrl, contentType: 'image/png'});
+    });
+    csvEntries.push({name: `${partNo.toLowerCase()}_robot${i}.csv`, text: rows.join('\n') + '\n'});
+  }
+  return {projectName, parts, csvEntries, imageEntries};
+}
+
+function persistProjectQueue(){
+  localStorage.setItem('weldViewerCreateQueue', JSON.stringify(projectQueueState));
+  const qc = document.getElementById('queueCount');
+  if(qc) qc.innerText = String(projectQueueState.length);
+}
+
+function enqueueProject(payload){
+  projectQueueState.push({
+    queuedAt: new Date().toISOString(),
+    projectName: payload.projectName,
+    parts: payload.parts,
+    csvEntries: payload.csvEntries,
+    imageEntries: payload.imageEntries
+  });
+  persistProjectQueue();
+}
+
+async function uploadProjectPayload(payload){
+  loading(true, projectWizardState.projectId ? 'Updating project...' : 'Creating project...');
+  let projId = projectWizardState.projectId;
+  if(projId){
+    const {error:updateErr}=await sb.from('projects').update({name:payload.projectName,parts:payload.parts}).eq('id',projId);
+    if(updateErr) throw updateErr;
+    const {data:csvExisting=[]}=await sb.storage.from('projects').list(`${projId}/csv`,{limit:500});
+    if(csvExisting.length){
+      await sb.storage.from('projects').remove(csvExisting.map(f=>`${projId}/csv/${f.name}`));
+    }
+    const {data:imageExisting=[]}=await sb.storage.from('projects').list(`${projId}/images`,{limit:1000});
+    if(imageExisting.length){
+      await sb.storage.from('projects').remove(imageExisting.map(f=>`${projId}/images/${f.name}`));
+    }
+  } else {
+    const {data:proj,error:pe}=await sb.from('projects').insert({name:payload.projectName,owner_id:S.profile.id,parts:payload.parts}).select().single();
+    if(pe) throw pe;
+    projId = proj.id;
+    projectWizardState.projectId = projId;
+  }
+  for(let i=0;i<payload.csvEntries.length;i++){
+    const csv = payload.csvEntries[i];
+    loading(true, `Uploading CSV ${i+1}/${payload.csvEntries.length}: ${csv.name}`);
+    const blob = new Blob([csv.text], {type: 'text/csv'});
+    const {error} = await sb.storage.from('projects').upload(`${projId}/csv/${csv.name}`, blob, {upsert: true});
+    if(error) console.warn('CSV upload error:', csv.name, error.message);
+  }
+  for(let i=0;i<payload.imageEntries.length;i++){
+    const img = payload.imageEntries[i];
+    loading(true, `Uploading image ${i+1}/${payload.imageEntries.length}: ${img.name}`);
+    const blob = dataUrlToBlob(img.dataUrl);
+    const {error} = await sb.storage.from('projects').upload(`${projId}/images/${img.name}`, blob, {upsert: true, contentType: img.contentType || 'image/png'});
+    if(error) console.warn('Image upload error:', img.name, error.message);
+  }
+  loading(false);
+}
+
+async function syncQueuedProjects(){
+  if(projectQueueState.length === 0){
+    updateCreateStatus('No queued projects.');
+    return;
+  }
+  if(!navigator.onLine){
+    updateCreateStatus('Still offline. Queue sync will run when online.');
+    return;
+  }
+  const pending = [...projectQueueState];
+  projectQueueState = [];
+  persistProjectQueue();
+  for(const item of pending){
+    try{
+      await uploadProjectPayload(item);
+    }catch(err){
+      console.warn('Queue sync failed:', err);
+      projectQueueState.push(item);
+    }
+  }
+  persistProjectQueue();
+  updateCreateStatus(projectQueueState.length ? `Queue sync done with ${projectQueueState.length} pending.` : 'Queue sync complete.');
+}
+
+async function createProject(){
+  let payload;
+  try{
+    payload = buildProjectPayload();
+  }catch(err){
+    alert(err.message || 'Please fill required fields.');
+    return;
+  }
+  const btn = document.getElementById('createProjBtn');
+  btn.disabled = true;
+  btn.innerText = 'Uploading...';
+  try{
+    if(!navigator.onLine){
+      enqueueProject(payload);
+      updateCreateStatus('Offline: project added to local queue.');
+      alert('Offline now. Project queued on device.');
+      return;
+    }
+    await uploadProjectPayload(payload);
+    updateCreateStatus(`Project ${payload.projectName} saved. CSV ${payload.csvEntries.length}, images ${payload.imageEntries.length}.`);
+    alert(`Project "${payload.projectName}" saved successfully.`);
+    showPanel('projects');
+  }catch(err){
+    alert('Upload failed: ' + (err.message || err));
+  }finally{
+    loading(false);
+    btn.disabled = false;
+    btn.innerText = projectWizardState.projectId ? 'Save Project Changes' : 'Create and Upload Project';
+  }
+}
+
+window.addEventListener('online', () => {
+  if(projectQueueState.length > 0) syncQueuedProjects();
+});
+
+/* Enhanced mobile project creation override */
+let builderCameraStream = null;
+let builderCameraTarget = 'weld';
+let pendingProjectWizardState = null;
+
+function resetProjectWizardState(){
+  projectWizardState = {
+    projectId: '',
+    projectName: '',
+    partNumber: '',
+    partCount: 1,
+    partNames: ['PART-1'],
+    selectedPartIndex: 0,
+    partImageByPart: {},
+    robotCount: 1,
+    currentRobot: 'Robot 1',
+    setupStep: 'setup',
+    robotPositionerEnabled: 'N',
+    robotPositionerAxes: '',
+    robotPositionerAxisNames: [],
+    workpiecePositionerEnabled: 'N',
+    workpiecePositionerAxes: '',
+    workpiecePositionerAxisNames: [],
+    partImageDataUrl: '',
+    baseImageDataUrl: '',
+    axisValuesByRobot: {'Robot 1': {robotPositionerValues:{}, workpiecePositionerValues:{}, workpieceAngle:''}},
+    annotationsByRobot: {'Robot 1': []},
+    recordsByRobot: {'Robot 1': []},
+    selectedRecordIndex: {'Robot 1': -1},
+    drawTool: 'lineArrow',
+    drawColor: '#ff5a00',
+    currentZoom: 1,
+    currentThickness: 4,
+    selectedAnnotationIndex: -1,
+    currentTextValue: '',
+    stampStyle: 'transparent',
+    stampOutline: 'no-outline',
+    stampBackgroundColor: '#ffffff',
+    stampFont: 'Arial',
+    stampBold: true,
+    stampItalic: false,
+    stampUnderline: false,
+    interactionMode: 'annotate',
+    draftTextPosition: null,
+    interaction: { mode: 'idle', annotationIndex: -1, pointKey: null },
+    baseImageElement: null
+  };
+}
+
+function renderCreateProject(el){
+  if(pendingProjectWizardState){
+    projectWizardState = pendingProjectWizardState;
+    pendingProjectWizardState = null;
+  } else {
+    resetProjectWizardState();
+  }
+  el.innerHTML = `
+    <div class="panel-title">${projectWizardState.projectId ? 'Edit Project' : 'Create New Project'}</div>
+    <div class="create-form mobile-project-builder" id="mobileProjectBuilder">
+      <div class="mobile-builder-head">
+        <div class="mobile-builder-sub">Engineer flow: pick robot, add part, capture weld image, annotate in full screen, save, and move to the next weld.</div>
+      </div>
+
+      <div id="projectSetupStage" class="wizard-stage">
+      <div class="mobile-builder-grid">
+        <label class="field-label" for="newProjName">Project Name</label>
+        <input id="newProjName" class="field-input" type="text" placeholder="e.g. ONEROBOT">
+        <label class="field-label" for="robotCount">Number of Robots</label>
+        <input id="robotCount" class="field-input" type="number" min="1" max="12" value="1">
+        <label class="field-label" for="partCount">No. Parts</label>
+        <input id="partCount" class="field-input" type="number" min="1" max="50" value="${projectWizardState.partCount || 1}">
+        <label class="field-label">Part Names</label>
+        <div id="partNamesWrap" class="part-names-wrap"></div>
+        <label class="field-label" for="robotPositionerEnabled">Robot Positioner</label>
+        <select id="robotPositionerEnabled" class="field-select">
+          <option value="N">No</option>
+          <option value="Y">Yes</option>
+        </select>
+        <label class="field-label" for="robotPositionerAxes">Robot Positioner Axis</label>
+        <select id="robotPositionerAxes" class="field-select">
+          <option value="">Select Axis</option>
+          <option value="1-Axis">1-Axis</option>
+          <option value="2-Axis">2-Axis</option>
+          <option value="3-Axis">3-Axis</option>
+        </select>
+        <label class="field-label axis-name-label" for="robotPositionerAxisNamesWrap">Robot Positioner Axis Names</label>
+        <div id="robotPositionerAxisNamesWrap" class="part-names-wrap axis-fields-wrap"></div>
+        <label class="field-label" for="workpiecePositionerEnabled">Workpiece Positioner</label>
+        <select id="workpiecePositionerEnabled" class="field-select">
+          <option value="N">No</option>
+          <option value="Y">Yes</option>
+        </select>
+        <label class="field-label" for="workpiecePositionerAxes">Workpiece Positioner Axis</label>
+        <select id="workpiecePositionerAxes" class="field-select">
+          <option value="">Select Axis</option>
+          <option value="1-Axis">1-Axis</option>
+          <option value="2-Axis">2-Axis</option>
+          <option value="3-Axis">3-Axis</option>
+        </select>
+        <label class="field-label axis-name-label" for="workpiecePositionerAxisNamesWrap">Workpiece Positioner Axis Names</label>
+        <div id="workpiecePositionerAxisNamesWrap" class="part-names-wrap axis-fields-wrap"></div>
+      </div>
+      <div class="builder-actions single-action">
+        <button class="action-btn" type="button" onclick="continueToWeldBuilder()">Continue To Weld Page</button>
+      </div>
+      </div>
+
+      <div id="weldBuilderStage" class="wizard-stage" style="display:none">
+      <div class="setup-summary-card" id="setupSummaryCard"></div>
+
+      <div class="mobile-builder-grid">
+        <label class="field-label" for="robotSelect">Select Robot</label>
+        <select id="robotSelect" class="field-select"></select>
+        <label class="field-label" for="partSelect">Select Part</label>
+        <select id="partSelect" class="field-select"></select>
+        <label class="field-label" for="partNumber">Part Number</label>
+        <input id="partNumber" class="field-input" type="text" placeholder="e.g. PART-1001" readonly>
+        <label class="field-label" for="partImageInput">Part Image</label>
+        <button id="partImageTrigger" class="field-input image-source-trigger" type="button" onclick="openImageSourcePicker('part')">Capture or Choose Part Image</button>
+        <input id="partImageInput" class="field-input" type="file" accept="image/*" hidden>
+        <div class="image-preview-card inline-preview-card">
+          <div class="field-label">Part Preview</div>
+          <div id="partPreview" class="image-preview-box part-preview-box">No part image</div>
+        </div>
+        <label class="field-label" for="jobNumber">Job Number</label>
+        <input id="jobNumber" class="field-input" type="text" placeholder="e.g. JOB-24">
+        <label class="field-label" for="workpiecePositionerAngle">Workpiece Positioner Angle</label>
+        <input id="workpiecePositionerAngle" class="field-input" type="number" step="0.1" placeholder="e.g. 45">
+        <div id="weldAxisValuesCard" class="setup-summary-card axis-values-card"></div>
+        <div id="weldAxisValueFields" class="mobile-builder-grid axis-value-fields"></div>
+        <label class="field-label" for="weldNumber">Weld Number / Weld ID</label>
+        <input id="weldNumber" class="field-input" type="text" placeholder="e.g. W-12/A#3">
+        <label class="field-label" for="weldNotes">Notes</label>
+        <textarea id="weldNotes" class="field-input builder-notes" placeholder="Add notes for this weld"></textarea>
+        <label class="field-label" for="weldImageInput">Weld Image</label>
+        <button id="weldImageTrigger" class="field-input image-source-trigger" type="button" onclick="openImageSourcePicker('weld')">Capture or Choose Weld Image</button>
+        <input id="weldImageInput" class="field-input" type="file" accept="image/*" hidden>
+        <div class="image-preview-card inline-preview-card">
+          <div class="field-label">Weld Preview</div>
+          <div id="weldPreview" class="image-preview-box weld-preview-box">No weld image</div>
+        </div>
+      </div>
+
+      <div class="capture-actions">
+        <button class="action-btn sec" type="button" onclick="openAnnotationFullscreen()">Full Screen Annotate</button>
+        <button class="action-btn sec" type="button" onclick="addSyncWeld()">SYNC</button>
+      </div>
+
+      <div class="annotate-wrap">
+        <div class="annotate-tools">
+          <button class="tbl-btn approve" type="button" onclick="setInteractionMode('select')">Select</button>
+          <button class="tbl-btn approve" type="button" onclick="setInteractionMode('pan')">Pan</button>
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('freehand')">Draw</button>
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('lineArrow')">Line</button>
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('splineArrow')">Spline</button>
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('text')">Text</button>
+          <button class="tbl-btn revoke" type="button" onclick="clearAnnotationCanvas()">Clear</button>
+          <button class="tbl-btn revoke" type="button" onclick="deleteSelectedAnnotation()">Delete Selected</button>
+          <button class="tbl-btn" type="button" onclick="stampWeldNumber()">Stamp Weld ID</button>
+          <label class="zoom-inline">Zoom <input id="builderZoom" type="range" min="1" max="3" step="0.1" value="1"></label>
+          <label class="zoom-inline">Thickness <input id="builderThickness" type="range" min="1" max="16" step="1" value="4"></label>
+          <label class="zoom-inline">Stamp Background
+            <select id="stampStyle" class="tool-select">
+              <option value="transparent">Transparent</option>
+              <option value="opaque">Background</option>
+            </select>
+          </label>
+          <label class="zoom-inline">Outline
+            <select id="stampOutline" class="tool-select">
+              <option value="no-outline">No Outline</option>
+              <option value="outline">Outline</option>
+            </select>
+          </label>
+          <label class="zoom-inline">Background Color <input id="stampBackgroundColor" type="color" value="#ffffff" aria-label="Stamp Background Color"></label>
+          <label class="zoom-inline">Font
+            <select id="stampFont" class="tool-select">
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Garamond">Garamond</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Cambria">Cambria</option>
+              <option value="Baskerville">Baskerville</option>
+              <option value="Arial">Arial</option>
+              <option value="Calibri">Calibri</option>
+              <option value="Helvetica">Helvetica</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Tahoma">Tahoma</option>
+              <option value="Roboto">Roboto</option>
+              <option value="Open Sans">Open Sans</option>
+              <option value="Inter">Inter</option>
+              <option value="Lato">Lato</option>
+              <option value="Montserrat">Montserrat</option>
+            </select>
+          </label>
+          <button class="tbl-btn approve" type="button" id="stampBoldBtn" onclick="toggleStampStyleOption('bold')">Bold</button>
+          <button class="tbl-btn approve" type="button" id="stampItalicBtn" onclick="toggleStampStyleOption('italic')">Italic</button>
+          <button class="tbl-btn approve" type="button" id="stampUnderlineBtn" onclick="toggleStampStyleOption('underline')">Underline</button>
+          <input id="drawColor" type="color" value="#ff5a00" aria-label="Draw Color">
+        </div>
+        <div class="canvas-preview-shell" id="weldCanvasShell">
+          <canvas id="weldCanvas" width="1000" height="600"></canvas>
+        </div>
+      </div>
+      <div id="annotationList" class="annotation-list"></div>
+
+      <div class="builder-actions">
+        <button class="action-btn" type="button" onclick="saveCurrentWeld()">Save Weld</button>
+        <button class="action-btn sec" type="button" onclick="goToNextWeld()">Next Weld</button>
+        <button class="action-btn sec" type="button" onclick="prevSavedWeld()">Prev Saved</button>
+        <button class="action-btn sec" type="button" onclick="nextSavedWeld()">Next Saved</button>
+        <button class="action-btn sec" type="button" onclick="deleteCurrentWeld()">Delete Weld</button>
+      </div>
+
+      <div id="weldList" class="queue-list"></div>
+      <div id="scanResult" class="info-msg" style="display:none"></div>
+
+      <div class="builder-actions">
+        <button class="action-btn" id="createProjBtn" type="button" onclick="createProject()">${projectWizardState.projectId ? 'Save Project Changes' : 'Create and Upload Project'}</button>
+        <button class="action-btn sec" type="button" onclick="showPanel('projects')">Back To Projects</button>
+      </div>
+      </div>
+    </div>
+
+    <div id="cameraOverlay" class="builder-overlay" style="display:none">
+      <div class="builder-overlay-card camera-card">
+        <div class="builder-overlay-head">
+          <strong>Camera Capture</strong>
+          <button class="tbl-btn revoke" type="button" onclick="closeCameraCapture()">Close</button>
+        </div>
+        <div class="camera-frame-wrap">
+          <video id="cameraVideo" autoplay playsinline></video>
+          <div class="camera-crop-guide"></div>
+          <div class="camera-actions-overlay">
+            <button class="action-btn" type="button" onclick="captureCameraFrame()">Capture Photo</button>
+            <button class="action-btn sec" type="button" onclick="closeCameraCapture()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="imageSourceOverlay" class="builder-overlay" style="display:none">
+      <div class="builder-overlay-card camera-card">
+        <div class="builder-overlay-head">
+          <strong>Select Image Source</strong>
+          <button class="tbl-btn revoke" type="button" onclick="closeImageSourcePicker()">Close</button>
+        </div>
+        <div class="capture-actions">
+          <button class="action-btn" type="button" onclick="chooseImageSource('camera')">Camera</button>
+          <button class="action-btn sec" type="button" onclick="chooseImageSource('gallery')">Gallery</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="annotationOverlay" class="builder-overlay" style="display:none">
+      <div class="builder-overlay-card annotation-card">
+        <div class="builder-overlay-head">
+          <strong>Full Screen Weld Annotation</strong>
+          <button class="tbl-btn revoke" type="button" onclick="closeAnnotationFullscreen()">Done</button>
+        </div>
+        <div class="annotate-tools full-tools">
+          <button class="tbl-btn approve" type="button" onclick="setInteractionMode('select')">Select</button>
+          <button class="tbl-btn approve" type="button" onclick="setInteractionMode('pan')">Pan</button>
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('freehand')">Draw</button>
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('lineArrow')">Line</button>
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('splineArrow')">Spline</button>
+          <button class="tbl-btn approve" type="button" onclick="setDrawTool('text')">Text</button>
+          <button class="tbl-btn revoke" type="button" onclick="clearAnnotationCanvas()">Clear</button>
+          <button class="tbl-btn revoke" type="button" onclick="deleteSelectedAnnotation()">Delete Selected</button>
+          <button class="tbl-btn" type="button" onclick="stampWeldNumber()">Stamp Weld ID</button>
+          <label class="zoom-inline">Zoom <input id="overlayZoom" type="range" min="1" max="4" step="0.1" value="1"></label>
+          <label class="zoom-inline">Thickness <input id="overlayThickness" type="range" min="1" max="16" step="1" value="4"></label>
+          <label class="zoom-inline">Background
+            <select id="overlayStampStyle" class="tool-select">
+              <option value="transparent">Transparent</option>
+              <option value="opaque">Background</option>
+            </select>
+          </label>
+          <label class="zoom-inline">Outline
+            <select id="overlayStampOutline" class="tool-select">
+              <option value="no-outline">No Outline</option>
+              <option value="outline">Outline</option>
+            </select>
+          </label>
+          <label class="zoom-inline">Background Color <input id="overlayStampBackgroundColor" type="color" value="#ffffff" aria-label="Overlay Stamp Background Color"></label>
+          <label class="zoom-inline">Font
+            <select id="overlayStampFont" class="tool-select">
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Garamond">Garamond</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Cambria">Cambria</option>
+              <option value="Baskerville">Baskerville</option>
+              <option value="Arial">Arial</option>
+              <option value="Calibri">Calibri</option>
+              <option value="Helvetica">Helvetica</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Tahoma">Tahoma</option>
+              <option value="Roboto">Roboto</option>
+              <option value="Open Sans">Open Sans</option>
+              <option value="Inter">Inter</option>
+              <option value="Lato">Lato</option>
+              <option value="Montserrat">Montserrat</option>
+            </select>
+          </label>
+          <button class="tbl-btn approve" type="button" id="overlayStampBoldBtn" onclick="toggleStampStyleOption('bold')">Bold</button>
+          <button class="tbl-btn approve" type="button" id="overlayStampItalicBtn" onclick="toggleStampStyleOption('italic')">Italic</button>
+          <button class="tbl-btn approve" type="button" id="overlayStampUnderlineBtn" onclick="toggleStampStyleOption('underline')">Underline</button>
+          <input id="overlayColor" type="color" value="#ff5a00" aria-label="Overlay Draw Color">
+        </div>
+        <div class="fullscreen-canvas-wrap" id="fullWeldCanvasShell">
+          <canvas id="fullWeldCanvas" width="1400" height="900"></canvas>
+        </div>
+      </div>
+    </div>
+  `;
+  initProjectBuilderBindings();
+}
+
+function initProjectBuilderBindings(){
+  const robotCount = document.getElementById('robotCount');
+  const robotSelect = document.getElementById('robotSelect');
+  const drawColor = document.getElementById('drawColor');
+  const overlayColor = document.getElementById('overlayColor');
+  const projectName = document.getElementById('newProjName');
+  const partCount = document.getElementById('partCount');
+  const partSelect = document.getElementById('partSelect');
+  const partNumber = document.getElementById('partNumber');
+  const workpiecePositionerAngle = document.getElementById('workpiecePositionerAngle');
+  const robotPositionerEnabled = document.getElementById('robotPositionerEnabled');
+  const robotPositionerAxes = document.getElementById('robotPositionerAxes');
+  const workpiecePositionerEnabled = document.getElementById('workpiecePositionerEnabled');
+  const workpiecePositionerAxes = document.getElementById('workpiecePositionerAxes');
+  const partImageInput = document.getElementById('partImageInput');
+  const weldImageInput = document.getElementById('weldImageInput');
+  const builderZoom = document.getElementById('builderZoom');
+  const overlayZoom = document.getElementById('overlayZoom');
+  const builderThickness = document.getElementById('builderThickness');
+  const overlayThickness = document.getElementById('overlayThickness');
+  const stampStyle = document.getElementById('stampStyle');
+  const stampOutline = document.getElementById('stampOutline');
+  const stampBackgroundColor = document.getElementById('stampBackgroundColor');
+  const stampFont = document.getElementById('stampFont');
+  const overlayStampStyle = document.getElementById('overlayStampStyle');
+  const overlayStampOutline = document.getElementById('overlayStampOutline');
+  const overlayStampBackgroundColor = document.getElementById('overlayStampBackgroundColor');
+  const overlayStampFont = document.getElementById('overlayStampFont');
+
+  robotCount.addEventListener('input', () => {
+    projectWizardState.robotCount = Math.max(1, parseInt(robotCount.value || '1', 10));
+    renderRobotSelectorOptions();
+  });
+  partCount.addEventListener('input', () => {
+    projectWizardState.partCount = Math.max(1, parseInt(partCount.value || '1', 10));
+    ensurePartNames();
+    renderPartNameFields();
+    renderPartSelector();
+  });
+  robotSelect.addEventListener('change', () => {
+    projectWizardState.currentRobot = robotSelect.value;
+    ensureRobotBucket(projectWizardState.currentRobot);
+    renderWeldAxisFields();
+    refreshWeldList();
+    loadSelectedWeldRecord();
+  });
+  partSelect.addEventListener('change', () => {
+    projectWizardState.selectedPartIndex = Math.max(0, parseInt(partSelect.value || '0', 10));
+    syncSelectedPartToForm();
+  });
+  drawColor.addEventListener('input', () => {
+    projectWizardState.drawColor = drawColor.value;
+    overlayColor.value = drawColor.value;
+  });
+  overlayColor.addEventListener('input', () => {
+    projectWizardState.drawColor = overlayColor.value;
+    drawColor.value = overlayColor.value;
+  });
+  projectName.addEventListener('input', () => { projectWizardState.projectName = projectName.value.trim().toUpperCase(); });
+  partNumber.addEventListener('input', () => { projectWizardState.partNumber = partNumber.value.trim().toUpperCase(); });
+  workpiecePositionerAngle.addEventListener('input', () => {
+    getCurrentRobotAxisValueState().workpieceAngle = workpiecePositionerAngle.value;
+  });
+  stampStyle.addEventListener('change', () => { projectWizardState.stampStyle = stampStyle.value; });
+  stampOutline.addEventListener('change', () => { projectWizardState.stampOutline = stampOutline.value; });
+  stampBackgroundColor.addEventListener('input', () => {
+    projectWizardState.stampBackgroundColor = stampBackgroundColor.value;
+    overlayStampBackgroundColor.value = stampBackgroundColor.value;
+  });
+  stampFont.addEventListener('change', () => { projectWizardState.stampFont = stampFont.value; });
+  overlayStampStyle.addEventListener('change', () => {
+    projectWizardState.stampStyle = overlayStampStyle.value;
+    stampStyle.value = overlayStampStyle.value;
+  });
+  overlayStampOutline.addEventListener('change', () => {
+    projectWizardState.stampOutline = overlayStampOutline.value;
+    stampOutline.value = overlayStampOutline.value;
+  });
+  overlayStampBackgroundColor.addEventListener('input', () => {
+    projectWizardState.stampBackgroundColor = overlayStampBackgroundColor.value;
+    stampBackgroundColor.value = overlayStampBackgroundColor.value;
+  });
+  overlayStampFont.addEventListener('change', () => {
+    projectWizardState.stampFont = overlayStampFont.value;
+    stampFont.value = overlayStampFont.value;
+  });
+  robotPositionerEnabled.addEventListener('change', () => {
+    projectWizardState.robotPositionerEnabled = robotPositionerEnabled.value;
+    toggleAxisField('robotPositionerAxes', 'robotPositionerAxisNamesWrap', robotPositionerEnabled.value === 'Y');
+    renderAxisNameFields('robot');
+    renderWeldAxisFields();
+    updateSetupSummary();
+  });
+  robotPositionerAxes.addEventListener('change', () => {
+    projectWizardState.robotPositionerAxes = robotPositionerAxes.value;
+    renderAxisNameFields('robot');
+    renderWeldAxisFields();
+    updateSetupSummary();
+  });
+  workpiecePositionerEnabled.addEventListener('change', () => {
+    projectWizardState.workpiecePositionerEnabled = workpiecePositionerEnabled.value;
+    toggleAxisField('workpiecePositionerAxes', 'workpiecePositionerAxisNamesWrap', workpiecePositionerEnabled.value === 'Y');
+    renderAxisNameFields('workpiece');
+    renderWeldAxisFields();
+    updateSetupSummary();
+  });
+  workpiecePositionerAxes.addEventListener('change', () => {
+    projectWizardState.workpiecePositionerAxes = workpiecePositionerAxes.value;
+    renderAxisNameFields('workpiece');
+    renderWeldAxisFields();
+    updateSetupSummary();
+  });
+  builderZoom.addEventListener('input', () => {
+    const prevZoom = projectWizardState.currentZoom || 1;
+    projectWizardState.currentZoom = parseFloat(builderZoom.value || '1');
+    overlayZoom.value = builderZoom.value;
+    recenterCanvasViews(prevZoom, projectWizardState.currentZoom);
+    redrawBuilderCanvases();
+  });
+  overlayZoom.addEventListener('input', () => {
+    const prevZoom = projectWizardState.currentZoom || 1;
+    projectWizardState.currentZoom = parseFloat(overlayZoom.value || '1');
+    builderZoom.value = overlayZoom.value;
+    recenterCanvasViews(prevZoom, projectWizardState.currentZoom);
+    redrawBuilderCanvases();
+  });
+  builderThickness.addEventListener('input', () => {
+    projectWizardState.currentThickness = parseInt(builderThickness.value || '4', 10);
+    overlayThickness.value = builderThickness.value;
+    applyThicknessToSelectedAnnotation();
+  });
+  overlayThickness.addEventListener('input', () => {
+    projectWizardState.currentThickness = parseInt(overlayThickness.value || '4', 10);
+    builderThickness.value = overlayThickness.value;
+    applyThicknessToSelectedAnnotation();
+  });
+  partImageInput.addEventListener('change', async ev => {
+    const f = ev.target.files && ev.target.files[0];
+    if(!f) return;
+    await loadPartImageFile(f);
+    ev.target.value = '';
+  });
+  weldImageInput.addEventListener('change', async ev => {
+    const f = ev.target.files && ev.target.files[0];
+    if(!f) return;
+    await loadWeldImageFile(f);
+    ev.target.value = '';
+  });
+
+  attachCanvasHandlers('weldCanvas');
+  attachCanvasHandlers('fullWeldCanvas');
+  attachPanHandlers('weldCanvasShell');
+  attachPanHandlers('fullWeldCanvasShell');
+  ensurePartNames();
+  renderPartNameFields();
+  renderPartSelector();
+  renderRobotSelectorOptions();
+  renderAxisNameFields('robot');
+  renderAxisNameFields('workpiece');
+  syncSetupFields();
+  updateSetupSummary();
+  syncSelectedPartToForm();
+  renderWeldAxisFields();
+  updateWizardStepUI();
+  overlayStampStyle.value = projectWizardState.stampStyle;
+  overlayStampOutline.value = projectWizardState.stampOutline;
+  stampBackgroundColor.value = projectWizardState.stampBackgroundColor || '#ffffff';
+  overlayStampBackgroundColor.value = projectWizardState.stampBackgroundColor || '#ffffff';
+  overlayStampFont.value = projectWizardState.stampFont;
+  updateStampButtons();
+  renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
+  renderImagePreview('weldPreview', projectWizardState.baseImageDataUrl);
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+}
+
+function ensurePartNames(){
+  const count = Math.max(1, parseInt(projectWizardState.partCount || '1', 10));
+  if(!Array.isArray(projectWizardState.partNames)) projectWizardState.partNames = [];
+  while(projectWizardState.partNames.length < count){
+    projectWizardState.partNames.push(`PART-${projectWizardState.partNames.length + 1}`);
+  }
+  projectWizardState.partNames = projectWizardState.partNames.slice(0, count);
+  if(projectWizardState.selectedPartIndex >= projectWizardState.partNames.length){
+    projectWizardState.selectedPartIndex = 0;
+  }
+}
+
+function renderPartNameFields(){
+  const wrap = document.getElementById('partNamesWrap');
+  if(!wrap) return;
+  wrap.innerHTML = projectWizardState.partNames.map((name, index) => `
+    <input class="field-input part-name-input" type="text" value="${name || ''}" placeholder="Part ${index + 1} Name" oninput="updatePartName(${index}, this.value)">
+  `).join('');
+}
+
+function getAxisCount(axisLabel){
+  const match = String(axisLabel || '').match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+function ensureAxisNames(group){
+  const axisCount = getAxisCount(group === 'robot' ? projectWizardState.robotPositionerAxes : projectWizardState.workpiecePositionerAxes);
+  const stateKey = group === 'robot' ? 'robotPositionerAxisNames' : 'workpiecePositionerAxisNames';
+  const prefix = group === 'robot' ? 'Robot Positioner Axis' : 'Workpiece Positioner Axis';
+  if(!Array.isArray(projectWizardState[stateKey])) projectWizardState[stateKey] = [];
+  while(projectWizardState[stateKey].length < axisCount){
+    projectWizardState[stateKey].push(`${prefix} ${projectWizardState[stateKey].length + 1}`);
+  }
+  projectWizardState[stateKey] = projectWizardState[stateKey].slice(0, axisCount);
+}
+
+function renderAxisNameFields(group){
+  const enabled = group === 'robot' ? projectWizardState.robotPositionerEnabled === 'Y' : projectWizardState.workpiecePositionerEnabled === 'Y';
+  const wrap = document.getElementById(group === 'robot' ? 'robotPositionerAxisNamesWrap' : 'workpiecePositionerAxisNamesWrap');
+  if(!wrap) return;
+  ensureAxisNames(group);
+  wrap.style.display = enabled ? 'grid' : 'none';
+  if(!enabled){
+    wrap.innerHTML = '';
+    return;
+  }
+  const values = group === 'robot' ? projectWizardState.robotPositionerAxisNames : projectWizardState.workpiecePositionerAxisNames;
+  wrap.innerHTML = values.map((name, index) => `
+    <input class="field-input part-name-input" type="text" value="${name || ''}" placeholder="${group === 'robot' ? 'Robot' : 'Workpiece'} Axis ${index + 1} Name" oninput="updateAxisName('${group}', ${index}, this.value)">
+  `).join('');
+}
+
+function updateAxisName(group, index, value){
+  const stateKey = group === 'robot' ? 'robotPositionerAxisNames' : 'workpiecePositionerAxisNames';
+  ensureAxisNames(group);
+  projectWizardState[stateKey][index] = value.trim() || projectWizardState[stateKey][index] || `${group === 'robot' ? 'Robot' : 'Workpiece'} Axis ${index + 1}`;
+  renderWeldAxisFields();
+  updateSetupSummary();
+}
+
+function updatePartName(index, value){
+  projectWizardState.partNames[index] = value.trim().toUpperCase() || `PART-${index + 1}`;
+  renderPartSelector();
+  syncSelectedPartToForm();
+}
+
+function renderPartSelector(){
+  const dd = document.getElementById('partSelect');
+  if(!dd) return;
+  dd.innerHTML = projectWizardState.partNames.map((name, index) => `<option value="${index}">${name}</option>`).join('');
+  dd.value = String(projectWizardState.selectedPartIndex || 0);
+}
+
+function syncSelectedPartToForm(){
+  const partName = projectWizardState.partNames[projectWizardState.selectedPartIndex] || projectWizardState.partNumber || '';
+  projectWizardState.partNumber = partName;
+  const partEl = document.getElementById('partNumber');
+  if(partEl) partEl.value = partName;
+  projectWizardState.partImageDataUrl = projectWizardState.partImageByPart[partName] || '';
+  renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
+  renderWeldAxisFields();
+}
+
+function syncSetupFields(){
+  const nameEl = document.getElementById('newProjName');
+  const robotCountEl = document.getElementById('robotCount');
+  const partCountEl = document.getElementById('partCount');
+  const robotPosEl = document.getElementById('robotPositionerEnabled');
+  const robotAxisEl = document.getElementById('robotPositionerAxes');
+  const workPosEl = document.getElementById('workpiecePositionerEnabled');
+  const workAxisEl = document.getElementById('workpiecePositionerAxes');
+  if(nameEl) nameEl.value = projectWizardState.projectName || '';
+  if(robotCountEl) robotCountEl.value = String(projectWizardState.robotCount || 1);
+  if(partCountEl) partCountEl.value = String(projectWizardState.partCount || 1);
+  if(robotPosEl) robotPosEl.value = projectWizardState.robotPositionerEnabled || 'N';
+  if(robotAxisEl) robotAxisEl.value = projectWizardState.robotPositionerAxes || '';
+  if(workPosEl) workPosEl.value = projectWizardState.workpiecePositionerEnabled || 'N';
+  if(workAxisEl) workAxisEl.value = projectWizardState.workpiecePositionerAxes || '';
+  toggleAxisField('robotPositionerAxes', 'robotPositionerAxisNamesWrap', projectWizardState.robotPositionerEnabled === 'Y');
+  toggleAxisField('workpiecePositionerAxes', 'workpiecePositionerAxisNamesWrap', projectWizardState.workpiecePositionerEnabled === 'Y');
+}
+
+function toggleAxisField(id, wrapId, enabled){
+  const el = document.getElementById(id);
+  const wrap = document.getElementById(wrapId);
+  const label = wrap ? wrap.previousElementSibling : null;
+  if(el){
+    el.disabled = !enabled;
+    if(!enabled) el.value = '';
+  }
+  if(wrap){
+    wrap.style.display = enabled ? 'grid' : 'none';
+    if(!enabled) wrap.innerHTML = '';
+  }
+  if(label && label.classList.contains('axis-name-label')){
+    label.style.display = enabled ? 'block' : 'none';
+  }
+}
+
+function updateSetupSummary(){
+  const el = document.getElementById('setupSummaryCard');
+  if(!el) return;
+  const robotPos = projectWizardState.robotPositionerEnabled === 'Y'
+    ? `${projectWizardState.robotPositionerAxes || 'Axis not set'}${projectWizardState.robotPositionerAxisNames?.length ? ` (${projectWizardState.robotPositionerAxisNames.join(', ')})` : ''}`
+    : 'No';
+  const workPos = projectWizardState.workpiecePositionerEnabled === 'Y'
+    ? `${projectWizardState.workpiecePositionerAxes || 'Axis not set'}${projectWizardState.workpiecePositionerAxisNames?.length ? ` (${projectWizardState.workpiecePositionerAxisNames.join(', ')})` : ''}`
+    : 'No';
+  el.innerHTML = `
+    <strong>${projectWizardState.projectName || 'New Project'}</strong>
+    <span>Robots: ${projectWizardState.robotCount || 1}</span>
+    <span>Parts: ${projectWizardState.partNames.join(', ')}</span>
+    <span>Robot Positioner: ${robotPos}</span>
+    <span>Workpiece Positioner: ${workPos}</span>
+  `;
+}
+
+function getCurrentRobotAxisValueState(){
+  if(!projectWizardState.axisValuesByRobot) projectWizardState.axisValuesByRobot = {};
+  if(!projectWizardState.axisValuesByRobot[projectWizardState.currentRobot]){
+    projectWizardState.axisValuesByRobot[projectWizardState.currentRobot] = {
+      robotPositionerValues: {},
+      workpiecePositionerValues: {},
+      workpieceAngle: ''
+    };
+  }
+  return projectWizardState.axisValuesByRobot[projectWizardState.currentRobot];
+}
+
+function renderWeldAxisFields(){
+  const wrap = document.getElementById('weldAxisValueFields');
+  const card = document.getElementById('weldAxisValuesCard');
+  const angleInput = document.getElementById('workpiecePositionerAngle');
+  if(!wrap || !card) return;
+  const robotAxisNames = projectWizardState.robotPositionerEnabled === 'Y' ? (projectWizardState.robotPositionerAxisNames || []) : [];
+  const workAxisNames = projectWizardState.workpiecePositionerEnabled === 'Y' ? (projectWizardState.workpiecePositionerAxisNames || []) : [];
+  const currentValues = getCurrentRobotAxisValueState();
+  const fields = [];
+  robotAxisNames.forEach((name, index) => {
+    const safeName = name || `Robot Axis ${index + 1}`;
+    fields.push(`
+      <label class="field-label" for="robotAxisValue_${index}">${safeName}</label>
+      <input id="robotAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName}" value="${currentValues.robotPositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('robot','${safeName.replace(/'/g, '&#39;')}', this.value)">
+    `);
+  });
+  workAxisNames.forEach((name, index) => {
+    const safeName = name || `Workpiece Axis ${index + 1}`;
+    fields.push(`
+      <label class="field-label" for="workAxisValue_${index}">${safeName}</label>
+      <input id="workAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName}" value="${currentValues.workpiecePositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('workpiece','${safeName.replace(/'/g, '&#39;')}', this.value)">
+    `);
+  });
+  wrap.innerHTML = fields.join('');
+  wrap.style.display = fields.length ? 'grid' : 'none';
+  card.style.display = (robotAxisNames.length || workAxisNames.length) ? 'flex' : 'none';
+  if(angleInput && !angleInput.matches(':focus')) angleInput.value = currentValues.workpieceAngle || '';
+  card.innerHTML = `
+    <strong>Weld Axis Values</strong>
+    <span>Robot Positioner: ${robotAxisNames.length ? robotAxisNames.join(', ') : 'No'}</span>
+    <span>Workpiece Positioner: ${workAxisNames.length ? workAxisNames.join(', ') : 'No'}</span>
+  `;
+}
+
+function updateWeldAxisValue(group, axisName, value){
+  const state = getCurrentRobotAxisValueState();
+  const key = group === 'robot' ? 'robotPositionerValues' : 'workpiecePositionerValues';
+  state[key][axisName] = value;
+}
+
+function continueToWeldBuilder(){
+  const name = (document.getElementById('newProjName').value || '').trim().toUpperCase();
+  if(!name) return alert('Project name is required.');
+  projectWizardState.projectName = name;
+  ensureAxisNames('robot');
+  ensureAxisNames('workpiece');
+  updateSetupSummary();
+  projectWizardState.setupStep = 'weld';
+  updateWizardStepUI();
+  renderWeldAxisFields();
+}
+
+function updateWizardStepUI(){
+  const setupStage = document.getElementById('projectSetupStage');
+  const weldStage = document.getElementById('weldBuilderStage');
+  if(!setupStage || !weldStage) return;
+  const isWeld = projectWizardState.setupStep === 'weld';
+  setupStage.style.display = isWeld ? 'none' : 'block';
+  weldStage.style.display = isWeld ? 'block' : 'none';
+}
+
+function renderRobotSelectorOptions(){
+  const dd = document.getElementById('robotSelect');
+  if(!dd) return;
+  dd.innerHTML = '';
+  for(let i=1;i<=projectWizardState.robotCount;i++){
+    const name = `Robot ${i}`;
+    ensureRobotBucket(name);
+    const op = document.createElement('option');
+    op.value = name;
+    op.textContent = name;
+    dd.appendChild(op);
+  }
+  if(!projectWizardState.recordsByRobot[projectWizardState.currentRobot]) projectWizardState.currentRobot = 'Robot 1';
+  dd.value = projectWizardState.currentRobot;
+  renderWeldAxisFields();
+  refreshWeldList();
+}
+
+function ensureRobotBucket(robotName){
+  if(!projectWizardState.recordsByRobot[robotName]) projectWizardState.recordsByRobot[robotName] = [];
+  if(!projectWizardState.annotationsByRobot[robotName]) projectWizardState.annotationsByRobot[robotName] = [];
+  if(typeof projectWizardState.selectedRecordIndex[robotName] !== 'number') projectWizardState.selectedRecordIndex[robotName] = -1;
+  if(!projectWizardState.axisValuesByRobot) projectWizardState.axisValuesByRobot = {};
+  if(!projectWizardState.axisValuesByRobot[robotName]){
+    projectWizardState.axisValuesByRobot[robotName] = {robotPositionerValues:{}, workpiecePositionerValues:{}, workpieceAngle:''};
+  }
+}
+
+function getCurrentRobotAnnotations(){
+  ensureRobotBucket(projectWizardState.currentRobot);
+  return projectWizardState.annotationsByRobot[projectWizardState.currentRobot];
+}
+
+function setDrawTool(tool){
+  projectWizardState.drawTool = tool;
+  projectWizardState.interactionMode = 'annotate';
+  if(tool === 'text'){
+    const entered = prompt('Enter text to place on the image:', projectWizardState.currentTextValue || '');
+    if(entered === null) return;
+    projectWizardState.currentTextValue = entered.trim();
+  }
+  projectWizardState.interaction = { mode: 'idle', annotationIndex: -1, pointKey: null };
+}
+
+function setInteractionMode(mode){
+  projectWizardState.interactionMode = mode;
+}
+
+function toggleStampStyleOption(option){
+  if(option === 'bold') projectWizardState.stampBold = !projectWizardState.stampBold;
+  if(option === 'italic') projectWizardState.stampItalic = !projectWizardState.stampItalic;
+  if(option === 'underline') projectWizardState.stampUnderline = !projectWizardState.stampUnderline;
+  updateStampButtons();
+}
+
+function updateStampButtons(){
+  const boldBtn = document.getElementById('stampBoldBtn');
+  const italicBtn = document.getElementById('stampItalicBtn');
+  const underlineBtn = document.getElementById('stampUnderlineBtn');
+  const overlayBoldBtn = document.getElementById('overlayStampBoldBtn');
+  const overlayItalicBtn = document.getElementById('overlayStampItalicBtn');
+  const overlayUnderlineBtn = document.getElementById('overlayStampUnderlineBtn');
+  if(boldBtn) boldBtn.classList.toggle('active-tool', !!projectWizardState.stampBold);
+  if(italicBtn) italicBtn.classList.toggle('active-tool', !!projectWizardState.stampItalic);
+  if(underlineBtn) underlineBtn.classList.toggle('active-tool', !!projectWizardState.stampUnderline);
+  if(overlayBoldBtn) overlayBoldBtn.classList.toggle('active-tool', !!projectWizardState.stampBold);
+  if(overlayItalicBtn) overlayItalicBtn.classList.toggle('active-tool', !!projectWizardState.stampItalic);
+  if(overlayUnderlineBtn) overlayUnderlineBtn.classList.toggle('active-tool', !!projectWizardState.stampUnderline);
+}
+
+function selectAnnotation(index){
+  projectWizardState.selectedAnnotationIndex = index;
+  const ann = getCurrentRobotAnnotations()[index];
+  if(ann){
+    projectWizardState.currentThickness = ann.thickness || 4;
+    const builderThickness = document.getElementById('builderThickness');
+    const overlayThickness = document.getElementById('overlayThickness');
+    if(builderThickness) builderThickness.value = String(projectWizardState.currentThickness);
+    if(overlayThickness) overlayThickness.value = String(projectWizardState.currentThickness);
+  }
+  refreshAnnotationList();
+  redrawBuilderCanvases();
+}
+
+function applyThicknessToSelectedAnnotation(){
+  const index = projectWizardState.selectedAnnotationIndex;
+  const ann = getCurrentRobotAnnotations()[index];
+  if(!ann) return;
+  ann.thickness = projectWizardState.currentThickness;
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+}
+
+async function loadPartImageFile(file){
+  projectWizardState.partImageDataUrl = await fileToDataUrl(file);
+  const currentPart = projectWizardState.partNames[projectWizardState.selectedPartIndex] || projectWizardState.partNumber;
+  if(currentPart) projectWizardState.partImageByPart[currentPart] = projectWizardState.partImageDataUrl;
+  const btn = document.getElementById('partImageTrigger');
+  if(btn) btn.innerText = file?.name || 'Part Image Ready';
+  renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
+  updateCreateStatus('Part image loaded.');
+}
+
+async function loadWeldImageFile(file){
+  projectWizardState.baseImageDataUrl = await fileToDataUrl(file);
+  projectWizardState.baseImageElement = null;
+  getCurrentRobotAnnotations().length = 0;
+  projectWizardState.selectedAnnotationIndex = -1;
+  const btn = document.getElementById('weldImageTrigger');
+  if(btn) btn.innerText = file?.name || 'Weld Image Ready';
+  renderImagePreview('weldPreview', projectWizardState.baseImageDataUrl);
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+  updateCreateStatus('Weld image loaded. Open full screen to annotate.');
+}
+
+function renderImagePreview(targetId, dataUrl){
+  const el = document.getElementById(targetId);
+  if(!el) return;
+  if(!dataUrl){
+    el.innerHTML = targetId === 'partPreview' ? 'No part image' : 'No weld image';
+    return;
+  }
+  el.innerHTML = `<img src="${dataUrl}" alt="Preview">`;
+}
+
+function openImageSourcePicker(target){
+  builderImageSourceTarget = target;
+  document.getElementById('imageSourceOverlay').style.display = 'flex';
+}
+
+function closeImageSourcePicker(){
+  document.getElementById('imageSourceOverlay').style.display = 'none';
+}
+
+function chooseImageSource(mode){
+  const target = builderImageSourceTarget || 'weld';
+  closeImageSourcePicker();
+  if(mode === 'camera'){
+    openCameraCapture(target);
+    return;
+  }
+  document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput').click();
+}
+
+function openAnnotationFullscreen(){
+  document.getElementById('annotationOverlay').style.display = 'flex';
+  redrawBuilderCanvases();
+}
+
+function closeAnnotationFullscreen(){
+  document.getElementById('annotationOverlay').style.display = 'none';
+  redrawBuilderCanvases();
+}
+
+async function openCameraCapture(target='weld'){
+  builderCameraTarget = target;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput').click();
+    return;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false});
+    builderCameraStream = stream;
+    const video = document.getElementById('cameraVideo');
+    video.srcObject = stream;
+    const frameWrap = document.querySelector('#cameraOverlay .camera-frame-wrap');
+    if(frameWrap) frameWrap.style.setProperty('--capture-aspect', target === 'part' ? '49 / 31' : '755 / 479');
+    document.getElementById('cameraOverlay').style.display = 'flex';
+  }catch(err){
+    console.warn(err);
+    document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput').click();
+  }
+}
+
+function closeCameraCapture(){
+  if(builderCameraStream){
+    builderCameraStream.getTracks().forEach(track => track.stop());
+    builderCameraStream = null;
+  }
+  const video = document.getElementById('cameraVideo');
+  if(video) video.srcObject = null;
+  document.getElementById('cameraOverlay').style.display = 'none';
+}
+
+function captureCameraFrame(){
+  const video = document.getElementById('cameraVideo');
+  if(!video || !video.videoWidth) return;
+  const targetAspect = builderCameraTarget === 'part' ? (49 / 31) : (755 / 479);
+  const sourceAspect = video.videoWidth / video.videoHeight;
+  let sx = 0;
+  let sy = 0;
+  let sw = video.videoWidth;
+  let sh = video.videoHeight;
+  if(sourceAspect > targetAspect){
+    sw = Math.round(video.videoHeight * targetAspect);
+    sx = Math.round((video.videoWidth - sw) / 2);
+  } else {
+    sh = Math.round(video.videoWidth / targetAspect);
+    sy = Math.round((video.videoHeight - sh) / 2);
+  }
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = builderCameraTarget === 'part' ? 882 : 1510;
+  tempCanvas.height = builderCameraTarget === 'part' ? 558 : 958;
+  tempCanvas.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, tempCanvas.width, tempCanvas.height);
+  const fileLikeDataUrl = tempCanvas.toDataURL('image/png');
+  closeCameraCapture();
+  if(builderCameraTarget === 'part'){
+    projectWizardState.partImageDataUrl = fileLikeDataUrl;
+    const currentPart = projectWizardState.partNames[projectWizardState.selectedPartIndex] || projectWizardState.partNumber;
+    if(currentPart) projectWizardState.partImageByPart[currentPart] = fileLikeDataUrl;
+    const btn = document.getElementById('partImageTrigger');
+    if(btn) btn.innerText = 'Part Image Ready';
+    renderImagePreview('partPreview', fileLikeDataUrl);
+    updateCreateStatus('Part photo captured from camera.');
+    return;
+  }
+  projectWizardState.baseImageDataUrl = fileLikeDataUrl;
+  projectWizardState.baseImageElement = null;
+  const btn = document.getElementById('weldImageTrigger');
+  if(btn) btn.innerText = 'Weld Image Ready';
+  renderImagePreview('weldPreview', fileLikeDataUrl);
+  getCurrentRobotAnnotations().length = 0;
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+  updateCreateStatus('Photo captured from camera.');
+}
+
+function attachCanvasHandlers(canvasId){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const pointer = ev => {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (ev.clientX - rect.left) * (canvas.width / rect.width),
+      y: (ev.clientY - rect.top) * (canvas.height / rect.height)
+    };
+  };
+  canvas.addEventListener('pointerdown', ev => handleCanvasPointerDown(pointer(ev), canvasId));
+  canvas.addEventListener('pointermove', ev => handleCanvasPointerMove(pointer(ev), canvasId));
+  canvas.addEventListener('pointerup', ev => handleCanvasPointerUp(pointer(ev), canvasId));
+  canvas.addEventListener('pointerleave', ev => handleCanvasPointerUp(pointer(ev), canvasId));
+}
+
+function handleCanvasPointerDown(point){
+  if(projectWizardState.interactionMode === 'pan') return;
+  const hit = findAnnotationHandle(point);
+  if(hit){
+    selectAnnotation(hit.annotationIndex);
+    projectWizardState.interaction = { mode: 'edit', annotationIndex: hit.annotationIndex, pointKey: hit.pointKey };
+    return;
+  }
+  if(projectWizardState.interactionMode === 'select'){
+    projectWizardState.selectedAnnotationIndex = -1;
+    refreshAnnotationList();
+    redrawBuilderCanvases();
+    return;
+  }
+  const annotations = getCurrentRobotAnnotations();
+  if(projectWizardState.drawTool === 'freehand'){
+    annotations.push({ type:'freehand', color:projectWizardState.drawColor, thickness: projectWizardState.currentThickness, points:[point] });
+    selectAnnotation(annotations.length - 1);
+    projectWizardState.interaction = { mode:'draw-freehand', annotationIndex:annotations.length-1, pointKey:'points' };
+  } else if(projectWizardState.drawTool === 'lineArrow'){
+    annotations.push({ type:'lineArrow', color:projectWizardState.drawColor, thickness: projectWizardState.currentThickness, start:{...point}, end:{...point} });
+    selectAnnotation(annotations.length - 1);
+    projectWizardState.interaction = { mode:'create-shape', annotationIndex:annotations.length-1, pointKey:'end' };
+  } else if(projectWizardState.drawTool === 'splineArrow'){
+    annotations.push({
+      type:'splineArrow',
+      color:projectWizardState.drawColor,
+      thickness: projectWizardState.currentThickness,
+      start:{...point},
+      control1:{x:point.x+120,y:point.y-80},
+      control2:{x:point.x+240,y:point.y-80},
+      end:{x:point.x+300,y:point.y}
+    });
+    selectAnnotation(annotations.length - 1);
+    projectWizardState.interaction = { mode:'create-shape', annotationIndex:annotations.length-1, pointKey:'end' };
+  } else if(projectWizardState.drawTool === 'text'){
+    const textValue = (projectWizardState.currentTextValue || '').trim() || (document.getElementById('weldNumber').value || '').trim() || 'TEXT';
+    annotations.push({
+      type:'text',
+      color:projectWizardState.drawColor,
+      thickness: projectWizardState.currentThickness,
+      stampStyle: projectWizardState.stampStyle,
+      stampOutline: projectWizardState.stampOutline,
+      backgroundColor: projectWizardState.stampBackgroundColor,
+      font: projectWizardState.stampFont,
+      bold: projectWizardState.stampBold,
+      italic: projectWizardState.stampItalic,
+      underline: projectWizardState.stampUnderline,
+      text:textValue,
+      position:{...point}
+    });
+    selectAnnotation(annotations.length - 1);
+    redrawBuilderCanvases();
+    refreshAnnotationList();
+  }
+}
+
+function handleCanvasPointerMove(point){
+  const annotations = getCurrentRobotAnnotations();
+  const interaction = projectWizardState.interaction;
+  if(interaction.mode === 'draw-freehand'){
+    annotations[interaction.annotationIndex].points.push(point);
+    redrawBuilderCanvases();
+    return;
+  }
+  if(interaction.mode === 'edit' || interaction.mode === 'create-shape'){
+    const ann = annotations[interaction.annotationIndex];
+    if(!ann) return;
+    if(interaction.pointKey === 'start' || interaction.pointKey === 'end' || interaction.pointKey === 'control1' || interaction.pointKey === 'control2' || interaction.pointKey === 'position'){
+      ann[interaction.pointKey] = {...point};
+      redrawBuilderCanvases();
+    }
+  }
+}
+
+function handleCanvasPointerUp(){
+  projectWizardState.interaction = { mode:'idle', annotationIndex:-1, pointKey:null };
+  refreshAnnotationList();
+}
+
+function findAnnotationHandle(point){
+  const annotations = getCurrentRobotAnnotations();
+  const keysByType = {
+    lineArrow:['start','end'],
+    splineArrow:['start','control1','control2','end'],
+    text:['position']
+  };
+  for(let i=annotations.length-1;i>=0;i--){
+    const ann = annotations[i];
+    const keys = keysByType[ann.type] || [];
+    for(const key of keys){
+      const p = ann[key];
+      if(!p) continue;
+      if(Math.hypot(point.x - p.x, point.y - p.y) <= 28){
+        return { annotationIndex:i, pointKey:key };
+      }
+    }
+  }
+  return null;
+}
+
+function redrawBuilderCanvases(){
+  ensureBaseImageLoaded();
+  redrawSingleCanvas('weldCanvas');
+  redrawSingleCanvas('fullWeldCanvas');
+}
+
+function redrawSingleCanvas(canvasId){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  canvas.style.width = `${projectWizardState.currentZoom * 100}%`;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#f6f6f6';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawBaseImageToCanvas(ctx, canvas.width, canvas.height);
+  drawAnnotations(ctx, getCurrentRobotAnnotations());
+}
+
+function recenterCanvasViews(prevZoom, nextZoom){
+  ['weldCanvasShell','fullWeldCanvasShell'].forEach(id => {
+    const shell = document.getElementById(id);
+    if(!shell) return;
+    const centerX = shell.scrollLeft + (shell.clientWidth / 2);
+    const centerY = shell.scrollTop + (shell.clientHeight / 2);
+    const ratio = nextZoom / prevZoom;
+    requestAnimationFrame(() => {
+      shell.scrollLeft = Math.max(0, (centerX * ratio) - (shell.clientWidth / 2));
+      shell.scrollTop = Math.max(0, (centerY * ratio) - (shell.clientHeight / 2));
+    });
+  });
+}
+
+function attachPanHandlers(containerId){
+  const shell = document.getElementById(containerId);
+  if(!shell) return;
+  let dragging = false;
+  let startX = 0;
+  let startY = 0;
+  let startLeft = 0;
+  let startTop = 0;
+  shell.addEventListener('pointerdown', ev => {
+    if(projectWizardState.interactionMode !== 'pan') return;
+    dragging = true;
+    startX = ev.clientX;
+    startY = ev.clientY;
+    startLeft = shell.scrollLeft;
+    startTop = shell.scrollTop;
+    shell.classList.add('panning');
+  });
+  shell.addEventListener('pointermove', ev => {
+    if(!dragging) return;
+    shell.scrollLeft = startLeft - (ev.clientX - startX);
+    shell.scrollTop = startTop - (ev.clientY - startY);
+  });
+  const stop = () => {
+    dragging = false;
+    shell.classList.remove('panning');
+  };
+  shell.addEventListener('pointerup', stop);
+  shell.addEventListener('pointerleave', stop);
+  shell.addEventListener('pointercancel', stop);
+}
+
+function drawBaseImageToCanvas(ctx, width, height){
+  if(!projectWizardState.baseImageDataUrl) return;
+  const img = projectWizardState.baseImageElement;
+  if(!img || !img.complete) return;
+  const ratio = Math.min(width / img.width, height / img.height);
+  const drawW = img.width * ratio;
+  const drawH = img.height * ratio;
+  const x = (width - drawW) / 2;
+  const y = (height - drawH) / 2;
+  ctx.drawImage(img, x, y, drawW, drawH);
+}
+
+function ensureBaseImageLoaded(){
+  if(!projectWizardState.baseImageDataUrl){
+    projectWizardState.baseImageElement = null;
+    return;
+  }
+  if(projectWizardState.baseImageElement && projectWizardState.baseImageElement.src === projectWizardState.baseImageDataUrl) return;
+  const img = new Image();
+  img.onload = () => {
+    projectWizardState.baseImageElement = img;
+    redrawSingleCanvas('weldCanvas');
+    redrawSingleCanvas('fullWeldCanvas');
+  };
+  img.src = projectWizardState.baseImageDataUrl;
+  projectWizardState.baseImageElement = img;
+}
+
+function drawAnnotations(ctx, annotations){
+  annotations.forEach((ann, index) => {
+    ctx.strokeStyle = ann.color;
+    ctx.fillStyle = ann.color;
+    ctx.lineWidth = ann.thickness || 4;
+    if(ann.type === 'freehand'){
+      if(!ann.points.length) return;
+      ctx.beginPath();
+      ctx.moveTo(ann.points[0].x, ann.points[0].y);
+      ann.points.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.stroke();
+      return;
+    }
+    if(ann.type === 'lineArrow'){
+      drawArrowOnContext(ctx, ann.start, ann.end, ann.thickness || 4);
+      if(projectWizardState.selectedAnnotationIndex === index){
+        drawHandle(ctx, ann.start);
+        drawHandle(ctx, ann.end);
+      }
+    }
+    if(ann.type === 'splineArrow'){
+      ctx.beginPath();
+      ctx.moveTo(ann.start.x, ann.start.y);
+      ctx.bezierCurveTo(ann.control1.x, ann.control1.y, ann.control2.x, ann.control2.y, ann.end.x, ann.end.y);
+      ctx.stroke();
+      drawArrowOnContext(ctx, ann.control2, ann.end, ann.thickness || 4);
+      if(projectWizardState.selectedAnnotationIndex === index){
+        if(projectWizardState.interaction.mode === 'edit' && projectWizardState.interaction.annotationIndex === index){
+          drawGuideLine(ctx, [ann.start, ann.control1, ann.control2, ann.end]);
+        }
+        drawHandle(ctx, ann.start);
+        drawHandle(ctx, ann.control1);
+        drawHandle(ctx, ann.control2);
+        drawHandle(ctx, ann.end);
+      }
+    }
+    if(ann.type === 'text'){
+      drawStampText(ctx, ann);
+      if(projectWizardState.selectedAnnotationIndex === index){
+        drawHandle(ctx, ann.position);
+      }
+    }
+    if(projectWizardState.selectedAnnotationIndex === index){
+      drawSelectionBox(ctx, annotationBounds(ann));
+    }
+  });
+}
+
+function annotationBounds(ann){
+  if(ann.type === 'freehand' && ann.points.length){
+    const xs = ann.points.map(p => p.x);
+    const ys = ann.points.map(p => p.y);
+    return {x1: Math.min(...xs), y1: Math.min(...ys), x2: Math.max(...xs), y2: Math.max(...ys)};
+  }
+  if(ann.type === 'lineArrow') return {x1: Math.min(ann.start.x, ann.end.x), y1: Math.min(ann.start.y, ann.end.y), x2: Math.max(ann.start.x, ann.end.x), y2: Math.max(ann.start.y, ann.end.y)};
+  if(ann.type === 'splineArrow'){
+    const pts = [ann.start, ann.control1, ann.control2, ann.end];
+    return {x1: Math.min(...pts.map(p => p.x)), y1: Math.min(...pts.map(p => p.y)), x2: Math.max(...pts.map(p => p.x)), y2: Math.max(...pts.map(p => p.y))};
+  }
+  if(ann.type === 'text') return {x1: ann.position.x - 12, y1: ann.position.y - 36, x2: ann.position.x + 120, y2: ann.position.y + 12};
+  return null;
+}
+
+function drawSelectionBox(ctx, bounds){
+  if(!bounds) return;
+  ctx.save();
+  ctx.setLineDash([8, 6]);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#111111';
+  ctx.strokeRect(bounds.x1 - 10, bounds.y1 - 10, (bounds.x2 - bounds.x1) + 20, (bounds.y2 - bounds.y1) + 20);
+  ctx.restore();
+}
+
+function drawArrowOnContext(ctx, start, end, thickness=4){
+  const angle = Math.atan2(end.y - start.y, end.x - start.x);
+  const head = Math.max(12, thickness * 4);
+  const cutBack = Math.max(head * 0.7, thickness * 1.6);
+  const shaftEndX = end.x - (Math.cos(angle) * cutBack);
+  const shaftEndY = end.y - (Math.sin(angle) * cutBack);
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  ctx.lineTo(shaftEndX, shaftEndY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(end.x, end.y);
+  ctx.lineTo(end.x - head * Math.cos(angle - Math.PI / 7), end.y - head * Math.sin(angle - Math.PI / 7));
+  ctx.lineTo(end.x - head * Math.cos(angle + Math.PI / 7), end.y - head * Math.sin(angle + Math.PI / 7));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawGuideLine(ctx, points){
+  ctx.save();
+  ctx.setLineDash([6,6]);
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  points.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawStampText(ctx, ann){
+  const fontSize = 24 + ((ann.thickness || 4) * 2);
+  ctx.save();
+  const fontWeight = ann.bold === false ? 'normal' : 'bold';
+  const fontStyle = ann.italic ? 'italic ' : '';
+  ctx.font = `${fontStyle}${fontWeight} ${fontSize}px ${ann.font || 'Arial'}`;
+  const paddingX = 14;
+  const paddingY = 10;
+  const metrics = ctx.measureText(ann.text);
+  const boxWidth = metrics.width + (paddingX * 2);
+  const boxHeight = fontSize + (paddingY * 2);
+  const x = ann.position.x;
+  const y = ann.position.y - fontSize;
+  if(ann.stampStyle === 'transparent'){
+    ctx.fillStyle = hexToRgba(ann.backgroundColor || '#ffffff', 0.35);
+    ctx.fillRect(x - paddingX, y - paddingY, boxWidth, boxHeight);
+  } else if(ann.stampStyle === 'opaque'){
+    ctx.fillStyle = hexToRgba(ann.backgroundColor || '#ffffff', 0.9);
+    ctx.fillRect(x - paddingX, y - paddingY, boxWidth, boxHeight);
+  }
+  if(ann.stampOutline === 'outline'){
+    ctx.strokeStyle = ann.color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - paddingX, y - paddingY, boxWidth, boxHeight);
+  }
+  ctx.fillStyle = ann.color;
+  ctx.fillText(ann.text, x, ann.position.y);
+  if(ann.underline){
+    const underlineY = ann.position.y + 6;
+    ctx.lineWidth = Math.max(2, (ann.thickness || 4) / 1.5);
+    ctx.beginPath();
+    ctx.moveTo(x, underlineY);
+    ctx.lineTo(x + metrics.width, underlineY);
+    ctx.strokeStyle = ann.color;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function hexToRgba(hex, alpha){
+  const clean = (hex || '#ffffff').replace('#','');
+  const full = clean.length === 3 ? clean.split('').map(ch => ch + ch).join('') : clean;
+  const r = parseInt(full.slice(0,2),16);
+  const g = parseInt(full.slice(2,4),16);
+  const b = parseInt(full.slice(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function drawHandle(ctx, point){
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#111111';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function clearAnnotationCanvas(){
+  getCurrentRobotAnnotations().length = 0;
+  projectWizardState.selectedAnnotationIndex = -1;
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+}
+
+function stampWeldNumber(){
+  const weldId = (document.getElementById('weldNumber').value || '').trim();
+  if(!weldId) return alert('Enter weld number / weld ID first.');
+  getCurrentRobotAnnotations().push({
+    type:'text',
+    color:projectWizardState.drawColor,
+    thickness: projectWizardState.currentThickness,
+    stampStyle: projectWizardState.stampStyle,
+    stampOutline: projectWizardState.stampOutline,
+    backgroundColor: projectWizardState.stampBackgroundColor,
+    font: projectWizardState.stampFont,
+    bold: projectWizardState.stampBold,
+    italic: projectWizardState.stampItalic,
+    underline: projectWizardState.stampUnderline,
+    text:weldId,
+    position:{x:40,y:60}
+  });
+  projectWizardState.selectedAnnotationIndex = getCurrentRobotAnnotations().length - 1;
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+}
+
+function addSyncMarker(){
+  const annotations = getCurrentRobotAnnotations();
+  const shell = document.getElementById('fullWeldCanvasShell') || document.getElementById('weldCanvasShell');
+  const canvas = document.getElementById('fullWeldCanvas') || document.getElementById('weldCanvas');
+  const x = shell ? shell.scrollLeft + (shell.clientWidth / 2) : (canvas ? canvas.width / 2 : 200);
+  const y = shell ? shell.scrollTop + (shell.clientHeight / 2) : (canvas ? canvas.height / 2 : 120);
+  annotations.push({
+    type:'text',
+    color:projectWizardState.drawColor,
+    thickness: projectWizardState.currentThickness,
+    text:'SYNC',
+    position:{x, y}
+  });
+  selectAnnotation(annotations.length - 1);
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+}
+
+function addSyncWeld(){
+  const partNo = (document.getElementById('partNumber').value || '').trim().toUpperCase();
+  if(!partNo) return alert('Part number is required before adding SYNC.');
+  const axisState = JSON.parse(JSON.stringify(getCurrentRobotAxisValueState()));
+  axisState.workpieceAngle = (document.getElementById('workpiecePositionerAngle').value || '').trim();
+  const records = getCurrentRobotRecords();
+  records.push({
+    partNo,
+    jobNo: (document.getElementById('jobNumber').value || '').trim(),
+    workpieceAngle: (document.getElementById('workpiecePositionerAngle').value || '').trim(),
+    weldNo: 'SYNC',
+    notes: (document.getElementById('weldNotes').value || '').trim(),
+    robotPositionerValues: axisState.robotPositionerValues,
+    workpiecePositionerValues: axisState.workpiecePositionerValues,
+    isSync: true,
+    baseImageDataUrl: '',
+    annotations: [],
+    imageDataUrl: ''
+  });
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = records.length - 1;
+  refreshWeldList();
+  updateCreateStatus(`SYNC weld added for ${projectWizardState.currentRobot}.`);
+}
+
+async function editProject(projectId){
+  loading(true,'Loading project for edit...');
+  try{
+    const {data:proj,error:projErr}=await sb.from('projects').select('*').eq('id',projectId).single();
+    if(projErr || !proj) throw new Error(projErr?.message || 'Project not found');
+    const {data:csvList=[]}=await sb.storage.from('projects').list(`${projectId}/csv`,{limit:500});
+    const {data:imageList=[]}=await sb.storage.from('projects').list(`${projectId}/images`,{limit:1000});
+    resetProjectWizardState();
+    projectWizardState.projectId = projectId;
+    projectWizardState.projectName = proj.name || '';
+    projectWizardState.partNames = [...(proj.parts || ['PART-1'])];
+    projectWizardState.partCount = projectWizardState.partNames.length || 1;
+    projectWizardState.partNumber = projectWizardState.partNames[0] || '';
+    const robotCsvs = csvList.filter(f => /_robot\d+\.csv$/i.test(f.name));
+    projectWizardState.robotCount = Math.max(1, robotCsvs.length || 1);
+    for(let i=1;i<=projectWizardState.robotCount;i++) ensureRobotBucket(`Robot ${i}`);
+    const partDataFile = csvList.find(f => f.name.toLowerCase() === 'part_data.csv');
+    if(partDataFile){
+      const {data:blob}=await sb.storage.from('projects').download(`${projectId}/csv/${partDataFile.name}`);
+      const text = blob ? await blob.text() : '';
+      const rows = text.replace(/^\uFEFF/,'').split(/\r?\n/).slice(1).filter(Boolean);
+      const parts = [];
+      rows.forEach(row => {
+        const cols = row.split(',');
+        const partName = (cols[1] || cols[0] || '').replace(/^"|"$/g,'').trim();
+        if(partName) parts.push(partName);
+        if(cols[4]) projectWizardState.robotPositionerEnabled = cols[4].includes('Axis') ? 'Y' : 'N';
+        if(cols[4]) projectWizardState.robotPositionerAxes = cols[4].replace(/^"|"$/g,'');
+        if(cols[5]) projectWizardState.workpiecePositionerEnabled = cols[5].includes('Axis') ? 'Y' : 'N';
+        if(cols[5]) projectWizardState.workpiecePositionerAxes = cols[5].replace(/^"|"$/g,'');
+        if(cols[6]) projectWizardState.robotPositionerAxisNames = cols[6].replace(/^"|"$/g,'').split('|').filter(Boolean);
+        if(cols[7]) projectWizardState.workpiecePositionerAxisNames = cols[7].replace(/^"|"$/g,'').split('|').filter(Boolean);
+      });
+      if(parts.length){
+        projectWizardState.partNames = parts;
+        projectWizardState.partCount = parts.length;
+        projectWizardState.partNumber = parts[0];
+      }
+    }
+    for(const csvFile of csvList){
+      if(!/_robot\d+\.csv$/i.test(csvFile.name)) continue;
+      const robotMatch = csvFile.name.match(/_robot(\d+)\.csv$/i);
+      const robotName = `Robot ${robotMatch ? robotMatch[1] : '1'}`;
+      const {data:blob}=await sb.storage.from('projects').download(`${projectId}/csv/${csvFile.name}`);
+      const text = blob ? await blob.text() : '';
+      const rows = text.replace(/^\uFEFF/,'').split(/\r?\n/).slice(1).filter(Boolean);
+      projectWizardState.recordsByRobot[robotName] = [];
+      for(const row of rows){
+        const cols = row.split(',');
+        const weldNo = (cols[0] || '').replace(/^"|"$/g,'');
+        const workpieceAngle = (cols[1] || '').replace(/^"|"$/g,'');
+        const jobNo = (cols[2] || '').replace(/^"|"$/g,'');
+        const imageId = (cols[3] || '').replace(/^"|"$/g,'');
+        const notes = (cols[4] || '').replace(/^"|"$/g,'');
+        const partNo = (cols[5] || projectWizardState.partNumber || '').replace(/^"|"$/g,'');
+        const robotPositionerValues = parseAxisValueString((cols[6] || '').replace(/^"|"$/g,''));
+        const workpiecePositionerValues = parseAxisValueString((cols[7] || '').replace(/^"|"$/g,''));
+        if(imageId === 'TSync' || weldNo === 'SYNC'){
+          projectWizardState.recordsByRobot[robotName].push({partNo:partNo || projectWizardState.partNumber,jobNo,workpieceAngle,weldNo:'SYNC',notes,robotPositionerValues,workpiecePositionerValues,isSync:true,annotations:[],imageDataUrl:'',baseImageDataUrl:''});
+          continue;
+        }
+        const imageEntry = imageList.find(img => img.name.replace(/\.[^.]+$/,'') === imageId);
+        let imageUrl = '';
+        if(imageEntry){
+          const {data:urlData}=sb.storage.from('projects').getPublicUrl(`${projectId}/images/${imageEntry.name}`);
+          imageUrl = urlData?.publicUrl || '';
+        }
+        projectWizardState.recordsByRobot[robotName].push({partNo:partNo || projectWizardState.partNumber,jobNo,workpieceAngle,weldNo,notes,robotPositionerValues,workpiecePositionerValues,annotations:[],imageDataUrl:imageUrl,baseImageDataUrl:imageUrl});
+      }
+    }
+    projectWizardState.partImageByPart = {};
+    for(const partName of projectWizardState.partNames){
+      const partImageEntry = imageList.find(img => img.name === `${partName}_part.png`);
+      if(partImageEntry){
+        const {data:urlData}=sb.storage.from('projects').getPublicUrl(`${projectId}/images/${partImageEntry.name}`);
+        projectWizardState.partImageByPart[partName] = urlData?.publicUrl || '';
+      }
+    }
+    projectWizardState.partImageDataUrl = projectWizardState.partImageByPart[projectWizardState.partNumber] || '';
+    projectWizardState.setupStep = 'weld';
+    pendingProjectWizardState = projectWizardState;
+    showPanel('create');
+    setTimeout(() => hydrateProjectEditor(), 80);
+  }catch(err){
+    alert('Unable to open project for edit: ' + (err.message || err));
+  }finally{
+    loading(false);
+  }
+}
+
+function hydrateProjectEditor(){
+  const nameEl = document.getElementById('newProjName');
+  const robotCountEl = document.getElementById('robotCount');
+  const partCountEl = document.getElementById('partCount');
+  if(nameEl) nameEl.value = projectWizardState.projectName || '';
+  if(robotCountEl) robotCountEl.value = String(projectWizardState.robotCount || 1);
+  if(partCountEl) partCountEl.value = String(projectWizardState.partCount || 1);
+  ensurePartNames();
+  renderPartNameFields();
+  renderPartSelector();
+  renderRobotSelectorOptions();
+  renderAxisNameFields('robot');
+  renderAxisNameFields('workpiece');
+  syncSetupFields();
+  updateSetupSummary();
+  syncSelectedPartToForm();
+  renderWeldAxisFields();
+  updateWizardStepUI();
+  renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
+  refreshWeldList();
+}
+
+function refreshAnnotationList(){
+  const list = document.getElementById('annotationList');
+  if(!list) return;
+  const annotations = getCurrentRobotAnnotations();
+  if(!annotations.length){
+    list.innerHTML = `<div class="queue-row"><strong>Annotations</strong><span>No annotations added yet.</span></div>`;
+    return;
+  }
+  list.innerHTML = annotations.map((ann, index) => `
+    <div class="queue-row annotation-row ${projectWizardState.selectedAnnotationIndex === index ? 'selected' : ''}" onclick="selectAnnotation(${index})" style="cursor:pointer">
+      <div>
+        <strong>${annotationLabel(ann, index)}</strong>
+        <span>Color: ${ann.color} | Thickness: ${ann.thickness || 4}</span>
+      </div>
+      <span>${projectWizardState.selectedAnnotationIndex === index ? 'Selected' : 'Tap to select'}</span>
+    </div>
+  `).join('');
+}
+
+function annotationLabel(ann, index){
+  if(ann.type === 'text') return `Text ${index + 1}: ${ann.text}`;
+  if(ann.type === 'lineArrow') return `Line Arrow ${index + 1}`;
+  if(ann.type === 'splineArrow') return `Spline Arrow ${index + 1}`;
+  if(ann.type === 'freehand') return `Drawing ${index + 1}`;
+  return `Annotation ${index + 1}`;
+}
+
+function deleteSelectedAnnotation(){
+  const annotations = getCurrentRobotAnnotations();
+  const index = projectWizardState.selectedAnnotationIndex;
+  if(index < 0 || index >= annotations.length) return alert('Select an annotation first.');
+  annotations.splice(index, 1);
+  projectWizardState.selectedAnnotationIndex = -1;
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+}
+
+function fileToDataUrl(file){
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+function updateCreateStatus(msg){
+  const el = document.getElementById('scanResult');
+  if(!el) return;
+  el.style.display = 'block';
+  el.innerHTML = msg;
+}
+
+function getCurrentRobotRecords(){
+  ensureRobotBucket(projectWizardState.currentRobot);
+  return projectWizardState.recordsByRobot[projectWizardState.currentRobot];
+}
+
+function saveCurrentWeld(){
+  const partNo = (document.getElementById('partNumber').value || '').trim().toUpperCase();
+  const jobNo = (document.getElementById('jobNumber').value || '').trim();
+  const workpieceAngle = (document.getElementById('workpiecePositionerAngle').value || '').trim();
+  const weldNo = (document.getElementById('weldNumber').value || '').trim();
+  const notes = (document.getElementById('weldNotes').value || '').trim();
+  if(!partNo) return alert('Part number is required.');
+  if(!weldNo) return alert('Weld number / weld ID is required.');
+  if(!projectWizardState.baseImageDataUrl) return alert('Capture or select a weld image first.');
+  const records = getCurrentRobotRecords();
+  const idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  const axisState = JSON.parse(JSON.stringify(getCurrentRobotAxisValueState()));
+  axisState.workpieceAngle = workpieceAngle;
+  const record = {
+    partNo,
+    jobNo,
+    workpieceAngle,
+    weldNo,
+    notes,
+    robotPositionerValues: axisState.robotPositionerValues,
+    workpiecePositionerValues: axisState.workpiecePositionerValues,
+    baseImageDataUrl: projectWizardState.baseImageDataUrl,
+    annotations: JSON.parse(JSON.stringify(getCurrentRobotAnnotations())),
+    imageDataUrl: exportAnnotatedImage()
+  };
+  if(idx >= 0 && idx < records.length) records[idx] = record;
+  else{
+    records.push(record);
+    projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = records.length - 1;
+  }
+  projectWizardState.selectedAnnotationIndex = -1;
+  refreshWeldList();
+  updateCreateStatus(`Saved weld ${weldNo} for ${projectWizardState.currentRobot}.`);
+}
+
+function exportAnnotatedImage(){
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = 1400;
+  tempCanvas.height = 900;
+  const ctx = tempCanvas.getContext('2d');
+  ctx.fillStyle = '#f6f6f6';
+  ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+  const src = document.getElementById('fullWeldCanvas') || document.getElementById('weldCanvas');
+  if(src) ctx.drawImage(src, 0, 0, tempCanvas.width, tempCanvas.height);
+  return tempCanvas.toDataURL('image/png');
+}
+
+function loadRecordToForm(index){
+  const records = getCurrentRobotRecords();
+  if(index < 0 || index >= records.length) return;
+  const r = records[index];
+  document.getElementById('partNumber').value = r.partNo || '';
+  document.getElementById('jobNumber').value = r.jobNo || '';
+  document.getElementById('workpiecePositionerAngle').value = r.workpieceAngle || '';
+  document.getElementById('weldNumber').value = r.weldNo || '';
+  document.getElementById('weldNotes').value = r.notes || '';
+  projectWizardState.axisValuesByRobot[projectWizardState.currentRobot] = {
+    robotPositionerValues: {...(r.robotPositionerValues || {})},
+    workpiecePositionerValues: {...(r.workpiecePositionerValues || {})},
+    workpieceAngle: r.workpieceAngle || ''
+  };
+  projectWizardState.baseImageDataUrl = r.baseImageDataUrl || r.imageDataUrl || '';
+  projectWizardState.baseImageElement = null;
+  projectWizardState.annotationsByRobot[projectWizardState.currentRobot] = JSON.parse(JSON.stringify(r.annotations || []));
+  projectWizardState.selectedAnnotationIndex = -1;
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = index;
+  const btn = document.getElementById('weldImageTrigger');
+  if(btn) btn.innerText = r.isSync ? 'SYNC weld selected' : (r.baseImageDataUrl || r.imageDataUrl ? 'Weld Image Ready' : 'Capture or Choose Weld Image');
+  renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
+  renderImagePreview('weldPreview', r.baseImageDataUrl || r.imageDataUrl || '');
+  renderWeldAxisFields();
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+}
+
+function loadSelectedWeldRecord(){
+  const idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  if(idx >= 0) loadRecordToForm(idx);
+}
+
+function refreshWeldList(){
+  const list = document.getElementById('weldList');
+  if(!list) return;
+  const records = getCurrentRobotRecords();
+  if(records.length === 0){
+    list.innerHTML = `<div class="queue-row"><strong>${projectWizardState.currentRobot}</strong><span>No welds saved yet.</span></div>`;
+    return;
+  }
+  list.innerHTML = records.map((r, i) => `
+    <div class="queue-row" onclick="loadRecordToForm(${i})" style="cursor:pointer">
+      <strong>${projectWizardState.currentRobot} - ${r.weldNo}</strong>
+      <span>Part: ${r.partNo} | Job: ${r.jobNo || '-'} | Workpiece Angle: ${r.workpieceAngle || '-'} | Notes: ${r.notes || '-'}${r.isSync ? ' | Type: TSync' : ''}</span>
+    </div>
+  `).join('');
+}
+
+function goToNextWeld(){
+  saveCurrentWeld();
+  document.getElementById('weldNotes').value = '';
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = -1;
+  projectWizardState.selectedAnnotationIndex = -1;
+  projectWizardState.baseImageDataUrl = '';
+  projectWizardState.baseImageElement = null;
+  const btn = document.getElementById('weldImageTrigger');
+  if(btn) btn.innerText = 'Capture or Choose Weld Image';
+  renderImagePreview('weldPreview', '');
+  getCurrentRobotAnnotations().length = 0;
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+}
+
+function prevSavedWeld(){
+  const records = getCurrentRobotRecords();
+  if(records.length === 0) return;
+  let idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  idx = idx <= 0 ? records.length - 1 : idx - 1;
+  loadRecordToForm(idx);
+}
+
+function nextSavedWeld(){
+  const records = getCurrentRobotRecords();
+  if(records.length === 0) return;
+  let idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  idx = idx >= records.length - 1 ? 0 : idx + 1;
+  loadRecordToForm(idx);
+}
+
+function deleteCurrentWeld(){
+  const records = getCurrentRobotRecords();
+  const idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  if(idx < 0 || idx >= records.length) return alert('Select a saved weld to delete.');
+  records.splice(idx, 1);
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = -1;
+  projectWizardState.selectedAnnotationIndex = -1;
+  projectWizardState.baseImageDataUrl = '';
+  projectWizardState.baseImageElement = null;
+  const btn = document.getElementById('weldImageTrigger');
+  if(btn) btn.innerText = 'Capture or Choose Weld Image';
+  renderImagePreview('weldPreview', '');
+  getCurrentRobotAnnotations().length = 0;
+  refreshWeldList();
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+  updateCreateStatus('Weld deleted.');
+}
+
+function dataUrlToBlob(dataUrl){
+  const parts = dataUrl.split(',');
+  const mime = (parts[0].match(/:(.*?);/) || [])[1] || 'image/png';
+  const binary = atob(parts[1]);
+  const arr = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) arr[i] = binary.charCodeAt(i);
+  return new Blob([arr], {type: mime});
+}
+
+function buildProjectPayload(){
+  const projectName = (document.getElementById('newProjName').value || '').trim().toUpperCase();
+  const parts = projectWizardState.partNames.map(p => String(p || '').trim().toUpperCase()).filter(Boolean);
+  if(!projectName) throw new Error('Project name is required.');
+  if(!parts.length) throw new Error('At least one part name is required.');
+  const csvEntries = [];
+  const imageEntries = [];
+  const robots = [];
+  for(let i=1;i<=projectWizardState.robotCount;i++) robots.push(`Robot ${i}`);
+  const partRows = ['PART_NO,PART_NAME,PART_IMAGE,ROBOTS,ROBOT_POSITIONER,WORKPIECE_POSITIONER,ROBOT_AXIS_NAMES,WORKPIECE_AXIS_NAMES'];
+  parts.forEach(partNo => {
+    const partImageName = `${partNo}_part.png`;
+    partRows.push(`${escapeCsvValue(partNo)},${escapeCsvValue(partNo)},${escapeCsvValue(partImageName)},${escapeCsvValue(robots.join('|'))},${escapeCsvValue(projectWizardState.robotPositionerEnabled === 'Y' ? projectWizardState.robotPositionerAxes : 'No')},${escapeCsvValue(projectWizardState.workpiecePositionerEnabled === 'Y' ? projectWizardState.workpiecePositionerAxes : 'No')},${escapeCsvValue((projectWizardState.robotPositionerAxisNames || []).join('|'))},${escapeCsvValue((projectWizardState.workpiecePositionerAxisNames || []).join('|'))}`);
+    if(projectWizardState.partImageByPart[partNo]){
+      imageEntries.push({name: partImageName, dataUrl: projectWizardState.partImageByPart[partNo], contentType: 'image/png'});
+    }
+  });
+  csvEntries.push({name: 'part_data.csv', text: partRows.join('\n') + '\n'});
+  for(let i=1;i<=projectWizardState.robotCount;i++){
+    const robot = `Robot ${i}`;
+    ensureRobotBucket(robot);
+    const rows = ['WeldNo,WorkpiecePositionerAngle,JobName,ImageId,Notes,PartNo,RobotPositionerValues,WorkpiecePositionerValues'];
+    const records = projectWizardState.recordsByRobot[robot];
+    records.forEach(r => {
+      const robotAxisValueText = serializeAxisValues(r.robotPositionerValues);
+      const workAxisValueText = serializeAxisValues(r.workpiecePositionerValues);
+      if(r.isSync){
+        rows.push(`${escapeCsvValue('SYNC')},${escapeCsvValue(r.workpieceAngle || '')},${escapeCsvValue(r.jobNo || '')},${escapeCsvValue('TSync')},${escapeCsvValue(r.notes || '')},${escapeCsvValue(r.partNo || '')},${escapeCsvValue(robotAxisValueText)},${escapeCsvValue(workAxisValueText)}`);
+        return;
+      }
+      const safeWeld = String(r.weldNo).replace(/[^a-zA-Z0-9_-]+/g, '_');
+      const partNo = String(r.partNo || parts[0]).toUpperCase();
+      const imageBase = `${partNo.toLowerCase()}_robot${i}_${safeWeld}`;
+      rows.push(`${escapeCsvValue(r.weldNo)},${escapeCsvValue(r.workpieceAngle || '')},${escapeCsvValue(r.jobNo || '')},${escapeCsvValue(imageBase)},${escapeCsvValue(r.notes || '')},${escapeCsvValue(partNo)},${escapeCsvValue(robotAxisValueText)},${escapeCsvValue(workAxisValueText)}`);
+      imageEntries.push({name: `${imageBase}.png`, dataUrl: r.imageDataUrl, contentType: 'image/png'});
+    });
+    csvEntries.push({name: `${(parts[0] || 'part').toLowerCase()}_robot${i}.csv`, text: rows.join('\n') + '\n'});
+  }
+  return {projectName, parts, csvEntries, imageEntries};
+}
+
+function escapeCsvValue(value){
+  const text = String(value ?? '');
+  if(/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+  return text;
+}
+
+function serializeAxisValues(values){
+  return Object.entries(values || {})
+    .filter(([, value]) => String(value ?? '').trim() !== '')
+    .map(([key, value]) => `${key}:${value}`)
+    .join('|');
+}
+
+function parseAxisValueString(text){
+  const result = {};
+  String(text || '').split('|').forEach(pair => {
+    const [key, ...rest] = pair.split(':');
+    if(!key || !rest.length) return;
+    result[key.trim()] = rest.join(':').trim();
+  });
+  return result;
 }
 
 async function deleteProject(id){
@@ -1749,7 +4170,16 @@ function parseCSV(text){
   for(let i=1;i<rows.length;i++){
     if(!rows[i].trim()) continue;
     const c=rows[i].split(',');
-    welds.push({weldNo:c[0]?.trim(),angle:c[1]?.trim(),jobName:c[2]?.trim(),imageId:c[3]?.trim()});
+    welds.push({
+      weldNo:c[0]?.trim(),
+      workpieceAngle:c[1]?.trim(),
+      jobName:c[2]?.trim(),
+      imageId:c[3]?.trim(),
+      notes:c[4]?.trim(),
+      partNo:c[5]?.trim(),
+      robotPositionerValues:c[6]?.trim(),
+      workpiecePositionerValues:c[7]?.trim()
+    });
   }
   return welds;
 }
@@ -1765,7 +4195,7 @@ function loadPartDropdown(){
 
 function loadWeldData(){
   const part=document.getElementById('partDropdown').value;
-  ['weldNumber','jobName','positionerAngle','robotName'].forEach(id=>document.getElementById(id).innerText='—');
+  ['weldNumber','jobName','workpiecePositionerAngleView','robotName','robotPositionerValuesView','workpiecePositionerValuesView'].forEach(id=>document.getElementById(id).innerText='—');
   const imgEl=document.getElementById('mainImage');
   imgEl.style.backgroundImage='none'; imgEl.innerText='[ Select a weld to view image ]';
   setActiveCell(null);
@@ -1816,7 +4246,9 @@ function mkCell(row,robot){
     setActiveCell(div);
     document.getElementById('weldNumber').innerText=row.weldNo||'—';
     document.getElementById('jobName').innerText=row.jobName||'—';
-    document.getElementById('positionerAngle').innerText=row.angle?row.angle+' °':'—';
+    document.getElementById('workpiecePositionerAngleView').innerText=row.workpieceAngle?row.workpieceAngle+' °':'—';
+    document.getElementById('robotPositionerValuesView').innerText=row.robotPositionerValues||'—';
+    document.getElementById('workpiecePositionerValuesView').innerText=row.workpiecePositionerValues||'—';
     document.getElementById('robotName').innerText=robot;
     const imgEl=document.getElementById('mainImage');
     const url=row.imageId?findImg(row.imageId):null;
@@ -1959,7 +4391,7 @@ async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
     pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT – ${code}`);
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:2.55,h:4.82,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:0.07,h:4.82,fill:{color:C.orange},line:{color:C.orange}});
-    [{l:'JOB NAME',v:w.jobName||'—',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'—',c:C.orange,s:22},{l:'ROBOT',v:code,c:C.black,s:18},{l:'POSITIONER ANGLE',v:w.angle?w.angle+' °':'—',c:C.orange,s:14}]
+    [{l:'JOB NAME',v:w.jobName||'—',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'—',c:C.orange,s:22},{l:'ROBOT',v:code,c:C.black,s:18},{l:'WORKPIECE POSITIONER ANGLE',v:w.workpieceAngle?w.workpieceAngle+' °':'—',c:C.orange,s:14},{l:'ROBOT POSITIONER',v:w.robotPositionerValues||'—',c:C.black,s:11},{l:'WORKPIECE POSITIONER',v:w.workpiecePositionerValues||'—',c:C.black,s:11}]
     .reduce((iy,f)=>{
       sl.addText(f.l,{x:0.2,y:iy,w:2.2,h:0.24,fontSize:7.5,color:C.medGrey,fontFace:'Segoe UI',bold:true});
       sl.addText(f.v,{x:0.2,y:iy+0.24,w:2.2,h:f.s>18?0.58:0.44,fontSize:f.s,color:f.c,fontFace:'Segoe UI',bold:true});
@@ -2017,5 +4449,9 @@ window.addEventListener('load',async()=>{
   }
 });
 </script>
+<script src="mobile-builder.js"></script>
 </body>
 </html>
+
+
+
