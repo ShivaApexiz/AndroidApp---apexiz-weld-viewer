@@ -213,9 +213,9 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .viewer-left::-webkit-scrollbar-thumb{background:var(--g2);border-radius:2px;}
 .viewer-right{flex:1;padding:24px 28px;display:flex;flex-direction:column;background:var(--white);overflow:hidden;min-width:0;}
 .overview-img{
-  height:260px;flex-shrink:0;
+  width:100%;aspect-ratio:49/31;flex-shrink:0;
   border:1px solid var(--g2);border-radius:4px;
-  background-position:center;background-repeat:no-repeat;background-size:cover;
+  background-position:center;background-repeat:no-repeat;background-size:contain;
   background-color:var(--g1);
   display:flex;align-items:center;justify-content:center;color:#B8B8B8;font-size:13px;
 }
@@ -243,13 +243,14 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .info-row{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--g1);gap:12px;}
 .info-label{color:var(--g3);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;min-width:170px;flex-shrink:0;}
 .info-value{color:var(--black);font-size:14px;font-weight:500;}
+.info-value{white-space:pre-line;line-height:1.35;}
 .info-value.hl{color:var(--orange);font-weight:700;font-size:15px;}
 .part-dd{padding:5px 14px;border:1.5px solid var(--orange);font-weight:600;color:var(--black);border-radius:20px;font-size:13px;background:var(--white);cursor:pointer;transition:border-color 0.15s;}
 .part-dd:focus{outline:none;border-color:var(--orange-dark);}
 .main-img{
-  flex:1;margin-top:16px;min-height:420px;
+  width:100%;aspect-ratio:755/479;flex:0 0 auto;margin-top:16px;min-height:0;
   border:1px solid var(--g2);border-radius:4px;
-  background-position:center;background-repeat:no-repeat;background-size:cover;
+  background-position:center;background-repeat:no-repeat;background-size:contain;
   background-color:var(--g1);
   display:flex;align-items:center;justify-content:center;color:#B8B8B8;font-size:13px;
 }
@@ -2338,7 +2339,7 @@ function renderCreateProject(el){
           <input id="drawColor" type="color" value="#ff5a00" aria-label="Draw Color">
         </div>
         <div class="canvas-preview-shell" id="weldCanvasShell">
-          <canvas id="weldCanvas" width="1000" height="600"></canvas>
+          <canvas id="weldCanvas" width="1510" height="958"></canvas>
         </div>
       </div>
       <div id="annotationList" class="annotation-list"></div>
@@ -2346,6 +2347,7 @@ function renderCreateProject(el){
       <div class="builder-actions">
         <button class="action-btn" type="button" onclick="saveCurrentWeld()">Save Weld</button>
         <button class="action-btn sec" type="button" onclick="goToNextWeld()">Next Weld</button>
+        <button class="action-btn sec" type="button" onclick="addSyncWeld()">SYNC</button>
         <button class="action-btn sec" type="button" onclick="prevSavedWeld()">Prev Saved</button>
         <button class="action-btn sec" type="button" onclick="nextSavedWeld()">Next Saved</button>
         <button class="action-btn sec" type="button" onclick="deleteCurrentWeld()">Delete Weld</button>
@@ -2449,7 +2451,7 @@ function renderCreateProject(el){
           <input id="overlayColor" type="color" value="#ff5a00" aria-label="Overlay Draw Color">
         </div>
         <div class="fullscreen-canvas-wrap" id="fullWeldCanvasShell">
-          <canvas id="fullWeldCanvas" width="1400" height="900"></canvas>
+          <canvas id="fullWeldCanvas" width="1510" height="958"></canvas>
         </div>
       </div>
     </div>
@@ -3026,7 +3028,8 @@ function applyThicknessToSelectedAnnotation(){
 }
 
 async function loadPartImageFile(file){
-  projectWizardState.partImageDataUrl = await fileToDataUrl(file);
+  const rawDataUrl = await fileToDataUrl(file);
+  projectWizardState.partImageDataUrl = await cropImageDataUrlToAspect(rawDataUrl, 49 / 31, 882, 558);
   const currentPart = projectWizardState.partNames[projectWizardState.selectedPartIndex] || projectWizardState.partNumber;
   if(currentPart) projectWizardState.partImageByPart[currentPart] = projectWizardState.partImageDataUrl;
   const btn = document.getElementById('partImageTrigger');
@@ -3036,7 +3039,8 @@ async function loadPartImageFile(file){
 }
 
 async function loadWeldImageFile(file){
-  projectWizardState.baseImageDataUrl = await fileToDataUrl(file);
+  const rawDataUrl = await fileToDataUrl(file);
+  projectWizardState.baseImageDataUrl = await cropImageDataUrlToAspect(rawDataUrl, 755 / 479, 1510, 958);
   projectWizardState.baseImageElement = null;
   getCurrentRobotAnnotations().length = 0;
   projectWizardState.selectedAnnotationIndex = -1;
@@ -3057,6 +3061,34 @@ function renderImagePreview(targetId, dataUrl){
     return;
   }
   el.innerHTML = `<img src="${dataUrl}" alt="Preview">`;
+}
+
+function cropImageDataUrlToAspect(dataUrl, aspectRatio, outWidth, outHeight){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const sourceAspect = img.width / img.height;
+      let sx = 0;
+      let sy = 0;
+      let sw = img.width;
+      let sh = img.height;
+      if(sourceAspect > aspectRatio){
+        sw = Math.round(img.height * aspectRatio);
+        sx = Math.round((img.width - sw) / 2);
+      }else{
+        sh = Math.round(img.width / aspectRatio);
+        sy = Math.round((img.height - sh) / 2);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = outWidth;
+      canvas.height = outHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outWidth, outHeight);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
 }
 
 function openImageSourcePicker(target){
@@ -3158,9 +3190,35 @@ function captureCameraFrame(){
   if(btn) btn.innerText = 'Weld Image Ready';
   renderImagePreview('weldPreview', fileLikeDataUrl);
   getCurrentRobotAnnotations().length = 0;
+  resetAnnotationHistory();
   redrawBuilderCanvases();
   refreshAnnotationList();
   updateCreateStatus('Photo captured from camera.');
+}
+
+function addSyncMarker(){
+  return;
+}
+
+function addSyncWeld(){
+  const partNo = (document.getElementById('partNumber').value || '').trim().toUpperCase();
+  if(!partNo) return alert('Part number is required before adding SYNC.');
+  const records = getCurrentRobotRecords();
+  records.push({
+    partNo,
+    jobNo: (document.getElementById('jobNumber').value || '').trim(),
+    weldNo: 'SYNC',
+    notes: (document.getElementById('weldNotes').value || '').trim(),
+    robotPositionerValues: JSON.parse(JSON.stringify(getCurrentRobotAxisValueState().robotPositionerValues || {})),
+    workpiecePositionerValues: JSON.parse(JSON.stringify(getCurrentRobotAxisValueState().workpiecePositionerValues || {})),
+    isSync: true,
+    baseImageDataUrl: '',
+    annotations: [],
+    imageDataUrl: ''
+  });
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = records.length - 1;
+  refreshWeldList();
+  updateCreateStatus(`SYNC row added for ${projectWizardState.currentRobot}.`);
 }
 
 function attachCanvasHandlers(canvasId){
@@ -3456,7 +3514,7 @@ function drawAnnotations(ctx, annotations){
       ctx.moveTo(ann.start.x, ann.start.y);
       ctx.bezierCurveTo(ann.control1.x, ann.control1.y, ann.control2.x, ann.control2.y, ann.end.x, ann.end.y);
       ctx.stroke();
-      drawArrowOnContext(ctx, ann.control2, ann.end, ann.thickness || 4);
+      drawArrowHeadOnContext(ctx, ann.control2, ann.end, ann.thickness || 4);
       if(projectWizardState.selectedAnnotationIndex === index){
         if(projectWizardState.interaction.mode === 'edit' && projectWizardState.interaction.annotationIndex === index){
           drawGuideLine(ctx, [ann.start, ann.control1, ann.control2, ann.end]);
@@ -3514,6 +3572,17 @@ function drawArrowOnContext(ctx, start, end, thickness=4){
   ctx.moveTo(start.x, start.y);
   ctx.lineTo(shaftEndX, shaftEndY);
   ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(end.x, end.y);
+  ctx.lineTo(end.x - head * Math.cos(angle - Math.PI / 7), end.y - head * Math.sin(angle - Math.PI / 7));
+  ctx.lineTo(end.x - head * Math.cos(angle + Math.PI / 7), end.y - head * Math.sin(angle + Math.PI / 7));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawArrowHeadOnContext(ctx, start, end, thickness=4){
+  const angle = Math.atan2(end.y - start.y, end.x - start.x);
+  const head = Math.max(12, thickness * 4);
   ctx.beginPath();
   ctx.moveTo(end.x, end.y);
   ctx.lineTo(end.x - head * Math.cos(angle - Math.PI / 7), end.y - head * Math.sin(angle - Math.PI / 7));
@@ -3630,7 +3699,24 @@ function addSyncMarker(){
 }
 
 function addSyncWeld(){
-  return;
+  const partNo = (document.getElementById('partNumber').value || '').trim().toUpperCase();
+  if(!partNo) return alert('Part number is required before adding SYNC.');
+  const records = getCurrentRobotRecords();
+  records.push({
+    partNo,
+    jobNo: (document.getElementById('jobNumber').value || '').trim(),
+    weldNo: 'SYNC',
+    notes: (document.getElementById('weldNotes').value || '').trim(),
+    robotPositionerValues: JSON.parse(JSON.stringify(getCurrentRobotAxisValueState().robotPositionerValues || {})),
+    workpiecePositionerValues: JSON.parse(JSON.stringify(getCurrentRobotAxisValueState().workpiecePositionerValues || {})),
+    isSync: true,
+    baseImageDataUrl: '',
+    annotations: [],
+    imageDataUrl: ''
+  });
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = records.length - 1;
+  refreshWeldList();
+  updateCreateStatus(`SYNC row added for ${projectWizardState.currentRobot}.`);
 }
 
 async function editProject(projectId){
@@ -3844,8 +3930,8 @@ function saveCurrentWeld(){
 
 function exportAnnotatedImage(){
   const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = 1400;
-  tempCanvas.height = 900;
+  tempCanvas.width = 1510;
+  tempCanvas.height = 958;
   const ctx = tempCanvas.getContext('2d');
   ctx.fillStyle = '#f6f6f6';
   ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
@@ -3993,6 +4079,7 @@ function buildProjectPayload(){
       const robotAxisValueText = serializeAxisValues(r.robotPositionerValues);
       const workAxisValueText = serializeAxisValues(r.workpiecePositionerValues);
       if(r.isSync){
+        rows.push(`${escapeCsvValue('SYNC')},${escapeCsvValue(r.jobNo || '')},${escapeCsvValue('TSync')},${escapeCsvValue(r.notes || '')},${escapeCsvValue(r.partNo || parts[0] || '')},${escapeCsvValue(robotAxisValueText)},${escapeCsvValue(workAxisValueText)}`);
         return;
       }
       const safeWeld = String(r.weldNo).replace(/[^a-zA-Z0-9_-]+/g, '_');
@@ -4017,6 +4104,16 @@ function serializeAxisValues(values){
     .filter(([, value]) => String(value ?? '').trim() !== '')
     .map(([key, value]) => `${key}:${value}`)
     .join('|');
+}
+
+function formatAxisValuesForDisplay(text){
+  if(!text) return '—';
+  const lines = String(text)
+    .split('|')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(item => item.replace(':', ': '));
+  return lines.length ? lines.join('\n') : '—';
 }
 
 function parseAxisValueString(text){
@@ -4377,8 +4474,8 @@ function mkCell(row,robot){
     setActiveCell(div);
     document.getElementById('weldNumber').innerText=row.weldNo||'—';
     document.getElementById('jobName').innerText=row.jobName||'—';
-    document.getElementById('robotPositionerValuesView').innerText=row.robotPositionerValues||'—';
-    document.getElementById('workpiecePositionerValuesView').innerText=row.workpiecePositionerValues||'—';
+    document.getElementById('robotPositionerValuesView').innerText=formatAxisValuesForDisplay(row.robotPositionerValues);
+    document.getElementById('workpiecePositionerValuesView').innerText=formatAxisValuesForDisplay(row.workpiecePositionerValues);
     document.getElementById('robotName').innerText=robot;
     const imgEl=document.getElementById('mainImage');
     const url=row.imageId?findImg(row.imageId):null;
@@ -4457,9 +4554,9 @@ async function exportToPPT(){
   {const sl=pptx.addSlide();sl.background={color:C.white};
    pptHdr(sl,pptx,'Part Overview',projName+' — '+part);
    const ovUrl=findImg(part);const ovB64=await imgB64(ovUrl);
-   if(ovB64) sl.addImage({data:ovB64,x:0.3,y:1,w:5.9,h:4.6,sizing:{type:'contain',w:5.9,h:4.6}});
-   else{sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1,w:5.9,h:4.6,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
-    sl.addText('[ No Part Image ]',{x:0.3,y:2.9,w:5.9,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
+   if(ovB64) sl.addImage({data:ovB64,x:0.3,y:1.15,w:5.9,h:3.73,sizing:{type:'contain',w:5.9,h:3.73}});
+   else{sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1.15,w:5.9,h:3.73,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
+    sl.addText('[ No Part Image ]',{x:0.3,y:2.7,w:5.9,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
    sl.addShape(pptx.shapes.RECTANGLE,{x:6.4,y:1,w:3.35,h:4.6,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
    const r1=S.welds1.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
    const r2=S.welds2.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
@@ -4521,14 +4618,14 @@ async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
     pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT – ${code}`);
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:2.72,h:4.82,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:0.07,h:4.82,fill:{color:C.orange},line:{color:C.orange}});
-    [{l:'JOB NAME',v:w.jobName||'—',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'—',c:C.orange,s:22},{l:'ROBOT',v:code,c:C.black,s:18},{l:'ROBOT POSITIONER',v:w.robotPositionerValues||'—',c:C.black,s:11},{l:'WORKPIECE POSITIONER',v:w.workpiecePositionerValues||'—',c:C.black,s:11}]
+    [{l:'JOB NAME',v:w.jobName||'—',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'—',c:C.orange,s:22},{l:'ROBOT',v:code,c:C.black,s:18},{l:'ROBOT POSITIONER',v:formatAxisValuesForDisplay(w.robotPositionerValues),c:C.black,s:11},{l:'WORKPIECE POSITIONER',v:formatAxisValuesForDisplay(w.workpiecePositionerValues),c:C.black,s:11}]
     .reduce((iy,f)=>{
       const isCompact=f.s<=11;
       sl.addText(f.l,{x:0.2,y:iy,w:2.32,h:0.22,fontSize:7.2,color:C.medGrey,fontFace:'Segoe UI',bold:true});
       sl.addText(f.v,{x:0.2,y:iy+0.22,w:2.32,h:isCompact?0.34:(f.s>18?0.58:0.44),fontSize:isCompact?9.5:f.s,color:f.c,fontFace:'Segoe UI',bold:true,fit:'shrink'});
       sl.addShape(pptx.shapes.RECTANGLE,{x:0.2,y:iy+(isCompact?0.62:(f.s>18?0.88:0.74)),w:2.22,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
       return iy+(isCompact?0.70:(f.s>18?0.96:0.84));},1.0);
-    const ix=2.82,iy=0.92,iw=6.93,ih=4.78;
+    const ix=2.82,iy=1.05,iw=6.93,ih=4.40;
     const url=w.imageId?findImg(w.imageId):null;
     const b64=await imgB64fn(url);
     if(b64) sl.addImage({data:b64,x:ix,y:iy,w:iw,h:ih,sizing:{type:'contain',w:iw,h:ih}});
