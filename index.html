@@ -184,6 +184,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .step-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--orange);color:var(--white);font-size:11px;font-weight:700;margin-right:8px;}
 .queue-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
 .queue-row{padding:10px 12px;border:1px solid var(--g2);border-radius:12px;background:#fff;}
+.queue-row.selected{border-color:var(--orange);box-shadow:0 0 0 2px rgba(255,85,0,0.12);background:#fff6ef;}
 .queue-row strong{display:block;font-size:12px;color:var(--black);}
 .queue-row span{display:block;font-size:11px;color:var(--g3);margin-top:3px;}
 .native-panel{background:linear-gradient(180deg,#1f1f1f 0%,#2a2a2a 100%);border-radius:18px;color:var(--white);padding:16px;border:1px solid rgba(255,255,255,0.08);}
@@ -214,7 +215,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .viewer-right{flex:1;padding:24px 28px;display:flex;flex-direction:column;background:var(--white);overflow:hidden;min-width:0;}
 .overview-img{
   width:100%;aspect-ratio:49/31;flex-shrink:0;
-  border:1px solid var(--g2);border-radius:4px;
+  border:3px solid #000;border-radius:4px;
   background-position:center;background-repeat:no-repeat;background-size:contain;
   background-color:var(--g1);
   display:flex;align-items:center;justify-content:center;color:#B8B8B8;font-size:13px;
@@ -247,13 +248,16 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .info-value.hl{color:var(--orange);font-weight:700;font-size:15px;}
 .part-dd{padding:5px 14px;border:1.5px solid var(--orange);font-weight:600;color:var(--black);border-radius:20px;font-size:13px;background:var(--white);cursor:pointer;transition:border-color 0.15s;}
 .part-dd:focus{outline:none;border-color:var(--orange-dark);}
+.main-image-wrap{position:relative;margin-top:16px;flex:0 0 auto;}
 .main-img{
-  width:100%;aspect-ratio:755/479;flex:0 0 auto;margin-top:16px;min-height:0;
-  border:1px solid var(--g2);border-radius:4px;
+  width:100%;aspect-ratio:755/479;flex:0 0 auto;min-height:0;
+  border:3px solid #000;border-radius:4px;
   background-position:center;background-repeat:no-repeat;background-size:contain;
   background-color:var(--g1);
   display:flex;align-items:center;justify-content:center;color:#B8B8B8;font-size:13px;
 }
+.notes-bubble{position:absolute;top:12px;right:12px;border:none;border-radius:999px;padding:8px 12px;background:rgba(255,255,255,.96);box-shadow:0 8px 22px rgba(0,0,0,.16);font-size:12px;font-weight:700;color:#111;cursor:pointer;z-index:2}
+.notes-modal-card{width:min(90vw,420px)}
 
 /* ══ CUSTOMER ══ */
 #customerPage .page-body{background:#EFEFEF;padding:18px;}
@@ -322,13 +326,13 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 <!-- ══ AUTH PAGE ══ -->
 <div id="authPage" class="page active">
   <div class="topbar">
-    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <span class="topbar-logo-text" style="display:none">APEXIZ</span>
     <div class="topbar-right"><span class="topbar-title">Weld Viewer</span></div>
   </div>
   <div class="page-body">
     <div class="auth-card">
-    <img class="auth-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <img class="auth-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
       <div class="auth-logo-text" style="display:none">APEXIZ</div>
       <div class="auth-title" id="authTitle">Sign In</div>
       <div class="auth-sub" id="authSub">Access the Apexiz Weld Viewer platform</div>
@@ -415,7 +419,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 <!-- ══ DASHBOARD ══ -->
 <div id="dashPage" class="page">
   <div class="topbar">
-    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <span class="topbar-logo-text" style="display:none">APEXIZ</span>
     <div class="topbar-right">
       <span class="topbar-title">Weld Viewer</span>
@@ -463,7 +467,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 <!-- ══ WELD VIEWER ══ -->
 <div id="viewerPage" class="page">
   <div class="topbar">
-    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <span class="topbar-logo-text" style="display:none">APEXIZ</span>
     <div class="topbar-right">
       <span class="topbar-title" id="viewerTitle">Weld Viewer</span>
@@ -492,16 +496,29 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
         <div class="info-row"><span class="info-label">Workpiece Positioner</span><span class="info-value" id="workpiecePositionerValuesView">—</span></div>
         <div class="info-row"><span class="info-label">Weld Number</span><span class="info-value hl" id="weldNumber">—</span></div>
       </div>
-      <div id="mainImage" class="main-img">[ Select a weld to view image ]</div>
+      <div class="main-image-wrap">
+        <div id="mainImage" class="main-img">[ Select a weld to view image ]</div>
+        <button id="notesBubble" class="notes-bubble" type="button" style="display:none" onclick="showWeldNotesPopup()">Notes</button>
+      </div>
     </div>
   </div>
   <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL INFORMATION<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
 </div>
 
+<div id="notesOverlay" class="modal-overlay" onclick="if(event.target===this) closeWeldNotesPopup()">
+  <div class="modal-card notes-modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">
+      <strong>Weld Notes</strong>
+      <button class="tbl-btn revoke" type="button" onclick="closeWeldNotesPopup()">Close</button>
+    </div>
+    <div id="notesOverlayContent" class="builder-note" style="font-size:13px;color:#1f1f1f;white-space:pre-wrap"></div>
+  </div>
+</div>
+
 <!-- ══ CUSTOMER PAGE ══ -->
 <div id="customerPage" class="page">
   <div class="topbar">
-    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <span class="topbar-logo-text" style="display:none">APEXIZ</span>
     <div class="topbar-right">
       <span class="topbar-title">My Projects</span>
@@ -2143,9 +2160,11 @@ window.addEventListener('online', () => {
 let builderCameraStream = null;
 let builderCameraTarget = 'weld';
 let pendingProjectWizardState = null;
+let sourceUploadState = { csv: new Map(), images: new Map() };
 
 function resetProjectWizardState(){
   projectWizardState = {
+    createEntryMode: 'builder',
     projectId: '',
     projectName: '',
     partNumber: '',
@@ -2203,6 +2222,41 @@ function renderCreateProject(el){
     <div class="create-form mobile-project-builder" id="mobileProjectBuilder">
       <div class="mobile-builder-head">
         <div class="mobile-builder-sub">Engineer flow: pick robot, add part, capture weld image, annotate in full screen, save, and move to the next weld.</div>
+      </div>
+
+      <div class="create-mode-toggle">
+        <button class="action-btn ${projectWizardState.createEntryMode === 'builder' ? '' : 'sec'}" type="button" onclick="switchCreateEntryMode('builder')">Current Builder</button>
+        <button class="action-btn ${projectWizardState.createEntryMode === 'source' ? '' : 'sec'}" type="button" onclick="switchCreateEntryMode('source')">Source Folder Upload</button>
+      </div>
+
+      <div id="sourceUploadStage" class="wizard-stage" style="display:none">
+        <div class="setup-summary-card source-guide-card">
+          <div class="builder-subtitle">Source Folder Structure</div>
+          <div class="builder-note">Use this option for the original website-style upload flow.</div>
+          <div class="source-guide-grid">
+            <div><strong>Folder Layout</strong><br>Source/<br>Weld_Data/<br>Weld_Images/<br>Part_Images/<br>Logo/</div>
+            <div><strong>Part CSV</strong><br><code>part_data.csv</code><br>Part rows define parts, robots, and axis names.</div>
+            <div><strong>Robot CSV</strong><br><code>&lt;part&gt;_robot1.csv</code><br><code>&lt;part&gt;_robot2.csv</code></div>
+            <div><strong>Part Image</strong><br><code>&lt;PART_NAME&gt;_part.png</code></div>
+            <div><strong>Weld Image</strong><br><code>&lt;part&gt;_robot1_&lt;weldId&gt;.png</code></div>
+            <div><strong>SYNC Row</strong><br><code>WeldNo=SYNC</code>, <code>ImageId=TSync</code></div>
+          </div>
+        </div>
+        <div class="mobile-builder-grid source-upload-grid">
+          <label class="field-label" for="sourceProjName">Project Name</label>
+          <input id="sourceProjName" class="field-input" type="text" placeholder="e.g. ONEROBOT">
+          <label class="field-label" for="sourceFolderInput">Source Folder</label>
+          <input id="sourceFolderInput" class="field-input" type="file" webkitdirectory mozdirectory multiple>
+          <label class="field-label" for="sourceCsvInput">CSV Files</label>
+          <input id="sourceCsvInput" class="field-input" type="file" accept=".csv,text/csv" multiple>
+          <label class="field-label" for="sourceImageInput">Images</label>
+          <input id="sourceImageInput" class="field-input" type="file" accept="image/png,image/jpeg" multiple>
+        </div>
+        <div id="sourceCreateStatus" class="builder-note" style="margin-top:8px"></div>
+        <div id="sourceStructureInfo" class="info-msg" style="display:none;margin-top:10px"></div>
+        <div class="builder-actions">
+          <button class="action-btn" id="sourceCreateProjBtn" type="button" onclick="uploadSourceProject()" disabled>Upload Source Project</button>
+        </div>
       </div>
 
       <div id="projectSetupStage" class="wizard-stage">
@@ -2301,7 +2355,7 @@ function renderCreateProject(el){
           <button class="tbl-btn revoke" type="button" onclick="deleteSelectedAnnotation()">Delete Selected</button>
           <button class="tbl-btn" type="button" onclick="stampWeldNumber()">Stamp Weld ID</button>
           <label class="zoom-inline">Zoom <input id="builderZoom" type="range" min="1" max="3" step="0.1" value="1"></label>
-          <label class="zoom-inline">Thickness <input id="builderThickness" type="range" min="1" max="16" step="1" value="4"></label>
+          <label class="zoom-inline">Thickness <input id="builderThickness" type="range" min="1" max="40" step="1" value="4"></label>
           <label class="zoom-inline">Stamp Background
             <select id="stampStyle" class="tool-select">
               <option value="transparent">Transparent</option>
@@ -2383,7 +2437,7 @@ function renderCreateProject(el){
     </div>
 
     <div id="imageSourceOverlay" class="builder-overlay" style="display:none">
-      <div class="builder-overlay-card camera-card">
+      <div class="builder-overlay-card source-picker-card">
         <div class="builder-overlay-head">
           <strong>Select Image Source</strong>
           <button class="tbl-btn revoke" type="button" onclick="closeImageSourcePicker()">Close</button>
@@ -2414,7 +2468,7 @@ function renderCreateProject(el){
           <button class="tbl-btn revoke" type="button" onclick="deleteSelectedAnnotation()">Delete Selected</button>
           <button class="tbl-btn" type="button" onclick="stampWeldNumber()">Stamp Weld ID</button>
           <label class="zoom-inline">Zoom <input id="overlayZoom" type="range" min="1" max="4" step="0.1" value="1"></label>
-          <label class="zoom-inline">Thickness <input id="overlayThickness" type="range" min="1" max="16" step="1" value="4"></label>
+          <label class="zoom-inline">Thickness <input id="overlayThickness" type="range" min="1" max="40" step="1" value="4"></label>
           <label class="zoom-inline">Background
             <select id="overlayStampStyle" class="tool-select">
               <option value="transparent">Transparent</option>
@@ -2488,6 +2542,10 @@ function initProjectBuilderBindings(){
   const overlayStampOutline = document.getElementById('overlayStampOutline');
   const overlayStampBackgroundColor = document.getElementById('overlayStampBackgroundColor');
   const overlayStampFont = document.getElementById('overlayStampFont');
+  const sourceProjName = document.getElementById('sourceProjName');
+  const sourceFolderInput = document.getElementById('sourceFolderInput');
+  const sourceCsvInput = document.getElementById('sourceCsvInput');
+  const sourceImageInput = document.getElementById('sourceImageInput');
 
   robotCount.addEventListener('input', () => {
     projectWizardState.robotCount = Math.max(1, parseInt(robotCount.value || '1', 10));
@@ -2513,10 +2571,12 @@ function initProjectBuilderBindings(){
   drawColor.addEventListener('input', () => {
     projectWizardState.drawColor = drawColor.value;
     overlayColor.value = drawColor.value;
+    applyColorToSelectedAnnotation();
   });
   overlayColor.addEventListener('input', () => {
     projectWizardState.drawColor = overlayColor.value;
     drawColor.value = overlayColor.value;
+    applyColorToSelectedAnnotation();
   });
   projectName.addEventListener('input', () => { projectWizardState.projectName = projectName.value.trim().toUpperCase(); });
   partNumber.addEventListener('input', () => { projectWizardState.partNumber = partNumber.value.trim().toUpperCase(); });
@@ -2637,9 +2697,116 @@ function initProjectBuilderBindings(){
   updateStampButtons();
   renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
   renderImagePreview('weldPreview', projectWizardState.baseImageDataUrl);
+  if(sourceProjName) sourceProjName.value = projectWizardState.projectName || '';
+  if(sourceFolderInput) sourceFolderInput.addEventListener('change', ev => processSourceSelectedFiles(ev.target.files, 'Source folder ready'));
+  if(sourceCsvInput) sourceCsvInput.addEventListener('change', processSourceMobileSelection);
+  if(sourceImageInput) sourceImageInput.addEventListener('change', processSourceMobileSelection);
   resetAnnotationHistory();
   redrawBuilderCanvases();
   refreshAnnotationList();
+  switchCreateEntryMode(projectWizardState.createEntryMode || 'builder');
+}
+
+function switchCreateEntryMode(mode){
+  projectWizardState.createEntryMode = mode;
+  const sourceStage = document.getElementById('sourceUploadStage');
+  const setupStage = document.getElementById('projectSetupStage');
+  const weldStage = document.getElementById('weldBuilderStage');
+  const toggleButtons = document.querySelectorAll('.create-mode-toggle .action-btn');
+  toggleButtons.forEach(btn => {
+    const isBuilder = btn.textContent.includes('Current Builder');
+    btn.classList.toggle('sec', mode === 'builder' ? !isBuilder : isBuilder);
+  });
+  if(sourceStage) sourceStage.style.display = mode === 'source' ? 'block' : 'none';
+  if(setupStage) setupStage.style.display = mode === 'builder' && projectWizardState.setupStep === 'setup' ? 'block' : 'none';
+  if(weldStage) weldStage.style.display = mode === 'builder' && projectWizardState.setupStep === 'weld' ? 'block' : 'none';
+}
+
+async function processSourceMobileSelection(){
+  const csvInput = document.getElementById('sourceCsvInput');
+  const imageInput = document.getElementById('sourceImageInput');
+  const mergedFiles = [...Array.from(csvInput?.files || []), ...Array.from(imageInput?.files || [])];
+  const status = mergedFiles.length ? `Source upload ready: ${(csvInput?.files || []).length} CSV and ${(imageInput?.files || []).length} images` : '';
+  await processSourceSelectedFiles(mergedFiles, status);
+}
+
+async function processSourceSelectedFiles(files, statusText=''){
+  sourceUploadState = { csv: new Map(), images: new Map() };
+  const arr = Array.from(files || []);
+  const statusEl = document.getElementById('sourceCreateStatus');
+  const infoEl = document.getElementById('sourceStructureInfo');
+  const btn = document.getElementById('sourceCreateProjBtn');
+  if(statusEl) statusEl.innerText = arr.length ? 'Scanning source files...' : '';
+  if(infoEl) infoEl.style.display = 'none';
+  if(btn) btn.disabled = true;
+  if(arr.length === 0) return;
+  await Promise.all(arr.map(file => new Promise(resolve => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const rel = (file.webkitRelativePath || file.name).replace(/\\/g,'/');
+    const reader = new FileReader();
+    if(ext === 'csv'){
+      reader.onload = ev => {
+        sourceUploadState.csv.set(file.name.toLowerCase(), { name:file.name, text:ev.target.result, path:rel });
+        resolve();
+      };
+      reader.readAsText(file);
+      return;
+    }
+    if(['png','jpg','jpeg'].includes(ext)){
+      reader.onload = ev => {
+        const key = file.name.toLowerCase();
+        const entry = { name:file.name, dataUrl:ev.target.result, path:rel, file };
+        sourceUploadState.images.set(key, entry);
+        sourceUploadState.images.set(key.replace(/\.[^.]+$/,''), entry);
+        resolve();
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+    resolve();
+  })));
+  const parts = detectParts(sourceUploadState.csv);
+  const imageCount = new Set([...sourceUploadState.images.values()].map(v => v.path)).size;
+  if(statusEl) statusEl.innerText = `${statusText || 'Source files ready'} • ${sourceUploadState.csv.size} CSV • ${imageCount} images • ${parts.length} parts`;
+  if(infoEl){
+    infoEl.style.display = 'block';
+    infoEl.innerHTML = `<strong>Detected parts:</strong> ${parts.length ? parts.join(' • ') : 'None'}<br><strong>Expected folders:</strong> Weld_Data/, Weld_Images/, Part_Images/, Logo/`;
+  }
+  if(btn) btn.disabled = sourceUploadState.csv.size === 0;
+}
+
+async function uploadSourceProject(){
+  const name = (document.getElementById('sourceProjName')?.value || '').trim().toUpperCase();
+  if(!name) return alert('Please enter a project name.');
+  if(sourceUploadState.csv.size === 0) return alert('Select a source folder or CSV files first.');
+  const parts = detectParts(sourceUploadState.csv);
+  const btn = document.getElementById('sourceCreateProjBtn');
+  btn.disabled = true;
+  btn.innerText = 'Uploading Source Project...';
+  loading(true,'Creating source project...');
+  try{
+    const {data:proj,error:pe}=await sb.from('projects').insert({name,owner_id:S.profile.id,parts}).select().single();
+    if(pe) throw new Error(pe.message);
+    const projId = proj.id;
+    for(const entry of sourceUploadState.csv.values()){
+      const blob = new Blob([entry.text],{type:'text/csv'});
+      const {error} = await sb.storage.from('projects').upload(`${projId}/csv/${entry.name}`,blob,{upsert:true});
+      if(error) throw new Error(error.message);
+    }
+    const uniqueImages = [...new Map([...sourceUploadState.images.values()].map(v => [v.path, v])).values()];
+    for(const entry of uniqueImages){
+      const blob = dataUrlToBlob(entry.dataUrl);
+      const {error} = await sb.storage.from('projects').upload(`${projId}/images/${entry.name}`,blob,{upsert:true,contentType:blob.type});
+      if(error) throw new Error(error.message);
+    }
+    showPanel('projects');
+  }catch(err){
+    alert('Source upload failed: ' + (err.message || err));
+  }finally{
+    loading(false);
+    btn.disabled = false;
+    btn.innerText = 'Upload Source Project';
+  }
 }
 
 function ensurePartNames(){
@@ -2941,10 +3108,15 @@ function selectAnnotation(index){
   const ann = getCurrentRobotAnnotations()[index];
   if(ann){
     projectWizardState.currentThickness = ann.thickness || 4;
+    projectWizardState.drawColor = ann.color || projectWizardState.drawColor;
     const builderThickness = document.getElementById('builderThickness');
     const overlayThickness = document.getElementById('overlayThickness');
+    const drawColor = document.getElementById('drawColor');
+    const overlayColor = document.getElementById('overlayColor');
     if(builderThickness) builderThickness.value = String(projectWizardState.currentThickness);
     if(overlayThickness) overlayThickness.value = String(projectWizardState.currentThickness);
+    if(drawColor) drawColor.value = projectWizardState.drawColor;
+    if(overlayColor) overlayColor.value = projectWizardState.drawColor;
     if(ann.type === 'text'){
       projectWizardState.stampStyle = ann.stampStyle || 'transparent';
       projectWizardState.stampOutline = ann.stampOutline || 'no-outline';
@@ -3028,6 +3200,16 @@ function applyThicknessToSelectedAnnotation(){
   const ann = getCurrentRobotAnnotations()[index];
   if(!ann) return;
   ann.thickness = projectWizardState.currentThickness;
+  recordAnnotationHistory();
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+}
+
+function applyColorToSelectedAnnotation(){
+  const index = projectWizardState.selectedAnnotationIndex;
+  const ann = getCurrentRobotAnnotations()[index];
+  if(!ann) return;
+  ann.color = projectWizardState.drawColor;
   recordAnnotationHistory();
   redrawBuilderCanvases();
   refreshAnnotationList();
@@ -3309,6 +3491,10 @@ function handleCanvasPointerDown(point){
   const shapeHit = findAnnotationHit(point);
   if(shapeHit >= 0){
     selectAnnotation(shapeHit);
+    const hitAnnotation = getCurrentRobotAnnotations()[shapeHit];
+    if(hitAnnotation?.type === 'text'){
+      projectWizardState.interaction = { mode:'edit', annotationIndex: shapeHit, pointKey:'position' };
+    }
     return;
   }
   if(projectWizardState.interactionMode === 'select'){
@@ -3693,7 +3879,16 @@ function annotationBounds(ann){
     const pts = Array.isArray(ann.points) ? ann.points : [ann.start, ann.control1, ann.control2, ann.end];
     return {x1: Math.min(...pts.map(p => p.x)), y1: Math.min(...pts.map(p => p.y)), x2: Math.max(...pts.map(p => p.x)), y2: Math.max(...pts.map(p => p.y))};
   }
-  if(ann.type === 'text') return {x1: ann.position.x - 12, y1: ann.position.y - 36, x2: ann.position.x + 120, y2: ann.position.y + 12};
+  if(ann.type === 'text'){
+    const fontSize = 24 + ((ann.thickness || 4) * 2);
+    const estimatedWidth = Math.max(96, String(ann.text || '').length * (fontSize * 0.72));
+    return {
+      x1: ann.position.x - 18,
+      y1: ann.position.y - fontSize - 18,
+      x2: ann.position.x + estimatedWidth + 18,
+      y2: ann.position.y + 18
+    };
+  }
   return null;
 }
 
@@ -4067,6 +4262,10 @@ function saveCurrentWeld(){
   const records = getCurrentRobotRecords();
   const idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
   const insertAfterIndex = projectWizardState.insertAfterIndexByRobot?.[projectWizardState.currentRobot];
+  const duplicateIndex = records.findIndex((r, i) => i !== idx && String(r.weldNo || '').toUpperCase() === weldNo.toUpperCase());
+  if(duplicateIndex >= 0 && !confirm(`Weld ID ${weldNo} already exists for ${projectWizardState.currentRobot}. Do you want to continue?`)){
+    return;
+  }
   const axisState = JSON.parse(JSON.stringify(getCurrentRobotAxisValueState()));
   projectWizardState.selectedAnnotationIndex = -1;
   projectWizardState.interaction = { mode:'idle', annotationIndex:-1, pointKey:null };
@@ -4171,16 +4370,36 @@ function refreshWeldList(){
   const list = document.getElementById('weldList');
   if(!list) return;
   const records = getCurrentRobotRecords();
+  const selectedIndex = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
   if(records.length === 0){
     list.innerHTML = `<div class="queue-row"><strong>${projectWizardState.currentRobot}</strong><span>No welds saved yet.</span></div>`;
     return;
   }
   list.innerHTML = records.map((r, i) => `
-    <div class="queue-row" onclick="loadRecordToForm(${i})" style="cursor:pointer">
+    <div class="queue-row weld-record-row ${selectedIndex === i ? 'selected' : ''}" draggable="true" ondragstart="startWeldReorder(${i})" ondragover="allowWeldReorder(event)" ondrop="dropWeldReorder(${i})" onclick="loadRecordToForm(${i})" style="cursor:pointer">
       <strong>${projectWizardState.currentRobot} - ${r.weldNo}</strong>
       <span>Part: ${r.partNo} | Job: ${r.jobNo || '-'} | Robot: ${serializeAxisValues(r.robotPositionerValues) || '-'} | Workpiece: ${serializeAxisValues(r.workpiecePositionerValues) || '-'} | Notes: ${r.notes || '-'}${r.isSync ? ' | Type: TSync' : ''}</span>
     </div>
   `).join('');
+}
+
+function startWeldReorder(index){
+  projectWizardState.draggingWeldIndex = index;
+}
+
+function allowWeldReorder(event){
+  event.preventDefault();
+}
+
+function dropWeldReorder(targetIndex){
+  const records = getCurrentRobotRecords();
+  const sourceIndex = projectWizardState.draggingWeldIndex;
+  if(typeof sourceIndex !== 'number' || sourceIndex === targetIndex || sourceIndex < 0 || sourceIndex >= records.length) return;
+  const [moved] = records.splice(sourceIndex, 1);
+  records.splice(targetIndex, 0, moved);
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = targetIndex;
+  projectWizardState.draggingWeldIndex = null;
+  refreshWeldList();
 }
 
 function goToNextWeld(){
@@ -4308,6 +4527,36 @@ function formatAxisValuesForDisplay(text){
     .filter(Boolean)
     .map(item => item.replace(':', ': '));
   return lines.length ? lines.join('\n') : '—';
+}
+
+function formatAxisValuesForWebsite(text, typeLabel){
+  if(!text) return '—';
+  const segments = String(text)
+    .split('|')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(item => item.replace(/^Axis\s*/i, `${typeLabel} Axis `).replace(':', ': '));
+  return segments.length ? segments.join(' | ') : '—';
+}
+
+function setViewerNotes(notes){
+  S.currentWeldNotes = String(notes || '').trim();
+  const bubble = document.getElementById('notesBubble');
+  if(!bubble) return;
+  bubble.style.display = S.currentWeldNotes ? 'inline-flex' : 'none';
+}
+
+function showWeldNotesPopup(){
+  const overlay = document.getElementById('notesOverlay');
+  const content = document.getElementById('notesOverlayContent');
+  if(!overlay || !content) return;
+  content.innerText = S.currentWeldNotes || 'No notes for this weld.';
+  overlay.style.display = 'flex';
+}
+
+function closeWeldNotesPopup(){
+  const overlay = document.getElementById('notesOverlay');
+  if(overlay) overlay.style.display = 'none';
 }
 
 function parseAxisValueString(text){
@@ -4620,6 +4869,7 @@ function loadWeldData(){
   ['weldNumber','jobName','robotName','robotPositionerValuesView','workpiecePositionerValuesView'].forEach(id=>document.getElementById(id).innerText='—');
   const imgEl=document.getElementById('mainImage');
   imgEl.style.backgroundImage='none'; imgEl.innerText='[ Select a weld to view image ]';
+  setViewerNotes('');
   setActiveCell(null);
   const t1=getCSV(`${part}_Robot1.csv`)||getCSV(`${part}_robot1.csv`);
   const t2=getCSV(`${part}_Robot2.csv`)||getCSV(`${part}_robot2.csv`);
@@ -4668,11 +4918,12 @@ function mkCell(row,robot){
     setActiveCell(div);
     document.getElementById('weldNumber').innerText=row.weldNo||'—';
     document.getElementById('jobName').innerText=row.jobName||'—';
-    document.getElementById('robotPositionerValuesView').innerText=formatAxisValuesForDisplay(row.robotPositionerValues);
-    document.getElementById('workpiecePositionerValuesView').innerText=formatAxisValuesForDisplay(row.workpiecePositionerValues);
+    document.getElementById('robotPositionerValuesView').innerText=formatAxisValuesForWebsite(row.robotPositionerValues,'Robot Positioner');
+    document.getElementById('workpiecePositionerValuesView').innerText=formatAxisValuesForWebsite(row.workpiecePositionerValues,'Workpiece Positioner');
     document.getElementById('robotName').innerText=robot;
     const imgEl=document.getElementById('mainImage');
     const url=row.imageId?findImg(row.imageId):null;
+    setViewerNotes(row.notes || '');
     if(url){imgEl.style.backgroundImage=`url("${url}")`;imgEl.innerText='';}
     else{imgEl.style.backgroundImage='none';imgEl.innerText=row.imageId?'[ Image not found ]':'[ No image ]';}
   };
@@ -4825,6 +5076,12 @@ async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
     if(b64) sl.addImage({data:b64,x:ix,y:iy,w:iw,h:ih,sizing:{type:'contain',w:iw,h:ih}});
     else{sl.addShape(pptx.shapes.RECTANGLE,{x:ix,y:iy,w:iw,h:ih,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
      sl.addText('[ No Image Available ]',{x:ix,y:iy+2.1,w:iw,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
+    if(w.notes){
+      sl.addShape(pptx.shapes.ROUND_1_RECT,{x:ix+iw-1.15,y:iy+0.12,w:0.92,h:0.34,fill:{color:'FFFFFF',transparency:2},line:{color:C.black,width:1.2}});
+      sl.addText('Notes',{x:ix+iw-1.05,y:iy+0.17,w:0.72,h:0.18,fontSize:9,bold:true,color:C.black,fontFace:'Segoe UI',align:'center'});
+      sl.addShape(pptx.shapes.ROUNDED_RECTANGLE,{x:ix+iw-2.35,y:iy+0.52,w:2.05,h:0.76,fill:{color:'FFFFFF',transparency:8},line:{color:C.lightGrey,width:0.8}});
+      sl.addText(w.notes,{x:ix+iw-2.28,y:iy+0.58,w:1.9,h:0.58,fontSize:8.5,color:C.black,fontFace:'Segoe UI',fit:'shrink',margin:0.04});
+    }
     pptFtr(sl,pptx,ls);
   }
 }
