@@ -488,8 +488,8 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
         <div class="info-row"><span class="info-label">Part Variant</span><select id="partDropdown" class="part-dd"><option>—</option></select></div>
         <div class="info-row"><span class="info-label">Robot Name</span><span class="info-value" id="robotName">—</span></div>
         <div class="info-row"><span class="info-label">Job Name</span><span class="info-value" id="jobName">—</span></div>
-        <div class="info-row"><span class="info-label">Robot Positioner Values</span><span class="info-value" id="robotPositionerValuesView">—</span></div>
-        <div class="info-row"><span class="info-label">Workpiece Positioner Values</span><span class="info-value" id="workpiecePositionerValuesView">—</span></div>
+        <div class="info-row"><span class="info-label">Robot Positioner</span><span class="info-value" id="robotPositionerValuesView">—</span></div>
+        <div class="info-row"><span class="info-label">Workpiece Positioner</span><span class="info-value" id="workpiecePositionerValuesView">—</span></div>
         <div class="info-row"><span class="info-label">Weld Number</span><span class="info-value hl" id="weldNumber">—</span></div>
       </div>
       <div id="mainImage" class="main-img">[ Select a weld to view image ]</div>
@@ -2168,6 +2168,7 @@ function resetProjectWizardState(){
     annotationsByRobot: {'Robot 1': []},
     recordsByRobot: {'Robot 1': []},
     selectedRecordIndex: {'Robot 1': -1},
+    insertAfterIndexByRobot: {'Robot 1': null},
     drawTool: 'lineArrow',
     drawColor: '#ff5a00',
     currentZoom: 1,
@@ -2348,6 +2349,7 @@ function renderCreateProject(el){
         <button class="action-btn" type="button" onclick="saveCurrentWeld()">Save Weld</button>
         <button class="action-btn sec" type="button" onclick="goToNextWeld()">Next Weld</button>
         <button class="action-btn sec" type="button" onclick="addSyncWeld()">SYNC</button>
+        <button class="action-btn sec" type="button" onclick="addWeldAfterCurrent()">Add Weld After</button>
         <button class="action-btn sec" type="button" onclick="prevSavedWeld()">Prev Saved</button>
         <button class="action-btn sec" type="button" onclick="nextSavedWeld()">Next Saved</button>
         <button class="action-btn sec" type="button" onclick="deleteCurrentWeld()">Delete Weld</button>
@@ -2881,6 +2883,10 @@ function ensureRobotBucket(robotName){
   if(!projectWizardState.recordsByRobot[robotName]) projectWizardState.recordsByRobot[robotName] = [];
   if(!projectWizardState.annotationsByRobot[robotName]) projectWizardState.annotationsByRobot[robotName] = [];
   if(typeof projectWizardState.selectedRecordIndex[robotName] !== 'number') projectWizardState.selectedRecordIndex[robotName] = -1;
+  if(!projectWizardState.insertAfterIndexByRobot) projectWizardState.insertAfterIndexByRobot = {};
+  if(typeof projectWizardState.insertAfterIndexByRobot[robotName] !== 'number' && projectWizardState.insertAfterIndexByRobot[robotName] !== null){
+    projectWizardState.insertAfterIndexByRobot[robotName] = null;
+  }
   if(!projectWizardState.axisValuesByRobot) projectWizardState.axisValuesByRobot = {};
   if(!projectWizardState.axisValuesByRobot[robotName]){
     projectWizardState.axisValuesByRobot[robotName] = {robotPositionerValues:{}, workpiecePositionerValues:{}, workpieceAngle:''};
@@ -3131,10 +3137,11 @@ async function openCameraCapture(target='weld'){
     builderCameraStream = stream;
     const video = document.getElementById('cameraVideo');
     const guideLabel = document.getElementById('cameraGuideLabel');
+    const config = getCaptureTargetConfig(target);
     video.srcObject = stream;
     const frameWrap = document.querySelector('#cameraOverlay .camera-frame-wrap');
-    if(frameWrap) frameWrap.style.setProperty('--capture-aspect', target === 'part' ? '49 / 31' : '755 / 479');
-    if(guideLabel) guideLabel.textContent = target === 'part' ? 'Part capture area 882 x 558' : 'Weld capture area 1510 x 958';
+    if(frameWrap) frameWrap.style.setProperty('--capture-aspect', String(config.aspect));
+    if(guideLabel) guideLabel.textContent = config.label;
     document.getElementById('cameraOverlay').style.display = 'flex';
   }catch(err){
     console.warn(err);
@@ -3152,27 +3159,61 @@ function closeCameraCapture(){
   document.getElementById('cameraOverlay').style.display = 'none';
 }
 
+function getCaptureTargetConfig(target){
+  return target === 'part'
+    ? { aspect: 49 / 31, width: 882, height: 558, label: 'Part capture area 882 x 558' }
+    : { aspect: 755 / 479, width: 1510, height: 958, label: 'Weld capture area 1510 x 958' };
+}
+
+function getCoverRect(containerWidth, containerHeight, sourceWidth, sourceHeight){
+  const scale = Math.max(containerWidth / sourceWidth, containerHeight / sourceHeight);
+  const width = sourceWidth * scale;
+  const height = sourceHeight * scale;
+  return {
+    x: (containerWidth - width) / 2,
+    y: (containerHeight - height) / 2,
+    width,
+    height,
+    scale
+  };
+}
+
+function clampCropRect(rect, sourceWidth, sourceHeight){
+  const x = Math.max(0, Math.min(sourceWidth - 1, rect.x));
+  const y = Math.max(0, Math.min(sourceHeight - 1, rect.y));
+  const width = Math.max(1, Math.min(sourceWidth - x, rect.width));
+  const height = Math.max(1, Math.min(sourceHeight - y, rect.height));
+  return { x, y, width, height };
+}
+
+function cropMediaSourceToGuide(source, guideElement, displayElement, outWidth, outHeight){
+  const displayRect = displayElement.getBoundingClientRect();
+  const guideRect = guideElement.getBoundingClientRect();
+  const sourceWidth = source.videoWidth || source.naturalWidth || source.width;
+  const sourceHeight = source.videoHeight || source.naturalHeight || source.height;
+  if(!sourceWidth || !sourceHeight || !displayRect.width || !displayRect.height) return null;
+  const coverRect = getCoverRect(displayRect.width, displayRect.height, sourceWidth, sourceHeight);
+  const cropRect = clampCropRect({
+    x: (guideRect.left - displayRect.left - coverRect.x) / coverRect.scale,
+    y: (guideRect.top - displayRect.top - coverRect.y) / coverRect.scale,
+    width: guideRect.width / coverRect.scale,
+    height: guideRect.height / coverRect.scale
+  }, sourceWidth, sourceHeight);
+  const canvas = document.createElement('canvas');
+  canvas.width = outWidth;
+  canvas.height = outHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(source, cropRect.x, cropRect.y, cropRect.width, cropRect.height, 0, 0, outWidth, outHeight);
+  return canvas.toDataURL('image/png');
+}
+
 function captureCameraFrame(){
   const video = document.getElementById('cameraVideo');
-  if(!video || !video.videoWidth) return;
-  const targetAspect = builderCameraTarget === 'part' ? (49 / 31) : (755 / 479);
-  const sourceAspect = video.videoWidth / video.videoHeight;
-  let sx = 0;
-  let sy = 0;
-  let sw = video.videoWidth;
-  let sh = video.videoHeight;
-  if(sourceAspect > targetAspect){
-    sw = Math.round(video.videoHeight * targetAspect);
-    sx = Math.round((video.videoWidth - sw) / 2);
-  } else {
-    sh = Math.round(video.videoWidth / targetAspect);
-    sy = Math.round((video.videoHeight - sh) / 2);
-  }
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = builderCameraTarget === 'part' ? 882 : 1510;
-  tempCanvas.height = builderCameraTarget === 'part' ? 558 : 958;
-  tempCanvas.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, tempCanvas.width, tempCanvas.height);
-  const fileLikeDataUrl = tempCanvas.toDataURL('image/png');
+  const guide = document.querySelector('#cameraOverlay .camera-crop-guide');
+  if(!video || !video.videoWidth || !guide) return;
+  const config = getCaptureTargetConfig(builderCameraTarget);
+  const fileLikeDataUrl = cropMediaSourceToGuide(video, guide, video, config.width, config.height);
+  if(!fileLikeDataUrl) return;
   closeCameraCapture();
   if(builderCameraTarget === 'part'){
     projectWizardState.partImageDataUrl = fileLikeDataUrl;
@@ -3204,7 +3245,9 @@ function addSyncWeld(){
   const partNo = (document.getElementById('partNumber').value || '').trim().toUpperCase();
   if(!partNo) return alert('Part number is required before adding SYNC.');
   const records = getCurrentRobotRecords();
-  records.push({
+  const selectedIndex = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  const insertAfterIndex = projectWizardState.insertAfterIndexByRobot?.[projectWizardState.currentRobot];
+  const syncRecord = {
     partNo,
     jobNo: (document.getElementById('jobNumber').value || '').trim(),
     weldNo: 'SYNC',
@@ -3215,8 +3258,25 @@ function addSyncWeld(){
     baseImageDataUrl: '',
     annotations: [],
     imageDataUrl: ''
-  });
-  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = records.length - 1;
+  };
+  if(selectedIndex >= 0 && selectedIndex < records.length && records[selectedIndex]?.isSync){
+    records[selectedIndex] = syncRecord;
+    projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = selectedIndex;
+  }else if(typeof insertAfterIndex === 'number' && insertAfterIndex >= -1){
+    records.splice(insertAfterIndex + 1, 0, syncRecord);
+    projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = insertAfterIndex + 1;
+    projectWizardState.insertAfterIndexByRobot[projectWizardState.currentRobot] = null;
+  }else{
+    records.push(syncRecord);
+    projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = records.length - 1;
+  }
+  projectWizardState.baseImageDataUrl = '';
+  projectWizardState.baseImageElement = null;
+  getCurrentRobotAnnotations().length = 0;
+  renderImagePreview('weldPreview', '');
+  resetAnnotationHistory();
+  redrawBuilderCanvases();
+  refreshAnnotationList();
   refreshWeldList();
   updateCreateStatus(`SYNC row added for ${projectWizardState.currentRobot}.`);
 }
@@ -3235,6 +3295,7 @@ function attachCanvasHandlers(canvasId){
   canvas.addEventListener('pointermove', ev => handleCanvasPointerMove(pointer(ev), canvasId));
   canvas.addEventListener('pointerup', ev => handleCanvasPointerUp(pointer(ev), canvasId));
   canvas.addEventListener('pointerleave', ev => handleCanvasPointerUp(pointer(ev), canvasId));
+  canvas.addEventListener('dblclick', ev => handleCanvasDoubleClick(pointer(ev), canvasId));
 }
 
 function handleCanvasPointerDown(point){
@@ -3270,13 +3331,15 @@ function handleCanvasPointerDown(point){
       type:'splineArrow',
       color:projectWizardState.drawColor,
       thickness: projectWizardState.currentThickness,
-      start:{...point},
-      control1:{x:point.x+120,y:point.y-80},
-      control2:{x:point.x+240,y:point.y-80},
-      end:{x:point.x+300,y:point.y}
+      points:[
+        {...point},
+        {x:point.x+110,y:point.y-70},
+        {x:point.x+220,y:point.y-70},
+        {x:point.x+300,y:point.y}
+      ]
     });
     selectAnnotation(annotations.length - 1);
-    projectWizardState.interaction = { mode:'create-shape', annotationIndex:annotations.length-1, pointKey:'end' };
+    projectWizardState.interaction = { mode:'create-shape', annotationIndex:annotations.length-1, pointKey:'point:3' };
   } else if(projectWizardState.drawTool === 'text'){
     const textValue = (projectWizardState.currentTextValue || '').trim() || (document.getElementById('weldNumber').value || '').trim() || 'TEXT';
     annotations.push({
@@ -3313,6 +3376,14 @@ function handleCanvasPointerMove(point){
     if(interaction.pointKey === 'start' || interaction.pointKey === 'end' || interaction.pointKey === 'control1' || interaction.pointKey === 'control2' || interaction.pointKey === 'position'){
       ann[interaction.pointKey] = {...point};
       redrawBuilderCanvases();
+      return;
+    }
+    if(String(interaction.pointKey || '').startsWith('point:') && Array.isArray(ann.points)){
+      const pointIndex = Number(String(interaction.pointKey).split(':')[1]);
+      if(Number.isInteger(pointIndex) && ann.points[pointIndex]){
+        ann.points[pointIndex] = {...point};
+        redrawBuilderCanvases();
+      }
     }
   }
 }
@@ -3321,6 +3392,30 @@ function handleCanvasPointerUp(){
   if(projectWizardState.interaction.mode !== 'idle') recordAnnotationHistory();
   projectWizardState.interaction = { mode:'idle', annotationIndex:-1, pointKey:null };
   refreshAnnotationList();
+}
+
+function handleCanvasDoubleClick(point){
+  const index = projectWizardState.selectedAnnotationIndex;
+  const ann = getCurrentRobotAnnotations()[index];
+  if(!ann || ann.type !== 'splineArrow' || !Array.isArray(ann.points)) return;
+  const handleHit = findAnnotationHandle(point);
+  if(handleHit && handleHit.annotationIndex === index && String(handleHit.pointKey).startsWith('point:')){
+    const pointIndex = Number(String(handleHit.pointKey).split(':')[1]);
+    if(ann.points.length > 2 && pointIndex > 0 && pointIndex < ann.points.length - 1){
+      ann.points.splice(pointIndex, 1);
+      recordAnnotationHistory();
+      redrawBuilderCanvases();
+      refreshAnnotationList();
+    }
+    return;
+  }
+  const insertIndex = findNearestSplineInsertIndex(ann, point);
+  if(insertIndex >= 0){
+    ann.points.splice(insertIndex, 0, {...point});
+    recordAnnotationHistory();
+    redrawBuilderCanvases();
+    refreshAnnotationList();
+  }
 }
 
 function findAnnotationHandle(point){
@@ -3332,6 +3427,14 @@ function findAnnotationHandle(point){
   };
   for(let i=annotations.length-1;i>=0;i--){
     const ann = annotations[i];
+    if(ann.type === 'splineArrow' && Array.isArray(ann.points)){
+      for(let p=0;p<ann.points.length;p++){
+        const handlePoint = ann.points[p];
+        if(handlePoint && Math.hypot(point.x - handlePoint.x, point.y - handlePoint.y) <= 28){
+          return { annotationIndex:i, pointKey:`point:${p}` };
+        }
+      }
+    }
     const keys = keysByType[ann.type] || [];
     for(const key of keys){
       const p = ann[key];
@@ -3376,6 +3479,9 @@ function annotationContainsPoint(ann, point){
 }
 
 function sampleSplinePoints(ann, steps=24){
+  if(Array.isArray(ann.points) && ann.points.length >= 2){
+    return sampleCatmullRomPoints(ann.points, Math.max(8, Math.round(steps)));
+  }
   const pts = [];
   for(let i=0;i<=steps;i++){
     const t = i / steps;
@@ -3386,6 +3492,43 @@ function sampleSplinePoints(ann, steps=24){
     });
   }
   return pts;
+}
+
+function sampleCatmullRomPoints(points, stepsPerSegment=18){
+  if(!Array.isArray(points) || points.length < 2) return [];
+  if(points.length === 2) return points.map(p => ({...p}));
+  const sampled = [];
+  for(let i=0;i<points.length - 1;i++){
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+    for(let step=0;step<stepsPerSegment;step++){
+      const t = step / stepsPerSegment;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      sampled.push({
+        x: 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3),
+        y: 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3)
+      });
+    }
+  }
+  sampled.push({...points[points.length - 1]});
+  return sampled;
+}
+
+function findNearestSplineInsertIndex(ann, point){
+  if(!Array.isArray(ann.points) || ann.points.length < 2) return -1;
+  let bestIndex = -1;
+  let bestDistance = Infinity;
+  for(let i=1;i<ann.points.length;i++){
+    const distance = distanceToSegment(point, ann.points[i - 1], ann.points[i]);
+    if(distance < bestDistance){
+      bestDistance = distance;
+      bestIndex = i;
+    }
+  }
+  return bestDistance <= Math.max(28, (ann.thickness || 4) * 4) ? bestIndex : -1;
 }
 
 function distanceToSegment(point, a, b){
@@ -3510,19 +3653,21 @@ function drawAnnotations(ctx, annotations){
       }
     }
     if(ann.type === 'splineArrow'){
-      ctx.beginPath();
-      ctx.moveTo(ann.start.x, ann.start.y);
-      ctx.bezierCurveTo(ann.control1.x, ann.control1.y, ann.control2.x, ann.control2.y, ann.end.x, ann.end.y);
-      ctx.stroke();
-      drawArrowHeadOnContext(ctx, ann.control2, ann.end, ann.thickness || 4);
+      const splinePoints = sampleSplinePoints(ann, 22);
+      if(splinePoints.length >= 2){
+        ctx.beginPath();
+        ctx.moveTo(splinePoints[0].x, splinePoints[0].y);
+        splinePoints.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+        const arrowAnchor = splinePoints[splinePoints.length - 2] || splinePoints[0];
+        const arrowEnd = splinePoints[splinePoints.length - 1];
+        drawArrowHeadOnContext(ctx, arrowAnchor, arrowEnd, ann.thickness || 4);
+      }
       if(projectWizardState.selectedAnnotationIndex === index){
         if(projectWizardState.interaction.mode === 'edit' && projectWizardState.interaction.annotationIndex === index){
-          drawGuideLine(ctx, [ann.start, ann.control1, ann.control2, ann.end]);
+          drawGuideLine(ctx, Array.isArray(ann.points) ? ann.points : [ann.start, ann.control1, ann.control2, ann.end]);
         }
-        drawHandle(ctx, ann.start);
-        drawHandle(ctx, ann.control1);
-        drawHandle(ctx, ann.control2);
-        drawHandle(ctx, ann.end);
+        (Array.isArray(ann.points) ? ann.points : [ann.start, ann.control1, ann.control2, ann.end]).forEach(handle => drawHandle(ctx, handle));
       }
     }
     if(ann.type === 'text'){
@@ -3545,7 +3690,7 @@ function annotationBounds(ann){
   }
   if(ann.type === 'lineArrow') return {x1: Math.min(ann.start.x, ann.end.x), y1: Math.min(ann.start.y, ann.end.y), x2: Math.max(ann.start.x, ann.end.x), y2: Math.max(ann.start.y, ann.end.y)};
   if(ann.type === 'splineArrow'){
-    const pts = [ann.start, ann.control1, ann.control2, ann.end];
+    const pts = Array.isArray(ann.points) ? ann.points : [ann.start, ann.control1, ann.control2, ann.end];
     return {x1: Math.min(...pts.map(p => p.x)), y1: Math.min(...pts.map(p => p.y)), x2: Math.max(...pts.map(p => p.x)), y2: Math.max(...pts.map(p => p.y))};
   }
   if(ann.type === 'text') return {x1: ann.position.x - 12, y1: ann.position.y - 36, x2: ann.position.x + 120, y2: ann.position.y + 12};
@@ -3702,7 +3847,9 @@ function addSyncWeld(){
   const partNo = (document.getElementById('partNumber').value || '').trim().toUpperCase();
   if(!partNo) return alert('Part number is required before adding SYNC.');
   const records = getCurrentRobotRecords();
-  records.push({
+  const selectedIndex = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  const insertAfterIndex = projectWizardState.insertAfterIndexByRobot?.[projectWizardState.currentRobot];
+  const syncRecord = {
     partNo,
     jobNo: (document.getElementById('jobNumber').value || '').trim(),
     weldNo: 'SYNC',
@@ -3713,8 +3860,25 @@ function addSyncWeld(){
     baseImageDataUrl: '',
     annotations: [],
     imageDataUrl: ''
-  });
-  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = records.length - 1;
+  };
+  if(selectedIndex >= 0 && selectedIndex < records.length && records[selectedIndex]?.isSync){
+    records[selectedIndex] = syncRecord;
+    projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = selectedIndex;
+  }else if(typeof insertAfterIndex === 'number' && insertAfterIndex >= -1){
+    records.splice(insertAfterIndex + 1, 0, syncRecord);
+    projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = insertAfterIndex + 1;
+    projectWizardState.insertAfterIndexByRobot[projectWizardState.currentRobot] = null;
+  }else{
+    records.push(syncRecord);
+    projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = records.length - 1;
+  }
+  projectWizardState.baseImageDataUrl = '';
+  projectWizardState.baseImageElement = null;
+  getCurrentRobotAnnotations().length = 0;
+  renderImagePreview('weldPreview', '');
+  resetAnnotationHistory();
+  redrawBuilderCanvases();
+  refreshAnnotationList();
   refreshWeldList();
   updateCreateStatus(`SYNC row added for ${projectWizardState.currentRobot}.`);
 }
@@ -3896,11 +4060,13 @@ function saveCurrentWeld(){
   const jobNo = (document.getElementById('jobNumber').value || '').trim();
   const weldNo = (document.getElementById('weldNumber').value || '').trim();
   const notes = (document.getElementById('weldNotes').value || '').trim();
+  const isSync = weldNo.toUpperCase() === 'SYNC';
   if(!partNo) return alert('Part number is required.');
   if(!weldNo) return alert('Weld number / weld ID is required.');
-  if(!projectWizardState.baseImageDataUrl) return alert('Capture or select a weld image first.');
+  if(!isSync && !projectWizardState.baseImageDataUrl) return alert('Capture or select a weld image first.');
   const records = getCurrentRobotRecords();
   const idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  const insertAfterIndex = projectWizardState.insertAfterIndexByRobot?.[projectWizardState.currentRobot];
   const axisState = JSON.parse(JSON.stringify(getCurrentRobotAxisValueState()));
   projectWizardState.selectedAnnotationIndex = -1;
   projectWizardState.interaction = { mode:'idle', annotationIndex:-1, pointKey:null };
@@ -3912,11 +4078,17 @@ function saveCurrentWeld(){
     notes,
     robotPositionerValues: axisState.robotPositionerValues,
     workpiecePositionerValues: axisState.workpiecePositionerValues,
-    baseImageDataUrl: projectWizardState.baseImageDataUrl,
-    annotations: JSON.parse(JSON.stringify(getCurrentRobotAnnotations())),
-    imageDataUrl: exportAnnotatedImage()
+    isSync,
+    baseImageDataUrl: isSync ? '' : projectWizardState.baseImageDataUrl,
+    annotations: isSync ? [] : JSON.parse(JSON.stringify(getCurrentRobotAnnotations())),
+    imageDataUrl: isSync ? '' : exportAnnotatedImage()
   };
   if(idx >= 0 && idx < records.length) records[idx] = record;
+  else if(typeof insertAfterIndex === 'number' && insertAfterIndex >= -1){
+    records.splice(insertAfterIndex + 1, 0, record);
+    projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = insertAfterIndex + 1;
+    projectWizardState.insertAfterIndexByRobot[projectWizardState.currentRobot] = null;
+  }
   else{
     records.push(record);
     projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = records.length - 1;
@@ -3926,6 +4098,28 @@ function saveCurrentWeld(){
   refreshWeldList();
   recordAnnotationHistory();
   updateCreateStatus(`Saved weld ${weldNo} for ${projectWizardState.currentRobot}.`);
+}
+
+function addWeldAfterCurrent(){
+  const currentIndex = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  if(currentIndex < 0) return alert('Select a saved weld first.');
+  const currentRecord = getCurrentRobotRecords()[currentIndex];
+  projectWizardState.insertAfterIndexByRobot[projectWizardState.currentRobot] = currentIndex;
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = -1;
+  projectWizardState.selectedAnnotationIndex = -1;
+  projectWizardState.interaction = { mode:'idle', annotationIndex:-1, pointKey:null };
+  document.getElementById('weldNumber').value = '';
+  document.getElementById('weldNotes').value = '';
+  projectWizardState.baseImageDataUrl = '';
+  projectWizardState.baseImageElement = null;
+  getCurrentRobotAnnotations().length = 0;
+  const btn = document.getElementById('weldImageTrigger');
+  if(btn) btn.innerText = 'Capture or Choose Weld Image';
+  renderImagePreview('weldPreview', '');
+  resetAnnotationHistory();
+  redrawBuilderCanvases();
+  refreshAnnotationList();
+  updateCreateStatus(`Ready to add a new weld after ${currentRecord?.weldNo || 'the selected weld'}.`);
 }
 
 function exportAnnotatedImage(){
@@ -4498,7 +4692,7 @@ async function loadLogo(){
       try{const r=await fetch(v.dataUrl);const b=await r.arrayBuffer();S.logob64='image/png;base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));return;}catch(e){}
     }
   }
-  try{const r=await fetch('https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/main/Logo.png');if(r.ok){const b=await r.arrayBuffer();S.logob64='image/png;base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));}}catch(e){}
+  try{const r=await fetch('https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png');if(r.ok){const b=await r.arrayBuffer();S.logob64='image/png;base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));}}catch(e){}
 }
 
 /* ══════════════════════════════════════
