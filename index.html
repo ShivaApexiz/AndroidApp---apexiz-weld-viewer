@@ -91,7 +91,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .sidebar-section::before{content:"●";color:var(--orange);font-size:7px;}
 .sidebar-btn{width:100%;padding:8px 11px;text-align:left;background:none;border:none;border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:600;color:var(--black);cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:7px;}
 .sidebar-btn:hover{background:var(--orange-light);color:var(--orange);}
-.sidebar-btn.active{background:#0f766e;color:var(--white);box-shadow:0 0 0 2px rgba(15,118,110,0.2);}
+.sidebar-btn.active{background:var(--orange);color:var(--white);box-shadow:0 0 0 2px rgba(26,26,26,0.18);}
 .sidebar-divider{height:1px;background:var(--g2);margin:8px 0;}
 .logout-btn{margin-top:auto;padding:8px 11px;background:none;border:1.5px solid var(--g2);border-radius:6px;font-family:'Barlow',sans-serif;font-size:11px;font-weight:700;color:var(--g3);cursor:pointer;transition:all 0.12s;}
 .logout-btn:hover{border-color:var(--red);color:var(--red);}
@@ -234,7 +234,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .weld-cell{height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:600;}
 .weld-cell.weld-item{color:var(--black);cursor:pointer;transition:all 0.1s;}
 .weld-cell.weld-item:hover{background:#FFF0EB;color:var(--orange);}
-.weld-cell.weld-item.active{background:#0f766e;color:var(--white);box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35);}
+.weld-cell.weld-item.active{background:var(--orange);color:var(--white);box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35);}
 .weld-cell.tsync{color:#B8B8B8;font-style:italic;font-size:11px;font-weight:400;background:var(--g1);border-top:1px dashed var(--g2);border-bottom:1px dashed var(--g2);}
 .weld-cell.empty{background:var(--white);}
 .export-btn{width:100%;padding:11px 0;background:var(--orange);color:var(--white);font-size:13px;font-weight:700;border:none;border-radius:20px;cursor:pointer;letter-spacing:0.8px;text-transform:uppercase;transition:background 0.15s;margin-top:16px;flex-shrink:0;}
@@ -248,7 +248,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .info-value.hl{color:var(--orange);font-weight:700;font-size:15px;}
 .part-dd{padding:5px 14px;border:1.5px solid var(--orange);font-weight:600;color:var(--black);border-radius:20px;font-size:13px;background:var(--white);cursor:pointer;transition:border-color 0.15s;}
 .part-dd:focus{outline:none;border-color:var(--orange-dark);}
-.main-image-wrap{position:relative;margin-top:16px;flex:0 0 auto;}
+.main-image-wrap{position:relative;margin:16px auto 0;flex:0 0 auto;width:80%;}
 .main-img{
   width:100%;aspect-ratio:755/479;flex:1 1 auto;min-height:240px;max-height:min(62vh, calc(100vh - 280px));
   border:3px solid #000;border-radius:4px;
@@ -315,6 +315,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
   #viewerPage .page-body{flex-direction:column;}
   .viewer-left,.viewer-right{width:100%;min-width:0;border-right:none;padding:16px;}
   .viewer-left{border-bottom:1px solid var(--g2);}
+  .main-image-wrap{width:100%;margin-top:16px;}
   .main-img{min-height:260px;}
   .project-grid{grid-template-columns:1fr;}
   .footer{font-size:10px;padding:0 10px;text-align:center;}
@@ -2886,10 +2887,14 @@ function addNewPartToProject(){
   projectWizardState.partCount = Math.max(1, Number(projectWizardState.partCount || projectWizardState.partNames.length || 1)) + 1;
   ensurePartNames();
   projectWizardState.selectedPartIndex = projectWizardState.partNames.length - 1;
+  projectWizardState.setupStep = 'setup';
+  const partCountEl = document.getElementById('partCount');
+  if(partCountEl) partCountEl.value = String(projectWizardState.partCount);
   renderPartNameFields();
   renderPartSelector();
   syncSelectedPartToForm();
   updateSetupSummary();
+  updateWizardStepUI();
   updateCreateStatus(`Added ${projectWizardState.partNames[projectWizardState.selectedPartIndex]} to this project.`);
 }
 
@@ -2905,9 +2910,19 @@ function syncSelectedPartToForm(){
   projectWizardState.partNumber = partName;
   const partEl = document.getElementById('partNumber');
   if(partEl) partEl.value = partName;
+  projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = -1;
   projectWizardState.partImageDataUrl = projectWizardState.partImageByPart[partName] || '';
   renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
+  projectWizardState.baseImageDataUrl = '';
+  projectWizardState.baseImageElement = null;
+  getCurrentRobotAnnotations().length = 0;
+  renderImagePreview('weldPreview', '');
+  const btn = document.getElementById('weldImageTrigger');
+  if(btn) btn.innerText = 'Capture or Choose Weld Image';
   renderWeldAxisFields();
+  refreshWeldList();
+  redrawBuilderCanvases();
+  refreshAnnotationList();
 }
 
 function syncSetupFields(){
@@ -2996,7 +3011,7 @@ function renderWeldAxisFields(){
     const safeName = name || `Robot Axis ${index + 1}`;
     fields.push(`
       <label class="field-label" for="robotAxisValue_${index}">${safeName}</label>
-      <input id="robotAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName}" value="${currentValues.robotPositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('robot','${safeName.replace(/'/g, '&#39;')}', this.value)">
+      <input id="robotAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName} (mm)" value="${currentValues.robotPositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('robot','${safeName.replace(/'/g, '&#39;')}', this.value)">
     `);
   });
   if(workAxisNames.length){
@@ -3006,7 +3021,7 @@ function renderWeldAxisFields(){
     const safeName = name || `Workpiece Axis ${index + 1}`;
     fields.push(`
       <label class="field-label" for="workAxisValue_${index}">${safeName}</label>
-      <input id="workAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName}" value="${currentValues.workpiecePositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('workpiece','${safeName.replace(/'/g, '&#39;')}', this.value)">
+      <input id="workAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName} (Deg)" value="${currentValues.workpiecePositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('workpiece','${safeName.replace(/'/g, '&#39;')}', this.value)">
     `);
   });
   wrap.innerHTML = fields.join('');
@@ -3023,6 +3038,17 @@ function updateWeldAxisValue(group, axisName, value){
   const state = getCurrentRobotAxisValueState();
   const key = group === 'robot' ? 'robotPositionerValues' : 'workpiecePositionerValues';
   state[key][axisName] = value;
+}
+
+function getSelectedPartName(){
+  return projectWizardState.partNames[projectWizardState.selectedPartIndex] || projectWizardState.partNumber || '';
+}
+
+function getCurrentRobotFilteredEntries(){
+  const partName = String(getSelectedPartName() || '').toUpperCase();
+  return getCurrentRobotRecords()
+    .map((record, index) => ({record, index}))
+    .filter(entry => String(entry.record.partNo || '').toUpperCase() === partName);
 }
 
 function continueToWeldBuilder(){
@@ -4411,14 +4437,14 @@ function loadSelectedWeldRecord(){
 function refreshWeldList(){
   const list = document.getElementById('weldList');
   if(!list) return;
-  const records = getCurrentRobotRecords();
+  const entries = getCurrentRobotFilteredEntries();
   const selectedIndex = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
-  if(records.length === 0){
-    list.innerHTML = `<div class="queue-row"><strong>${projectWizardState.currentRobot}</strong><span>No welds saved yet.</span></div>`;
+  if(entries.length === 0){
+    list.innerHTML = `<div class="queue-row"><strong>${projectWizardState.currentRobot}</strong><span>No welds saved yet for ${getSelectedPartName() || 'this part'}.</span></div>`;
     return;
   }
-  list.innerHTML = records.map((r, i) => `
-    <div class="queue-row weld-record-row ${selectedIndex === i ? 'selected' : ''}" draggable="true" ondragstart="startWeldReorder(${i})" ondragover="allowWeldReorder(event)" ondrop="dropWeldReorder(${i})" onclick="loadRecordToForm(${i})" style="cursor:pointer">
+  list.innerHTML = entries.map(({record:r, index}) => `
+    <div class="queue-row weld-record-row ${selectedIndex === index ? 'selected' : ''}" draggable="true" ondragstart="startWeldReorder(${index})" ondragover="allowWeldReorder(event)" ondrop="dropWeldReorder(${index})" onclick="loadRecordToForm(${index})" style="cursor:pointer">
       <strong>${projectWizardState.currentRobot} - ${r.weldNo}</strong>
       <span>Part: ${r.partNo} | Job: ${r.jobNo || '-'} | Robot: ${serializeAxisValues(r.robotPositionerValues) || '-'} | Workpiece: ${serializeAxisValues(r.workpiecePositionerValues) || '-'} | Notes: ${r.notes || '-'}${r.isSync ? ' | Type: TSync' : ''}</span>
     </div>
@@ -4462,19 +4488,21 @@ function goToNextWeld(){
 }
 
 function prevSavedWeld(){
-  const records = getCurrentRobotRecords();
-  if(records.length === 0) return;
-  let idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
-  idx = idx <= 0 ? records.length - 1 : idx - 1;
-  loadRecordToForm(idx);
+  const entries = getCurrentRobotFilteredEntries();
+  if(entries.length === 0) return;
+  const selected = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  let pos = entries.findIndex(entry => entry.index === selected);
+  pos = pos <= 0 ? entries.length - 1 : pos - 1;
+  loadRecordToForm(entries[pos].index);
 }
 
 function nextSavedWeld(){
-  const records = getCurrentRobotRecords();
-  if(records.length === 0) return;
-  let idx = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
-  idx = idx >= records.length - 1 ? 0 : idx + 1;
-  loadRecordToForm(idx);
+  const entries = getCurrentRobotFilteredEntries();
+  if(entries.length === 0) return;
+  const selected = projectWizardState.selectedRecordIndex[projectWizardState.currentRobot];
+  let pos = entries.findIndex(entry => entry.index === selected);
+  pos = pos >= entries.length - 1 || pos < 0 ? 0 : pos + 1;
+  loadRecordToForm(entries[pos].index);
 }
 
 function deleteCurrentWeld(){
@@ -4577,7 +4605,11 @@ function formatAxisValuesForWebsite(text, typeLabel){
     .split('|')
     .map(item => item.trim())
     .filter(Boolean)
-    .map(item => item.replace(/^Axis\s*/i, `${typeLabel} Axis `).replace(':', ': '));
+    .map(item => {
+      const withLabel = item.replace(/^Axis\s*/i, `${typeLabel} Axis `).replace(':', ': ');
+      if(typeLabel === 'Robot Positioner') return withLabel.endsWith(' mm') ? withLabel : `${withLabel} mm`;
+      return withLabel.endsWith(' Deg') ? withLabel : `${withLabel} Deg`;
+    });
   return segments.length ? segments.join(' | ') : '—';
 }
 
@@ -4916,7 +4948,7 @@ function loadWeldData(){
   const t1=getCSV(`${part}_Robot1.csv`)||getCSV(`${part}_robot1.csv`);
   const t2=getCSV(`${part}_Robot2.csv`)||getCSV(`${part}_robot2.csv`);
   S.welds1=t1?parseCSV(t1):[]; S.welds2=t2?parseCSV(t2):[];
-  buildGrid(S.welds1,S.welds2,t1,t2);
+  buildGrid([{label:'Robot 1', welds:S.welds1, hasData:!!t1},{label:'Robot 2', welds:S.welds2, hasData:!!t2}].filter(col => col.hasData));
   const ov=document.getElementById('overviewImage');
   const ovUrl=findImg(part);
   if(ovUrl){ov.style.backgroundImage=`url("${ovUrl}")`;ov.innerText='';}
@@ -4932,25 +4964,33 @@ function splitSegs(welds){
   segs.push(cur);return segs;
 }
 
-function buildGrid(w1,w2,t1,t2){
+function buildGrid(columns){
+  const hdr=document.querySelector('.robot-cols-hdr');
+  const wrap=document.querySelector('.weld-grid-wrap');
   const c1=document.getElementById('robot1Col'),c2=document.getElementById('robot2Col');
-  c1.innerHTML='';c2.innerHTML='';
-  if(!t1) c1.innerHTML='<div class="no-data">No Data</div>';
-  if(!t2) c2.innerHTML='<div class="no-data">No Data</div>';
-  if(!t1&&!t2) return;
-  const s1=splitSegs(w1),s2=splitSegs(w2);
-  for(let s=0;s<Math.max(s1.length,s2.length);s++){
-    const g1=s1[s]||{welds:[],hasSync:false},g2=s2[s]||{welds:[],hasSync:false};
-    const mx=Math.max(g1.welds.length,g2.welds.length);
-    g1.welds.forEach(w=>c1.appendChild(mkCell(w,'Robot 1')));
-    g2.welds.forEach(w=>c2.appendChild(mkCell(w,'Robot 2')));
-    for(let p=0;p<mx-g1.welds.length;p++) c1.appendChild(mkEmpty());
-    for(let p=0;p<mx-g2.welds.length;p++) c2.appendChild(mkEmpty());
-    if(g1.hasSync||g2.hasSync){
-      c1.appendChild(g1.hasSync?mkSync():mkEmpty());
-      c2.appendChild(g2.hasSync?mkSync():mkEmpty());
-    }
+  const normalized = columns.length ? columns : [{label:'Robot 1', welds:[], hasData:false}];
+  if(hdr){
+    hdr.innerHTML = normalized.map(col => `<div class="robot-title">${col.label}</div>`).join('');
   }
+  if(wrap){
+    wrap.style.gridTemplateColumns = `repeat(${normalized.length}, minmax(0, 1fr))`;
+  }
+  [c1,c2].forEach(col => { if(col) col.innerHTML=''; });
+  [c1,c2].forEach((col, idx) => {
+    if(!col) return;
+    const meta = normalized[idx];
+    col.style.display = meta ? 'flex' : 'none';
+    if(!meta) return;
+    if(!meta.hasData){
+      col.innerHTML = '<div class="no-data">No Data</div>';
+      return;
+    }
+    const segments = splitSegs(meta.welds);
+    segments.forEach(group => {
+      group.welds.forEach(w => col.appendChild(mkCell(w, meta.label)));
+      if(group.hasSync) col.appendChild(mkSync());
+    });
+  });
 }
 function mkSync(){const d=document.createElement('div');d.className='weld-cell tsync';d.innerText='— SYNC —';return d;}
 function mkEmpty(){const d=document.createElement('div');d.className='weld-cell empty';return d;}
@@ -5119,10 +5159,10 @@ async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
     else{sl.addShape(pptx.shapes.RECTANGLE,{x:ix,y:iy,w:iw,h:ih,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
      sl.addText('[ No Image Available ]',{x:ix,y:iy+2.1,w:iw,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
     if(w.notes){
-      sl.addShape(pptx.shapes.ROUND_1_RECT,{x:ix+iw-1.15,y:iy+0.12,w:0.92,h:0.34,fill:{color:'FFFFFF',transparency:2},line:{color:C.black,width:1.2}});
+      sl.addShape(pptx.shapes.ROUNDED_RECTANGLE,{x:ix+iw-1.15,y:iy+0.12,w:0.92,h:0.34,fill:{color:'FFFFFF',transparency:2},line:{color:C.black,width:1.2}});
       sl.addText('Notes',{x:ix+iw-1.05,y:iy+0.17,w:0.72,h:0.18,fontSize:9,bold:true,color:C.black,fontFace:'Segoe UI',align:'center'});
-      sl.addShape(pptx.shapes.ROUNDED_RECTANGLE,{x:ix+iw-2.35,y:iy+0.52,w:2.05,h:0.76,fill:{color:'FFFFFF',transparency:8},line:{color:C.lightGrey,width:0.8}});
-      sl.addText(w.notes,{x:ix+iw-2.28,y:iy+0.58,w:1.9,h:0.58,fontSize:8.5,color:C.black,fontFace:'Segoe UI',fit:'shrink',margin:0.04});
+      sl.addShape(pptx.shapes.ROUNDED_RECTANGLE,{x:ix+iw-2.4,y:iy+0.52,w:2.08,h:0.82,fill:{color:'FFFFFF',transparency:0},line:{color:C.black,width:1}});
+      sl.addText(w.notes,{x:ix+iw-2.28,y:iy+0.60,w:1.82,h:0.52,fontSize:8.5,bold:true,color:C.black,fontFace:'Segoe UI',fit:'shrink',margin:0.04});
     }
     pptFtr(sl,pptx,ls);
   }
