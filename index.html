@@ -229,8 +229,8 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .weld-grid-wrap::-webkit-scrollbar{width:4px;}
 .weld-grid-wrap::-webkit-scrollbar-track{background:var(--g1);}
 .weld-grid-wrap::-webkit-scrollbar-thumb{background:var(--g2);border-radius:2px;}
-.weld-col{flex:1;display:flex;flex-direction:column;}
-.weld-col:first-child{border-right:1px solid var(--g2);}
+.weld-col{flex:1;display:flex;flex-direction:column;border-right:1px solid var(--g2);}
+.weld-col:last-child{border-right:none;}
 .weld-cell{height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:600;}
 .weld-cell.weld-item{color:var(--black);cursor:pointer;transition:all 0.1s;}
 .weld-cell.weld-item:hover{background:#FFF0EB;color:var(--orange);}
@@ -980,6 +980,8 @@ function setNav(panel){
   if(n) n.classList.add('active');
   const m=document.querySelector(`.mobile-nav-btn[data-panel="${panel}"]`);
   if(m) m.classList.add('active');
+  const menu=document.getElementById('profileQuickMenu');
+  if(menu) menu.style.display='none';
 }
 
 async function showPanel(panel){
@@ -3039,33 +3041,29 @@ function renderWeldAxisFields(){
   const robotAxisNames = projectWizardState.robotPositionerEnabled === 'Y' ? (projectWizardState.robotPositionerAxisNames || []) : [];
   const workAxisNames = projectWizardState.workpiecePositionerEnabled === 'Y' ? (projectWizardState.workpiecePositionerAxisNames || []) : [];
   const currentValues = getCurrentRobotAxisValueState();
-  const fields = [];
-  if(robotAxisNames.length){
-    fields.push(`<div class="axis-section-title">Robot Positioner Values</div>`);
-  }
-  robotAxisNames.forEach((name, index) => {
-    const safeName = name || `Robot Axis ${index + 1}`;
-    fields.push(`
-      <div class="axis-input-pair">
+  const robotCards = robotAxisNames.map((name, index) => {
+    const safeName = name || `Axis ${index + 1}`;
+    return `
+      <div class="axis-input-card">
         <label class="field-label" for="robotAxisValue_${index}">${safeName}</label>
         <input id="robotAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName} (mm)" value="${currentValues.robotPositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('robot','${safeName.replace(/'/g, '&#39;')}', this.value)">
       </div>
-    `);
-  });
-  if(workAxisNames.length){
-    fields.push(`<div class="axis-section-title">Workpiece Positioner Angles</div>`);
-  }
-  workAxisNames.forEach((name, index) => {
-    const safeName = name || `Workpiece Axis ${index + 1}`;
-    fields.push(`
-      <div class="axis-input-pair">
+    `;
+  }).join('');
+  const workCards = workAxisNames.map((name, index) => {
+    const safeName = name || `Axis ${index + 1}`;
+    return `
+      <div class="axis-input-card">
         <label class="field-label" for="workAxisValue_${index}">${safeName}</label>
         <input id="workAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName} (Deg)" value="${currentValues.workpiecePositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('workpiece','${safeName.replace(/'/g, '&#39;')}', this.value)">
       </div>
-    `);
-  });
-  wrap.innerHTML = fields.join('');
-  wrap.style.display = fields.length ? 'grid' : 'none';
+    `;
+  }).join('');
+  wrap.innerHTML = `
+    ${robotAxisNames.length ? `<div class="axis-ui-block"><div class="axis-ui-title">Robot Positioner Values</div><div class="axis-ui-grid">${robotCards}</div></div>` : ''}
+    ${workAxisNames.length ? `<div class="axis-ui-block"><div class="axis-ui-title">Workpiece Positioner Angles</div><div class="axis-ui-grid">${workCards}</div></div>` : ''}
+  `;
+  wrap.style.display = (robotAxisNames.length || workAxisNames.length) ? 'grid' : 'none';
   card.style.display = (robotAxisNames.length || workAxisNames.length) ? 'flex' : 'none';
   card.innerHTML = `
     <strong>Weld Positioner Details</strong>
@@ -3116,12 +3114,13 @@ function renderRobotSelectorOptions(){
   const dd = document.getElementById('robotSelect');
   if(!dd) return;
   dd.innerHTML = '';
+  ensureRobotNames();
   for(let i=1;i<=projectWizardState.robotCount;i++){
-    const name = `Robot ${i}`;
-    ensureRobotBucket(name);
+    const key = `Robot ${i}`;
+    ensureRobotBucket(key);
     const op = document.createElement('option');
-    op.value = name;
-    op.textContent = name;
+    op.value = key;
+    op.textContent = projectWizardState.robotNames[i - 1] || key;
     dd.appendChild(op);
   }
   if(!projectWizardState.recordsByRobot[projectWizardState.currentRobot]) projectWizardState.currentRobot = 'Robot 1';
@@ -3584,6 +3583,17 @@ function attachCanvasHandlers(canvasId){
 
 function handleCanvasPointerDown(point){
   if(projectWizardState.interactionMode === 'pan') return;
+  const selectedSplineControl = detectSelectedSplineBoundaryControl(point);
+  if(selectedSplineControl){
+    const annotations = getCurrentRobotAnnotations();
+    const ann = annotations[selectedSplineControl.annotationIndex];
+    if(selectedSplineControl.type === 'add') addSplineInterpolationPoint(ann);
+    if(selectedSplineControl.type === 'remove') removeSplineInterpolationPoint(ann);
+    recordAnnotationHistory();
+    redrawBuilderCanvases();
+    refreshAnnotationList();
+    return;
+  }
   const hit = findAnnotationHandle(point);
   if(hit){
     selectAnnotation(hit.annotationIndex);
@@ -3648,6 +3658,39 @@ function handleCanvasPointerDown(point){
     redrawBuilderCanvases();
     refreshAnnotationList();
   }
+}
+
+function detectSelectedSplineBoundaryControl(point){
+  const index = projectWizardState.selectedAnnotationIndex;
+  if(index < 0) return null;
+  const ann = getCurrentRobotAnnotations()[index];
+  if(!ann || ann.type !== 'splineArrow' || !Array.isArray(ann.points) || ann.points.length < 2) return null;
+  const controls = getSplineBoundaryControls(ann);
+  const isPlus = Math.hypot(point.x - controls.plus.x, point.y - controls.plus.y) <= 18;
+  if(isPlus) return {annotationIndex:index, type:'add'};
+  const isMinus = Math.hypot(point.x - controls.minus.x, point.y - controls.minus.y) <= 18;
+  if(isMinus) return {annotationIndex:index, type:'remove'};
+  return null;
+}
+
+function getSplineBoundaryControls(ann){
+  const bounds = annotationBounds(ann) || {x1:0,y1:0,x2:0,y2:0};
+  return {
+    plus: {x: bounds.x2 + 22, y: bounds.y1 - 14},
+    minus: {x: bounds.x2 + 22, y: bounds.y1 + 16}
+  };
+}
+
+function addSplineInterpolationPoint(ann){
+  if(!Array.isArray(ann.points) || ann.points.length < 2) return;
+  const prev = ann.points[ann.points.length - 2];
+  const end = ann.points[ann.points.length - 1];
+  ann.points.splice(ann.points.length - 1, 0, {x:(prev.x + end.x) / 2, y:(prev.y + end.y) / 2});
+}
+
+function removeSplineInterpolationPoint(ann){
+  if(!Array.isArray(ann.points) || ann.points.length <= 2) return;
+  ann.points.splice(ann.points.length - 2, 1);
 }
 
 function handleCanvasPointerMove(point){
@@ -3958,6 +4001,7 @@ function drawAnnotations(ctx, annotations){
           drawGuideLine(ctx, Array.isArray(ann.points) ? ann.points : [ann.start, ann.control1, ann.control2, ann.end]);
         }
         (Array.isArray(ann.points) ? ann.points : [ann.start, ann.control1, ann.control2, ann.end]).forEach(handle => drawHandle(ctx, handle));
+        drawSplineBoundaryButtons(ctx, ann);
       }
     }
     if(ann.type === 'text'){
@@ -3970,6 +4014,29 @@ function drawAnnotations(ctx, annotations){
       drawSelectionBox(ctx, annotationBounds(ann));
     }
   });
+}
+
+function drawSplineBoundaryButtons(ctx, ann){
+  const controls = getSplineBoundaryControls(ann);
+  drawBoundaryButton(ctx, controls.plus, '+');
+  drawBoundaryButton(ctx, controls.minus, '-');
+}
+
+function drawBoundaryButton(ctx, point, text){
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#ff5500';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, 13, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#111111';
+  ctx.font = 'bold 16px Barlow, Segoe UI, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, point.x, point.y + (text === '-' ? -1 : 0));
+  ctx.restore();
 }
 
 function annotationBounds(ann){
@@ -4224,6 +4291,7 @@ async function editProject(projectId){
         if(cols[5]) projectWizardState.workpiecePositionerAxes = cols[5].replace(/^"|"$/g,'');
         if(cols[6]) projectWizardState.robotPositionerAxisNames = cols[6].replace(/^"|"$/g,'').split('|').filter(Boolean);
         if(cols[7]) projectWizardState.workpiecePositionerAxisNames = cols[7].replace(/^"|"$/g,'').split('|').filter(Boolean);
+        if(cols[8]) projectWizardState.robotNames = cols[8].replace(/^"|"$/g,'').split('|').filter(Boolean);
       });
       if(parts.length){
         projectWizardState.partNames = parts;
@@ -4593,10 +4661,10 @@ function buildProjectPayload(){
   const imageEntries = [];
   const robots = [];
   for(let i=1;i<=projectWizardState.robotCount;i++) robots.push(`Robot ${i}`);
-  const partRows = ['PART_NO,PART_NAME,PART_IMAGE,ROBOTS,ROBOT_POSITIONER,WORKPIECE_POSITIONER,ROBOT_AXIS_NAMES,WORKPIECE_AXIS_NAMES'];
+  const partRows = ['PART_NO,PART_NAME,PART_IMAGE,ROBOTS,ROBOT_POSITIONER,WORKPIECE_POSITIONER,ROBOT_AXIS_NAMES,WORKPIECE_AXIS_NAMES,ROBOT_NAMES'];
   parts.forEach(partNo => {
     const partImageName = `${partNo}_part.png`;
-    partRows.push(`${escapeCsvValue(partNo)},${escapeCsvValue(partNo)},${escapeCsvValue(partImageName)},${escapeCsvValue(robots.join('|'))},${escapeCsvValue(projectWizardState.robotPositionerEnabled === 'Y' ? projectWizardState.robotPositionerAxes : 'No')},${escapeCsvValue(projectWizardState.workpiecePositionerEnabled === 'Y' ? projectWizardState.workpiecePositionerAxes : 'No')},${escapeCsvValue((projectWizardState.robotPositionerAxisNames || []).join('|'))},${escapeCsvValue((projectWizardState.workpiecePositionerAxisNames || []).join('|'))}`);
+    partRows.push(`${escapeCsvValue(partNo)},${escapeCsvValue(partNo)},${escapeCsvValue(partImageName)},${escapeCsvValue(robots.join('|'))},${escapeCsvValue(projectWizardState.robotPositionerEnabled === 'Y' ? projectWizardState.robotPositionerAxes : 'No')},${escapeCsvValue(projectWizardState.workpiecePositionerEnabled === 'Y' ? projectWizardState.workpiecePositionerAxes : 'No')},${escapeCsvValue((projectWizardState.robotPositionerAxisNames || []).join('|'))},${escapeCsvValue((projectWizardState.workpiecePositionerAxisNames || []).join('|'))},${escapeCsvValue((projectWizardState.robotNames || []).join('|'))}`);
     if(projectWizardState.partImageByPart[partNo]){
       imageEntries.push({name: partImageName, dataUrl: projectWizardState.partImageByPart[partNo], contentType: 'image/png'});
     }
@@ -4655,9 +4723,13 @@ function formatAxisValuesForWebsite(text, typeLabel){
     .map(item => item.trim())
     .filter(Boolean)
     .map(item => {
-      const withLabel = item.replace(/^Axis\s*/i, `${typeLabel} Axis `).replace(':', ': ');
-      if(typeLabel === 'Robot Positioner') return withLabel.endsWith(' mm') ? withLabel : `${withLabel} mm`;
-      return withLabel.endsWith(' Deg') ? withLabel : `${withLabel} Deg`;
+      const [k, ...vParts] = item.split(':');
+      const key = (k || '').trim();
+      const value = vParts.join(':').trim();
+      if(!key) return item;
+      const unit = typeLabel === 'Robot Positioner' ? 'mm' : 'Deg';
+      if(!value) return `${key}`;
+      return `${key}: ${value}${value.endsWith(` ${unit}`) ? '' : ` ${unit}`}`;
     });
   return segments.length ? segments.join(' | ') : '—';
 }
@@ -4970,7 +5042,7 @@ function detectParts(csvMap){
     if(parts.length) return parts;
   }
   const set=new Set();
-  csvMap.forEach((_,k)=>{const m=k.match(/^(.+?)_robot[12]\.csv$/i); if(m) set.add(m[1].toUpperCase());});
+  csvMap.forEach((_,k)=>{const m=k.match(/^(.+?)_robot\d+\.csv$/i); if(m) set.add(m[1].toUpperCase());});
   return [...set];
 }
 
@@ -5024,17 +5096,36 @@ function loadPartDropdown(){
 }
 
 function getRobotCsvColumns(part){
+  const viewerRobotNames = getViewerRobotNames(part);
   const cols = [];
   [...S.csvFiles.values()].forEach(file => {
     const match = file.name.match(new RegExp(`^${part.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}_robot(\\d+)\\.csv$`,'i'));
     if(!match) return;
+    const idx = Number(match[1]);
     cols.push({
-      index: Number(match[1]),
-      label: `Robot ${Number(match[1])}`,
+      index: idx,
+      label: viewerRobotNames[idx - 1] || `Robot ${idx}`,
       text: file.text
     });
   });
   return cols.sort((a,b) => a.index - b.index);
+}
+
+function getViewerRobotNames(part){
+  const pd = S.csvFiles.get('part_data.csv');
+  if(!pd) return [];
+  const rows = pd.text.replace(/^\uFEFF/,'').split(/\r?\n/).slice(1).filter(Boolean);
+  for(const row of rows){
+    const cols = row.split(',');
+    const partName = (cols[1] || cols[0] || '').replace(/^"|"$/g,'').trim();
+    if(String(partName).toUpperCase() !== String(part).toUpperCase()) continue;
+    return String(cols[8] || '')
+      .replace(/^"|"$/g,'')
+      .split('|')
+      .map(v => v.trim())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 function loadWeldData(){
@@ -5074,23 +5165,31 @@ function buildGrid(columns){
     wrap.style.gridTemplateColumns = `repeat(${normalized.length}, minmax(0, 1fr))`;
     wrap.innerHTML = normalized.map((col, idx) => `<div class="weld-col${idx>0 ? '' : ''}" id="dynRobotCol_${idx}"></div>`).join('');
   }
-  normalized.forEach((meta, idx) => {
-    const col = document.getElementById(`dynRobotCol_${idx}`);
-    if(!col) return;
-    col.style.display = 'flex';
-    if(!meta.hasData){
-      col.innerHTML = '<div class="no-data">No Data</div>';
-      return;
-    }
-    const segments = splitSegs(meta.welds);
-    segments.forEach(group => {
-      group.welds.forEach(w => col.appendChild(mkCell(w, meta.label)));
-      if(group.hasSync) col.appendChild(mkSync());
+  const columnNodes = normalized.map((meta, idx) => ({meta, col: document.getElementById(`dynRobotCol_${idx}`)})).filter(item => item.col);
+  columnNodes.forEach(item => { item.col.innerHTML = ''; item.col.style.display = 'flex'; });
+  if(!columnNodes.length) return;
+  if(columnNodes.every(item => !item.meta.hasData)){
+    columnNodes.forEach(item => item.col.innerHTML = '<div class="no-data">No Data</div>');
+    return;
+  }
+  const segmented = columnNodes.map(item => item.meta.hasData ? splitSegs(item.meta.welds) : [{welds:[],hasSync:false}]);
+  const maxSegments = Math.max(...segmented.map(s => s.length));
+  for(let s=0;s<maxSegments;s++){
+    const segmentRows = segmented.map(segs => segs[s] || {welds:[],hasSync:false});
+    const maxRows = Math.max(...segmentRows.map(row => row.welds.length));
+    columnNodes.forEach((item, idx) => {
+      segmentRows[idx].welds.forEach(w => item.col.appendChild(mkCell(w, item.meta.label)));
+      for(let i=0;i<(maxRows - segmentRows[idx].welds.length);i++) item.col.appendChild(mkEmpty());
     });
-  });
+    if(segmentRows.some(row => row.hasSync)){
+      columnNodes.forEach((item, idx) => {
+        item.col.appendChild(segmentRows[idx].hasSync ? mkSync() : mkEmpty());
+      });
+    }
+  }
 }
 function mkSync(){const d=document.createElement('div');d.className='weld-cell tsync';d.innerText='— SYNC —';return d;}
-function mkEmpty(){const d=document.createElement('div');d.className='weld-cell empty';return d;}
+function mkEmpty(){const d=document.createElement('div');d.className='weld-cell empty';d.innerText='[empty]';return d;}
 function mkCell(row,robot){
   const div=document.createElement('div');div.className='weld-cell weld-item';div.innerText=row.weldNo;
   div.onclick=function(){
