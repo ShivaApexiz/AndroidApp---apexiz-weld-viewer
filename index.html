@@ -83,7 +83,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .auth-msg.success{background:#EFE;color:var(--green);display:block;}
 
 /* ══ DASHBOARD ══ */
-#dashPage .page-body{flex-direction:row;padding:14px;gap:12px;overflow:hidden;}
+#dashPage .page-body{flex-direction:row;padding:14px;gap:12px;overflow:auto;}
 .dash-sidebar{width:210px;min-width:210px;background:var(--white);border-radius:8px;border:1px solid var(--g2);padding:14px;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
 .dash-sidebar::-webkit-scrollbar{width:3px;}
 .dash-sidebar::-webkit-scrollbar-thumb{background:var(--g2);}
@@ -91,7 +91,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .sidebar-section::before{content:"●";color:var(--orange);font-size:7px;}
 .sidebar-btn{width:100%;padding:8px 11px;text-align:left;background:none;border:none;border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:600;color:var(--black);cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:7px;}
 .sidebar-btn:hover{background:var(--orange-light);color:var(--orange);}
-.sidebar-btn.active{background:var(--orange);color:var(--white);}
+.sidebar-btn.active{background:#0f766e;color:var(--white);box-shadow:0 0 0 2px rgba(15,118,110,0.2);}
 .sidebar-divider{height:1px;background:var(--g2);margin:8px 0;}
 .logout-btn{margin-top:auto;padding:8px 11px;background:none;border:1.5px solid var(--g2);border-radius:6px;font-family:'Barlow',sans-serif;font-size:11px;font-weight:700;color:var(--g3);cursor:pointer;transition:all 0.12s;}
 .logout-btn:hover{border-color:var(--red);color:var(--red);}
@@ -200,7 +200,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .section-lbl::before{content:"●";color:var(--orange);font-size:7px;}
 
 /* ══ WELD VIEWER ══ */
-#viewerPage .page-body{flex-direction:row;overflow:hidden;}
+#viewerPage .page-body{flex-direction:row;overflow:auto;}
 .viewer-left{
   width:400px;min-width:400px;
   padding:24px 20px;
@@ -212,7 +212,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .viewer-left::-webkit-scrollbar{width:4px;}
 .viewer-left::-webkit-scrollbar-track{background:var(--g1);}
 .viewer-left::-webkit-scrollbar-thumb{background:var(--g2);border-radius:2px;}
-.viewer-right{flex:1;padding:24px 28px;display:flex;flex-direction:column;background:var(--white);overflow:hidden;min-width:0;}
+.viewer-right{flex:1;padding:20px 22px;display:flex;flex-direction:column;background:var(--white);overflow:auto;min-width:0;}
 .overview-img{
   width:100%;aspect-ratio:49/31;flex-shrink:0;
   border:3px solid #000;border-radius:4px;
@@ -234,7 +234,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .weld-cell{height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:600;}
 .weld-cell.weld-item{color:var(--black);cursor:pointer;transition:all 0.1s;}
 .weld-cell.weld-item:hover{background:#FFF0EB;color:var(--orange);}
-.weld-cell.weld-item.active{background:var(--orange);color:var(--white);}
+.weld-cell.weld-item.active{background:#0f766e;color:var(--white);box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35);}
 .weld-cell.tsync{color:#B8B8B8;font-style:italic;font-size:11px;font-weight:400;background:var(--g1);border-top:1px dashed var(--g2);border-bottom:1px dashed var(--g2);}
 .weld-cell.empty{background:var(--white);}
 .export-btn{width:100%;padding:11px 0;background:var(--orange);color:var(--white);font-size:13px;font-weight:700;border:none;border-radius:20px;cursor:pointer;letter-spacing:0.8px;text-transform:uppercase;transition:background 0.15s;margin-top:16px;flex-shrink:0;}
@@ -250,7 +250,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .part-dd:focus{outline:none;border-color:var(--orange-dark);}
 .main-image-wrap{position:relative;margin-top:16px;flex:0 0 auto;}
 .main-img{
-  width:100%;aspect-ratio:755/479;flex:0 0 auto;min-height:0;
+  width:100%;aspect-ratio:755/479;flex:1 1 auto;min-height:240px;max-height:min(62vh, calc(100vh - 280px));
   border:3px solid #000;border-radius:4px;
   background-position:center;background-repeat:no-repeat;background-size:contain;
   background-color:var(--g1);
@@ -260,7 +260,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .notes-modal-card{width:min(90vw,420px)}
 
 /* ══ CUSTOMER ══ */
-#customerPage .page-body{background:#EFEFEF;padding:18px;}
+#customerPage .page-body{background:#EFEFEF;padding:18px;overflow:auto;}
 .project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
 .project-card{background:var(--white);border-radius:8px;border:1px solid var(--g2);padding:15px 17px;cursor:pointer;transition:all 0.15s;animation:fadeUp 0.3s ease;}
 .project-card:hover{border-color:var(--orange);box-shadow:0 4px 16px rgba(255,85,0,0.1);transform:translateY(-2px);}
@@ -429,7 +429,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
       </div>
     </div>
   </div>
-  <div class="page-body" style="flex-direction:row;padding:14px;gap:12px;overflow:hidden;">
+  <div class="page-body" style="flex-direction:row;padding:14px;gap:12px;overflow:auto;">
     <div class="dash-sidebar">
       <div class="sidebar-section">Navigation</div>
       <button class="sidebar-btn active" onclick="showPanel('overview')" id="nav-overview"><span>📊</span> Overview</button>
@@ -970,8 +970,11 @@ function applyInviteToForm(){
 ══════════════════════════════════════ */
 function setNav(panel){
   document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
   const n=document.getElementById('nav-'+panel);
   if(n) n.classList.add('active');
+  const m=document.querySelector(`.mobile-nav-btn[data-panel="${panel}"]`);
+  if(m) m.classList.add('active');
 }
 
 async function showPanel(panel){
@@ -2310,7 +2313,10 @@ function renderCreateProject(el){
         <label class="field-label" for="robotSelect">Select Robot</label>
         <select id="robotSelect" class="field-select"></select>
         <label class="field-label" for="partSelect">Select Part</label>
-        <select id="partSelect" class="field-select"></select>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="partSelect" class="field-select"></select>
+          <button class="tbl-btn view" type="button" onclick="addNewPartToProject()">Add Part</button>
+        </div>
         <label class="field-label" for="partNumber">Part Number</label>
         <input id="partNumber" class="field-input" type="text" placeholder="e.g. PART-1001" readonly>
         <label class="field-label" for="partImageInput">Part Image</label>
@@ -2343,14 +2349,14 @@ function renderCreateProject(el){
 
       <div class="annotate-wrap">
         <div class="annotate-tools">
-          <button class="tbl-btn approve" type="button" onclick="setInteractionMode('select')">Select</button>
-          <button class="tbl-btn approve" type="button" onclick="setInteractionMode('pan')">Pan</button>
+          <button class="tbl-btn approve" type="button" data-mode="select" onclick="setInteractionMode('select')">Select</button>
+          <button class="tbl-btn approve" type="button" data-mode="pan" onclick="setInteractionMode('pan')">Pan</button>
           <button class="tbl-btn approve" type="button" onclick="undoAnnotationAction()">Undo</button>
           <button class="tbl-btn approve" type="button" onclick="redoAnnotationAction()">Redo</button>
-          <button class="tbl-btn approve" type="button" onclick="setDrawTool('freehand')">Draw</button>
-          <button class="tbl-btn approve" type="button" onclick="setDrawTool('lineArrow')">Line</button>
-          <button class="tbl-btn approve" type="button" onclick="setDrawTool('splineArrow')">Spline</button>
-          <button class="tbl-btn approve" type="button" onclick="setDrawTool('text')">Text</button>
+          <button class="tbl-btn approve" type="button" data-tool="freehand" onclick="setDrawTool('freehand')">Draw</button>
+          <button class="tbl-btn approve" type="button" data-tool="lineArrow" onclick="setDrawTool('lineArrow')">Line</button>
+          <button class="tbl-btn approve" type="button" data-tool="splineArrow" onclick="setDrawTool('splineArrow')">Spline</button>
+          <button class="tbl-btn approve" type="button" data-tool="text" onclick="setDrawTool('text')">Text</button>
           <button class="tbl-btn revoke" type="button" onclick="clearAnnotationCanvas()">Clear</button>
           <button class="tbl-btn revoke" type="button" onclick="deleteSelectedAnnotation()">Delete Selected</button>
           <button class="tbl-btn" type="button" onclick="stampWeldNumber()">Stamp Weld ID</button>
@@ -2456,14 +2462,14 @@ function renderCreateProject(el){
           <button class="tbl-btn revoke" type="button" onclick="closeAnnotationFullscreen()">Done</button>
         </div>
         <div class="annotate-tools full-tools">
-          <button class="tbl-btn approve" type="button" onclick="setInteractionMode('select')">Select</button>
-          <button class="tbl-btn approve" type="button" onclick="setInteractionMode('pan')">Pan</button>
+          <button class="tbl-btn approve" type="button" data-mode="select" onclick="setInteractionMode('select')">Select</button>
+          <button class="tbl-btn approve" type="button" data-mode="pan" onclick="setInteractionMode('pan')">Pan</button>
           <button class="tbl-btn approve" type="button" onclick="undoAnnotationAction()">Undo</button>
           <button class="tbl-btn approve" type="button" onclick="redoAnnotationAction()">Redo</button>
-          <button class="tbl-btn approve" type="button" onclick="setDrawTool('freehand')">Draw</button>
-          <button class="tbl-btn approve" type="button" onclick="setDrawTool('lineArrow')">Line</button>
-          <button class="tbl-btn approve" type="button" onclick="setDrawTool('splineArrow')">Spline</button>
-          <button class="tbl-btn approve" type="button" onclick="setDrawTool('text')">Text</button>
+          <button class="tbl-btn approve" type="button" data-tool="freehand" onclick="setDrawTool('freehand')">Draw</button>
+          <button class="tbl-btn approve" type="button" data-tool="lineArrow" onclick="setDrawTool('lineArrow')">Line</button>
+          <button class="tbl-btn approve" type="button" data-tool="splineArrow" onclick="setDrawTool('splineArrow')">Spline</button>
+          <button class="tbl-btn approve" type="button" data-tool="text" onclick="setDrawTool('text')">Text</button>
           <button class="tbl-btn revoke" type="button" onclick="clearAnnotationCanvas()">Clear</button>
           <button class="tbl-btn revoke" type="button" onclick="deleteSelectedAnnotation()">Delete Selected</button>
           <button class="tbl-btn" type="button" onclick="stampWeldNumber()">Stamp Weld ID</button>
@@ -2695,6 +2701,7 @@ function initProjectBuilderBindings(){
   overlayStampBackgroundColor.value = projectWizardState.stampBackgroundColor || '#ffffff';
   overlayStampFont.value = projectWizardState.stampFont;
   updateStampButtons();
+  updateToolSelectionState();
   renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
   renderImagePreview('weldPreview', projectWizardState.baseImageDataUrl);
   if(sourceProjName) sourceProjName.value = projectWizardState.projectName || '';
@@ -2873,6 +2880,17 @@ function updatePartName(index, value){
   projectWizardState.partNames[index] = value.trim().toUpperCase() || `PART-${index + 1}`;
   renderPartSelector();
   syncSelectedPartToForm();
+}
+
+function addNewPartToProject(){
+  projectWizardState.partCount = Math.max(1, Number(projectWizardState.partCount || projectWizardState.partNames.length || 1)) + 1;
+  ensurePartNames();
+  projectWizardState.selectedPartIndex = projectWizardState.partNames.length - 1;
+  renderPartNameFields();
+  renderPartSelector();
+  syncSelectedPartToForm();
+  updateSetupSummary();
+  updateCreateStatus(`Added ${projectWizardState.partNames[projectWizardState.selectedPartIndex]} to this project.`);
 }
 
 function renderPartSelector(){
@@ -3074,10 +3092,21 @@ function setDrawTool(tool){
     projectWizardState.currentTextValue = entered.trim();
   }
   projectWizardState.interaction = { mode: 'idle', annotationIndex: -1, pointKey: null };
+  updateToolSelectionState();
 }
 
 function setInteractionMode(mode){
   projectWizardState.interactionMode = mode;
+  updateToolSelectionState();
+}
+
+function updateToolSelectionState(){
+  document.querySelectorAll('[data-tool]').forEach(btn => {
+    btn.classList.toggle('active-tool', projectWizardState.interactionMode === 'annotate' && btn.getAttribute('data-tool') === projectWizardState.drawTool);
+  });
+  document.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.classList.toggle('active-tool', btn.getAttribute('data-mode') === projectWizardState.interactionMode);
+  });
 }
 
 function toggleStampStyleOption(option){
@@ -3841,12 +3870,14 @@ function drawAnnotations(ctx, annotations){
     if(ann.type === 'splineArrow'){
       const splinePoints = sampleSplinePoints(ann, 22);
       if(splinePoints.length >= 2){
-        ctx.beginPath();
-        ctx.moveTo(splinePoints[0].x, splinePoints[0].y);
-        splinePoints.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
-        ctx.stroke();
         const arrowAnchor = splinePoints[splinePoints.length - 2] || splinePoints[0];
         const arrowEnd = splinePoints[splinePoints.length - 1];
+        const shortenedEnd = getShortenedEndPoint(arrowAnchor, arrowEnd, ann.thickness || 4, 0.92);
+        ctx.beginPath();
+        ctx.moveTo(splinePoints[0].x, splinePoints[0].y);
+        splinePoints.slice(1, -1).forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.lineTo(shortenedEnd.x, shortenedEnd.y);
+        ctx.stroke();
         drawArrowHeadOnContext(ctx, arrowAnchor, arrowEnd, ann.thickness || 4);
       }
       if(projectWizardState.selectedAnnotationIndex === index){
@@ -3929,6 +3960,16 @@ function drawArrowHeadOnContext(ctx, start, end, thickness=4){
   ctx.lineTo(end.x - head * Math.cos(angle + Math.PI / 7), end.y - head * Math.sin(angle + Math.PI / 7));
   ctx.closePath();
   ctx.fill();
+}
+
+function getShortenedEndPoint(start, end, thickness=4, factor=0.78){
+  const angle = Math.atan2(end.y - start.y, end.x - start.x);
+  const head = Math.max(12, thickness * 4);
+  const cutBack = Math.max(head * factor, thickness * 1.8);
+  return {
+    x: end.x - (Math.cos(angle) * cutBack),
+    y: end.y - (Math.sin(angle) * cutBack)
+  };
 }
 
 function drawGuideLine(ctx, points){
@@ -4357,6 +4398,7 @@ function loadRecordToForm(index){
   renderImagePreview('weldPreview', r.baseImageDataUrl || r.imageDataUrl || '');
   renderWeldAxisFields();
   resetAnnotationHistory();
+  refreshWeldList();
   redrawBuilderCanvases();
   refreshAnnotationList();
 }
