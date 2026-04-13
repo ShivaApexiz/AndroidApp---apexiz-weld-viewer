@@ -17,10 +17,10 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:14px;}
-body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--black);width:100vw;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--black);width:100vw;height:100vh;overflow:auto;display:flex;flex-direction:column;}
 
 /* ── PAGES ── */
-.page{width:100vw;height:100vh;display:none;flex-direction:column;overflow:hidden;}
+.page{width:100vw;height:100vh;display:none;flex-direction:column;overflow:auto;}
 .page.active{display:flex;}
 
 /* ── TOPBAR ── */
@@ -223,7 +223,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .robot-cols-hdr{display:flex;gap:4px;margin-bottom:4px;flex-shrink:0;}
 .robot-title{flex:1;text-align:center;color:var(--white);font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;background:var(--black);padding:6px 0;border-radius:3px;}
 .weld-grid-wrap{
-  display:flex;border:1px solid var(--g2);border-radius:4px;
+  display:grid;border:1px solid var(--g2);border-radius:4px;
   height:230px;overflow-y:auto;background:var(--white);flex-shrink:0;
 }
 .weld-grid-wrap::-webkit-scrollbar{width:4px;}
@@ -258,6 +258,12 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 }
 .notes-bubble{position:absolute;top:12px;right:12px;border:none;border-radius:999px;padding:8px 12px;background:rgba(255,255,255,.96);box-shadow:0 8px 22px rgba(0,0,0,.16);font-size:12px;font-weight:700;color:#111;cursor:pointer;z-index:2}
 .notes-modal-card{width:min(90vw,420px)}
+.viewer-note-bubble{position:absolute;top:52px;right:16px;max-width:min(280px,72%);padding:12px 14px;background:#fff;border:1px solid #e6e6e6;border-radius:16px;box-shadow:0 12px 26px rgba(0,0,0,.14);color:#000;font-size:15px;font-weight:700;line-height:1.4;display:none;z-index:3}
+.viewer-note-bubble::after{content:"";position:absolute;top:-10px;right:26px;border-width:0 10px 12px 10px;border-style:solid;border-color:transparent transparent #fff transparent;filter:drop-shadow(0 -1px 0 #e6e6e6)}
+.profile-pop{position:absolute;right:10px;bottom:82px;background:#fff;border:1px solid #ececec;border-radius:18px;box-shadow:0 16px 36px rgba(0,0,0,.18);padding:10px;display:none;flex-direction:column;gap:8px;z-index:140}
+.profile-pop button{border:none;background:#f6f6f6;border-radius:12px;padding:10px 12px;font-size:12px;font-weight:700;color:#1a1a1a;cursor:pointer;text-align:left}
+.profile-pop button:hover{background:#fff3ee}
+.value-bubble{display:inline-block;padding:8px 12px;background:#fff;border:1px solid #ececec;border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);white-space:pre-line}
 
 /* ══ CUSTOMER ══ */
 #customerPage .page-body{background:#EFEFEF;padding:18px;overflow:auto;}
@@ -461,6 +467,11 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
     <button class="mobile-nav-btn" data-panel="projects" onclick="showPanel('projects')"><span class="mobile-nav-icon nav-projects"></span><strong>Projects</strong></button>
     <button class="mobile-nav-btn mobile-nav-create" data-panel="create" onclick="showPanel('create')"><span class="mobile-nav-plus">+</span></button>
     <button class="mobile-nav-btn" data-panel="mycustomers" onclick="showPanel('mycustomers')"><span class="mobile-nav-icon nav-customers"></span><strong>Customers</strong></button>
+    <button class="mobile-nav-btn" data-panel="profile" onclick="toggleProfileQuickMenu()"><span class="mobile-nav-icon nav-customers"></span><strong>Profile</strong></button>
+    <div class="profile-pop" id="profileQuickMenu">
+      <button type="button" onclick="editProfileName()">Edit Profile</button>
+      <button type="button" onclick="doLogout()">Sign Out</button>
+    </div>
   </div>
   <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
 </div>
@@ -493,28 +504,21 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
         <div class="info-row"><span class="info-label">Part Variant</span><select id="partDropdown" class="part-dd"><option>—</option></select></div>
         <div class="info-row"><span class="info-label">Robot Name</span><span class="info-value" id="robotName">—</span></div>
         <div class="info-row"><span class="info-label">Job Name</span><span class="info-value" id="jobName">—</span></div>
-        <div class="info-row"><span class="info-label">Robot Positioner</span><span class="info-value" id="robotPositionerValuesView">—</span></div>
-        <div class="info-row"><span class="info-label">Workpiece Positioner</span><span class="info-value" id="workpiecePositionerValuesView">—</span></div>
+        <div class="info-row"><span class="info-label">Robot Positioner</span><span class="info-value value-bubble" id="robotPositionerValuesView">—</span></div>
+        <div class="info-row"><span class="info-label">Workpiece Positioner</span><span class="info-value value-bubble" id="workpiecePositionerValuesView">—</span></div>
         <div class="info-row"><span class="info-label">Weld Number</span><span class="info-value hl" id="weldNumber">—</span></div>
       </div>
       <div class="main-image-wrap">
         <div id="mainImage" class="main-img">[ Select a weld to view image ]</div>
-        <button id="notesBubble" class="notes-bubble" type="button" style="display:none" onclick="showWeldNotesPopup()">Notes</button>
+        <button id="notesBubble" class="notes-bubble" type="button" style="display:none" onclick="showWeldNotesPopup()">Notes View</button>
+        <div id="notesSpeechBubble" class="viewer-note-bubble"></div>
       </div>
     </div>
   </div>
   <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL INFORMATION<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
 </div>
 
-<div id="notesOverlay" class="modal-overlay" onclick="if(event.target===this) closeWeldNotesPopup()">
-  <div class="modal-card notes-modal-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">
-      <strong>Weld Notes</strong>
-      <button class="tbl-btn revoke" type="button" onclick="closeWeldNotesPopup()">Close</button>
-    </div>
-    <div id="notesOverlayContent" class="builder-note" style="font-size:13px;color:#1f1f1f;white-space:pre-wrap"></div>
-  </div>
-</div>
+
 
 <!-- ══ CUSTOMER PAGE ══ -->
 <div id="customerPage" class="page">
@@ -1744,7 +1748,10 @@ function initProjectBuilderBindings(){
 
   robotCount.addEventListener('input', () => {
     projectWizardState.robotCount = Math.max(1, parseInt(robotCount.value || '1', 10));
+    ensureRobotNames();
+    renderRobotNameFields();
     renderRobotSelectorOptions();
+    updateSetupSummary();
   });
   robotSelect.addEventListener('change', () => {
     projectWizardState.currentRobot = robotSelect.value;
@@ -1810,12 +1817,13 @@ function renderRobotSelectorOptions(){
   const dd = document.getElementById('robotSelect');
   if(!dd) return;
   dd.innerHTML = '';
+  ensureRobotNames();
   for(let i=1;i<=projectWizardState.robotCount;i++){
-    const name = `Robot ${i}`;
-    ensureRobotBucket(name);
+    const key = `Robot ${i}`;
+    ensureRobotBucket(key);
     const op = document.createElement('option');
-    op.value = name;
-    op.textContent = name;
+    op.value = key;
+    op.textContent = projectWizardState.robotNames[i - 1] || key;
     dd.appendChild(op);
   }
   if(!projectWizardState.recordsByRobot[projectWizardState.currentRobot]){
@@ -2171,6 +2179,7 @@ function resetProjectWizardState(){
     createEntryMode: 'builder',
     projectId: '',
     projectName: '',
+    robotNames: ['Robot 1'],
     partNumber: '',
     partCount: 1,
     partNames: ['PART-1'],
@@ -2269,6 +2278,8 @@ function renderCreateProject(el){
         <input id="newProjName" class="field-input" type="text" placeholder="e.g. ONEROBOT">
         <label class="field-label" for="robotCount">Number of Robots</label>
         <input id="robotCount" class="field-input" type="number" min="1" max="12" value="1">
+        <label class="field-label">Robot Names</label>
+        <div id="robotNamesWrap" class="part-names-wrap"></div>
         <label class="field-label" for="partCount">No. Parts</label>
         <input id="partCount" class="field-input" type="number" min="1" max="50" value="${projectWizardState.partCount || 1}">
         <label class="field-label">Part Names</label>
@@ -2329,8 +2340,6 @@ function renderCreateProject(el){
         </div>
         <label class="field-label" for="jobNumber">Job Number</label>
         <input id="jobNumber" class="field-input" type="text" placeholder="e.g. JOB-24">
-        <div id="weldAxisValuesCard" class="setup-summary-card axis-values-card"></div>
-        <div id="weldAxisValueFields" class="mobile-builder-grid axis-value-fields"></div>
         <label class="field-label" for="weldNumber">Weld Number / Weld ID</label>
         <input id="weldNumber" class="field-input" type="text" placeholder="e.g. W-12/A#3">
         <label class="field-label" for="weldNotes">Notes</label>
@@ -2338,14 +2347,11 @@ function renderCreateProject(el){
         <label class="field-label" for="weldImageInput">Weld Image</label>
         <button id="weldImageTrigger" class="field-input image-source-trigger" type="button" onclick="openImageSourcePicker('weld')">Capture or Choose Weld Image</button>
         <input id="weldImageInput" class="field-input" type="file" accept="image/*" hidden>
-        <div class="image-preview-card inline-preview-card">
-          <div class="field-label">Weld Preview</div>
-          <div id="weldPreview" class="image-preview-box weld-preview-box">No weld image</div>
+        <div class="capture-actions">
+          <button class="action-btn sec" type="button" onclick="openAnnotationFullscreen()">Full Screen Annotate</button>
         </div>
-      </div>
-
-      <div class="capture-actions">
-        <button class="action-btn sec" type="button" onclick="openAnnotationFullscreen()">Full Screen Annotate</button>
+        <div id="weldAxisValuesCard" class="setup-summary-card axis-values-card"></div>
+        <div id="weldAxisValueFields" class="mobile-builder-grid axis-value-fields"></div>
       </div>
 
       <div class="annotate-wrap">
@@ -2407,13 +2413,13 @@ function renderCreateProject(el){
       <div id="annotationList" class="annotation-list"></div>
 
       <div class="builder-actions">
-        <button class="action-btn" type="button" onclick="saveCurrentWeld()">Save Weld</button>
-        <button class="action-btn sec" type="button" onclick="goToNextWeld()">Next Weld</button>
-        <button class="action-btn sec" type="button" onclick="addSyncWeld()">SYNC</button>
-        <button class="action-btn sec" type="button" onclick="addWeldAfterCurrent()">Add Weld After</button>
-        <button class="action-btn sec" type="button" onclick="prevSavedWeld()">Prev Saved</button>
-        <button class="action-btn sec" type="button" onclick="nextSavedWeld()">Next Saved</button>
-        <button class="action-btn sec" type="button" onclick="deleteCurrentWeld()">Delete Weld</button>
+        <button class="action-btn" data-weld-action="save" type="button" onclick="highlightWeldAction('save');saveCurrentWeld()">Save Weld</button>
+        <button class="action-btn sec" data-weld-action="next" type="button" onclick="highlightWeldAction('next');goToNextWeld()">Next Weld</button>
+        <button class="action-btn sec" data-weld-action="sync" type="button" onclick="highlightWeldAction('sync');addSyncWeld()">SYNC</button>
+        <button class="action-btn sec" data-weld-action="after" type="button" onclick="highlightWeldAction('after');addWeldAfterCurrent()">Add Weld After</button>
+        <button class="action-btn sec" data-weld-action="prev" type="button" onclick="highlightWeldAction('prev');prevSavedWeld()">Prev Saved</button>
+        <button class="action-btn sec" data-weld-action="nextSaved" type="button" onclick="highlightWeldAction('nextSaved');nextSavedWeld()">Next Saved</button>
+        <button class="action-btn sec" data-weld-action="delete" type="button" onclick="highlightWeldAction('delete');deleteCurrentWeld()">Delete Weld</button>
       </div>
 
       <div id="weldList" class="queue-list"></div>
@@ -2452,6 +2458,10 @@ function renderCreateProject(el){
         <div class="capture-actions">
           <button class="action-btn" type="button" onclick="chooseImageSource('camera')">Camera</button>
           <button class="action-btn sec" type="button" onclick="chooseImageSource('gallery')">Gallery</button>
+        </div>
+        <div class="image-preview-card inline-preview-card" style="margin-top:12px">
+          <div class="field-label">Preview</div>
+          <div id="imageSourcePreview" class="image-preview-box weld-preview-box">No image selected</div>
         </div>
       </div>
     </div>
@@ -2686,7 +2696,9 @@ function initProjectBuilderBindings(){
   attachPanHandlers('weldCanvasShell');
   attachPanHandlers('fullWeldCanvasShell');
   ensurePartNames();
+  ensureRobotNames();
   renderPartNameFields();
+  renderRobotNameFields();
   renderPartSelector();
   renderRobotSelectorOptions();
   renderAxisNameFields('robot');
@@ -2829,12 +2841,37 @@ function ensurePartNames(){
   }
 }
 
+function ensureRobotNames(){
+  const count = Math.max(1, parseInt(projectWizardState.robotCount || '1', 10));
+  if(!Array.isArray(projectWizardState.robotNames)) projectWizardState.robotNames = [];
+  while(projectWizardState.robotNames.length < count){
+    projectWizardState.robotNames.push(`Robot ${projectWizardState.robotNames.length + 1}`);
+  }
+  projectWizardState.robotNames = projectWizardState.robotNames.slice(0, count);
+}
+
 function renderPartNameFields(){
   const wrap = document.getElementById('partNamesWrap');
   if(!wrap) return;
   wrap.innerHTML = projectWizardState.partNames.map((name, index) => `
     <input class="field-input part-name-input" type="text" value="${name || ''}" placeholder="Part ${index + 1} Name" oninput="updatePartName(${index}, this.value)">
   `).join('');
+}
+
+function renderRobotNameFields(){
+  const wrap = document.getElementById('robotNamesWrap');
+  if(!wrap) return;
+  ensureRobotNames();
+  wrap.innerHTML = projectWizardState.robotNames.map((name, index) => `
+    <input class="field-input part-name-input" type="text" value="${name || ''}" placeholder="Robot ${index + 1} Name" oninput="updateRobotName(${index}, this.value)">
+  `).join('');
+}
+
+function updateRobotName(index, value){
+  ensureRobotNames();
+  projectWizardState.robotNames[index] = value.trim() || `Robot ${index + 1}`;
+  renderRobotSelectorOptions();
+  updateSetupSummary();
 }
 
 function getAxisCount(axisLabel){
@@ -2845,10 +2882,9 @@ function getAxisCount(axisLabel){
 function ensureAxisNames(group){
   const axisCount = getAxisCount(group === 'robot' ? projectWizardState.robotPositionerAxes : projectWizardState.workpiecePositionerAxes);
   const stateKey = group === 'robot' ? 'robotPositionerAxisNames' : 'workpiecePositionerAxisNames';
-  const prefix = group === 'robot' ? 'Robot Positioner Axis' : 'Workpiece Positioner Axis';
   if(!Array.isArray(projectWizardState[stateKey])) projectWizardState[stateKey] = [];
   while(projectWizardState[stateKey].length < axisCount){
-    projectWizardState[stateKey].push(`${prefix} ${projectWizardState[stateKey].length + 1}`);
+    projectWizardState[stateKey].push(`Axis ${projectWizardState[stateKey].length + 1}`);
   }
   projectWizardState[stateKey] = projectWizardState[stateKey].slice(0, axisCount);
 }
@@ -2977,7 +3013,7 @@ function updateSetupSummary(){
     : 'No';
   el.innerHTML = `
     <strong>${projectWizardState.projectName || 'New Project'}</strong>
-    <span>Robots: ${projectWizardState.robotCount || 1}</span>
+    <span>Robots: ${(projectWizardState.robotNames || []).join(', ') || projectWizardState.robotCount || 1}</span>
     <span>Parts: ${projectWizardState.partNames.join(', ')}</span>
     <span>Robot Positioner: ${robotPos}</span>
     <span>Workpiece Positioner: ${workPos}</span>
@@ -3010,8 +3046,10 @@ function renderWeldAxisFields(){
   robotAxisNames.forEach((name, index) => {
     const safeName = name || `Robot Axis ${index + 1}`;
     fields.push(`
-      <label class="field-label" for="robotAxisValue_${index}">${safeName}</label>
-      <input id="robotAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName} (mm)" value="${currentValues.robotPositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('robot','${safeName.replace(/'/g, '&#39;')}', this.value)">
+      <div class="axis-input-pair">
+        <label class="field-label" for="robotAxisValue_${index}">${safeName}</label>
+        <input id="robotAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName} (mm)" value="${currentValues.robotPositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('robot','${safeName.replace(/'/g, '&#39;')}', this.value)">
+      </div>
     `);
   });
   if(workAxisNames.length){
@@ -3020,8 +3058,10 @@ function renderWeldAxisFields(){
   workAxisNames.forEach((name, index) => {
     const safeName = name || `Workpiece Axis ${index + 1}`;
     fields.push(`
-      <label class="field-label" for="workAxisValue_${index}">${safeName}</label>
-      <input id="workAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName} (Deg)" value="${currentValues.workpiecePositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('workpiece','${safeName.replace(/'/g, '&#39;')}', this.value)">
+      <div class="axis-input-pair">
+        <label class="field-label" for="workAxisValue_${index}">${safeName}</label>
+        <input id="workAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName} (Deg)" value="${currentValues.workpiecePositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('workpiece','${safeName.replace(/'/g, '&#39;')}', this.value)">
+      </div>
     `);
   });
   wrap.innerHTML = fields.join('');
@@ -3132,6 +3172,12 @@ function updateToolSelectionState(){
   });
   document.querySelectorAll('[data-mode]').forEach(btn => {
     btn.classList.toggle('active-tool', btn.getAttribute('data-mode') === projectWizardState.interactionMode);
+  });
+}
+
+function highlightWeldAction(action){
+  document.querySelectorAll('[data-weld-action]').forEach(btn => {
+    btn.classList.toggle('active-tool', btn.getAttribute('data-weld-action') === action);
   });
 }
 
@@ -3336,6 +3382,7 @@ function cropImageDataUrlToAspect(dataUrl, aspectRatio, outWidth, outHeight){
 
 function openImageSourcePicker(target){
   builderImageSourceTarget = target;
+  renderImagePreview('imageSourcePreview', target === 'part' ? projectWizardState.partImageDataUrl : projectWizardState.baseImageDataUrl);
   document.getElementById('imageSourceOverlay').style.display = 'flex';
 }
 
@@ -4245,7 +4292,9 @@ function hydrateProjectEditor(){
   if(robotCountEl) robotCountEl.value = String(projectWizardState.robotCount || 1);
   if(partCountEl) partCountEl.value = String(projectWizardState.partCount || 1);
   ensurePartNames();
+  ensureRobotNames();
   renderPartNameFields();
+  renderRobotNameFields();
   renderPartSelector();
   renderRobotSelectorOptions();
   renderAxisNameFields('robot');
@@ -4616,21 +4665,57 @@ function formatAxisValuesForWebsite(text, typeLabel){
 function setViewerNotes(notes){
   S.currentWeldNotes = String(notes || '').trim();
   const bubble = document.getElementById('notesBubble');
+  const speech = document.getElementById('notesSpeechBubble');
   if(!bubble) return;
   bubble.style.display = S.currentWeldNotes ? 'inline-flex' : 'none';
+  if(speech && !S.currentWeldNotes) speech.style.display = 'none';
 }
 
 function showWeldNotesPopup(){
-  const overlay = document.getElementById('notesOverlay');
-  const content = document.getElementById('notesOverlayContent');
-  if(!overlay || !content) return;
-  content.innerText = S.currentWeldNotes || 'No notes for this weld.';
-  overlay.style.display = 'flex';
+  const bubble = document.getElementById('notesSpeechBubble');
+  if(!bubble) return;
+  if(!S.currentWeldNotes){
+    bubble.style.display = 'none';
+    return;
+  }
+  bubble.innerText = S.currentWeldNotes;
+  bubble.style.display = bubble.style.display === 'block' ? 'none' : 'block';
 }
 
 function closeWeldNotesPopup(){
-  const overlay = document.getElementById('notesOverlay');
-  if(overlay) overlay.style.display = 'none';
+  const bubble = document.getElementById('notesSpeechBubble');
+  if(bubble) bubble.style.display = 'none';
+}
+
+function toggleProfileQuickMenu(){
+  const menu = document.getElementById('profileQuickMenu');
+  if(!menu) return;
+  menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+}
+
+async function editProfileName(){
+  const currentName = S.profile?.name || '';
+  const nextName = prompt('Edit profile name:', currentName);
+  if(nextName === null) return;
+  const clean = nextName.trim();
+  if(!clean || clean === currentName) return;
+  const {error} = await sb.from('profiles').update({name: clean}).eq('id', S.profile.id);
+  if(error) return alert('Unable to update profile: ' + error.message);
+  S.profile.name = clean;
+  const first = clean[0]?.toUpperCase() || '?';
+  const dashUser = document.getElementById('dashUserName');
+  const viewerUser = document.getElementById('viewerUserName');
+  const custUser = document.getElementById('custUserName');
+  if(dashUser) dashUser.innerText = clean;
+  if(viewerUser) viewerUser.innerText = clean;
+  if(custUser) custUser.innerText = clean;
+  const dashAvatar = document.getElementById('dashAvatar');
+  const viewerAvatar = document.getElementById('viewerAvatar');
+  const custAvatar = document.getElementById('custAvatar');
+  if(dashAvatar) dashAvatar.innerText = first;
+  if(viewerAvatar) viewerAvatar.innerText = first;
+  if(custAvatar) custAvatar.innerText = first;
+  toggleProfileQuickMenu();
 }
 
 function parseAxisValueString(text){
@@ -4938,6 +5023,20 @@ function loadPartDropdown(){
   dd.addEventListener('change',loadWeldData);
 }
 
+function getRobotCsvColumns(part){
+  const cols = [];
+  [...S.csvFiles.values()].forEach(file => {
+    const match = file.name.match(new RegExp(`^${part.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}_robot(\\d+)\\.csv$`,'i'));
+    if(!match) return;
+    cols.push({
+      index: Number(match[1]),
+      label: `Robot ${Number(match[1])}`,
+      text: file.text
+    });
+  });
+  return cols.sort((a,b) => a.index - b.index);
+}
+
 function loadWeldData(){
   const part=document.getElementById('partDropdown').value;
   ['weldNumber','jobName','robotName','robotPositionerValuesView','workpiecePositionerValuesView'].forEach(id=>document.getElementById(id).innerText='—');
@@ -4945,10 +5044,10 @@ function loadWeldData(){
   imgEl.style.backgroundImage='none'; imgEl.innerText='[ Select a weld to view image ]';
   setViewerNotes('');
   setActiveCell(null);
-  const t1=getCSV(`${part}_Robot1.csv`)||getCSV(`${part}_robot1.csv`);
-  const t2=getCSV(`${part}_Robot2.csv`)||getCSV(`${part}_robot2.csv`);
-  S.welds1=t1?parseCSV(t1):[]; S.welds2=t2?parseCSV(t2):[];
-  buildGrid([{label:'Robot 1', welds:S.welds1, hasData:!!t1},{label:'Robot 2', welds:S.welds2, hasData:!!t2}].filter(col => col.hasData));
+  const robotCols = getRobotCsvColumns(part);
+  S.welds1 = robotCols[0]?.text ? parseCSV(robotCols[0].text) : [];
+  S.welds2 = robotCols[1]?.text ? parseCSV(robotCols[1].text) : [];
+  buildGrid(robotCols.map(col => ({label: col.label, welds: parseCSV(col.text), hasData: true})));
   const ov=document.getElementById('overviewImage');
   const ovUrl=findImg(part);
   if(ovUrl){ov.style.backgroundImage=`url("${ovUrl}")`;ov.innerText='';}
@@ -4967,20 +5066,18 @@ function splitSegs(welds){
 function buildGrid(columns){
   const hdr=document.querySelector('.robot-cols-hdr');
   const wrap=document.querySelector('.weld-grid-wrap');
-  const c1=document.getElementById('robot1Col'),c2=document.getElementById('robot2Col');
   const normalized = columns.length ? columns : [{label:'Robot 1', welds:[], hasData:false}];
   if(hdr){
     hdr.innerHTML = normalized.map(col => `<div class="robot-title">${col.label}</div>`).join('');
   }
   if(wrap){
     wrap.style.gridTemplateColumns = `repeat(${normalized.length}, minmax(0, 1fr))`;
+    wrap.innerHTML = normalized.map((col, idx) => `<div class="weld-col${idx>0 ? '' : ''}" id="dynRobotCol_${idx}"></div>`).join('');
   }
-  [c1,c2].forEach(col => { if(col) col.innerHTML=''; });
-  [c1,c2].forEach((col, idx) => {
+  normalized.forEach((meta, idx) => {
+    const col = document.getElementById(`dynRobotCol_${idx}`);
     if(!col) return;
-    const meta = normalized[idx];
-    col.style.display = meta ? 'flex' : 'none';
-    if(!meta) return;
+    col.style.display = 'flex';
     if(!meta.hasData){
       col.innerHTML = '<div class="no-data">No Data</div>';
       return;
@@ -5145,11 +5242,11 @@ async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
     pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT – ${code}`);
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:2.72,h:4.82,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:0.07,h:4.82,fill:{color:C.orange},line:{color:C.orange}});
-    [{l:'JOB NAME',v:w.jobName||'—',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'—',c:C.orange,s:22},{l:'ROBOT',v:code,c:C.black,s:18},{l:'ROBOT POSITIONER',v:formatAxisValuesForDisplay(w.robotPositionerValues),c:C.black,s:11},{l:'WORKPIECE POSITIONER',v:formatAxisValuesForDisplay(w.workpiecePositionerValues),c:C.black,s:11}]
+    [{l:'JOB NAME',v:w.jobName||'—',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'—',c:C.orange,s:22},{l:'ROBOT',v:code,c:C.black,s:18},{l:'ROBOT POSITIONER',v:formatAxisValuesForWebsite(w.robotPositionerValues,'Robot Positioner').replace(/\s\|\s/g,'\n'),c:C.black,s:11},{l:'WORKPIECE POSITIONER',v:formatAxisValuesForWebsite(w.workpiecePositionerValues,'Workpiece Positioner').replace(/\s\|\s/g,'\n'),c:C.black,s:11}]
     .reduce((iy,f)=>{
       const isCompact=f.s<=11;
       sl.addText(f.l,{x:0.2,y:iy,w:2.32,h:0.22,fontSize:7.2,color:C.medGrey,fontFace:'Segoe UI',bold:true});
-      sl.addText(f.v,{x:0.2,y:iy+0.22,w:2.32,h:isCompact?0.34:(f.s>18?0.58:0.44),fontSize:isCompact?9.5:f.s,color:f.c,fontFace:'Segoe UI',bold:true,fit:'shrink'});
+      sl.addText(f.v,{x:0.2,y:iy+0.22,w:2.32,h:isCompact?0.56:(f.s>18?0.58:0.44),fontSize:isCompact?9.5:f.s,color:f.c,fontFace:'Segoe UI',bold:true,fit:'shrink',breakLine:false,paraSpaceAfterPt:isCompact?1:0});
       sl.addShape(pptx.shapes.RECTANGLE,{x:0.2,y:iy+(isCompact?0.62:(f.s>18?0.88:0.74)),w:2.22,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
       return iy+(isCompact?0.70:(f.s>18?0.96:0.84));},1.0);
     const ix=2.82,iy=1.05,iw=6.93,ih=4.40;
@@ -5162,6 +5259,7 @@ async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
       sl.addShape(pptx.shapes.ROUNDED_RECTANGLE,{x:ix+iw-1.15,y:iy+0.12,w:0.92,h:0.34,fill:{color:'FFFFFF',transparency:2},line:{color:C.black,width:1.2}});
       sl.addText('Notes',{x:ix+iw-1.05,y:iy+0.17,w:0.72,h:0.18,fontSize:9,bold:true,color:C.black,fontFace:'Segoe UI',align:'center'});
       sl.addShape(pptx.shapes.ROUNDED_RECTANGLE,{x:ix+iw-2.4,y:iy+0.52,w:2.08,h:0.82,fill:{color:'FFFFFF',transparency:0},line:{color:C.black,width:1}});
+      sl.addShape(pptx.shapes.CHEVRON,{x:ix+iw-0.88,y:iy+0.43,w:0.22,h:0.16,fill:{color:'FFFFFF',transparency:0},line:{color:C.black,width:1}});
       sl.addText(w.notes,{x:ix+iw-2.28,y:iy+0.60,w:1.82,h:0.52,fontSize:8.5,bold:true,color:C.black,fontFace:'Segoe UI',fit:'shrink',margin:0.04});
     }
     pptFtr(sl,pptx,ls);
