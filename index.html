@@ -2568,7 +2568,10 @@ function initProjectBuilderBindings(){
 
   robotCount.addEventListener('input', () => {
     projectWizardState.robotCount = Math.max(1, parseInt(robotCount.value || '1', 10));
+    ensureRobotNames();
+    renderRobotNameFields();
     renderRobotSelectorOptions();
+    updateSetupSummary();
   });
   partCount.addEventListener('input', () => {
     projectWizardState.partCount = Math.max(1, parseInt(partCount.value || '1', 10));
@@ -3034,6 +3037,29 @@ function getCurrentRobotAxisValueState(){
   return projectWizardState.axisValuesByRobot[projectWizardState.currentRobot];
 }
 
+function normalizeAxisValue(value){
+  return String(value == null ? '' : value)
+    .replace(/\s*(mm|deg)\s*$/i, '')
+    .trim();
+}
+
+function formatAxisValue(value, unit){
+  const normalized = normalizeAxisValue(value);
+  return normalized ? `${normalized} ${unit}` : '';
+}
+
+function focusWeldAxisInput(input){
+  if(!input) return;
+  input.value = normalizeAxisValue(input.value);
+}
+
+function blurWeldAxisInput(input, group, axisName, unit){
+  if(!input) return;
+  const normalized = normalizeAxisValue(input.value);
+  updateWeldAxisValue(group, axisName, normalized);
+  input.value = formatAxisValue(normalized, unit);
+}
+
 function renderWeldAxisFields(){
   const wrap = document.getElementById('weldAxisValueFields');
   const card = document.getElementById('weldAxisValuesCard');
@@ -3046,7 +3072,7 @@ function renderWeldAxisFields(){
     return `
       <div class="axis-input-card">
         <label class="field-label" for="robotAxisValue_${index}">${safeName}</label>
-        <input id="robotAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName} (mm)" value="${currentValues.robotPositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('robot','${safeName.replace(/'/g, '&#39;')}', this.value)">
+        <input id="robotAxisValue_${index}" class="field-input axis-value-input" type="text" inputmode="decimal" placeholder="Enter ${safeName}" value="${formatAxisValue(currentValues.robotPositionerValues[safeName] || '', 'mm')}" onfocus="focusWeldAxisInput(this)" oninput="updateWeldAxisValue('robot','${safeName.replace(/'/g, '&#39;')}', normalizeAxisValue(this.value))" onblur="blurWeldAxisInput(this,'robot','${safeName.replace(/'/g, '&#39;')}','mm')">
       </div>
     `;
   }).join('');
@@ -3055,7 +3081,7 @@ function renderWeldAxisFields(){
     return `
       <div class="axis-input-card">
         <label class="field-label" for="workAxisValue_${index}">${safeName}</label>
-        <input id="workAxisValue_${index}" class="field-input" type="number" step="0.1" placeholder="Enter ${safeName} (Deg)" value="${currentValues.workpiecePositionerValues[safeName] || ''}" oninput="updateWeldAxisValue('workpiece','${safeName.replace(/'/g, '&#39;')}', this.value)">
+        <input id="workAxisValue_${index}" class="field-input axis-value-input" type="text" inputmode="decimal" placeholder="Enter ${safeName}" value="${formatAxisValue(currentValues.workpiecePositionerValues[safeName] || '', 'Deg')}" onfocus="focusWeldAxisInput(this)" oninput="updateWeldAxisValue('workpiece','${safeName.replace(/'/g, '&#39;')}', normalizeAxisValue(this.value))" onblur="blurWeldAxisInput(this,'workpiece','${safeName.replace(/'/g, '&#39;')}','Deg')">
       </div>
     `;
   }).join('');
@@ -3075,7 +3101,7 @@ function renderWeldAxisFields(){
 function updateWeldAxisValue(group, axisName, value){
   const state = getCurrentRobotAxisValueState();
   const key = group === 'robot' ? 'robotPositionerValues' : 'workpiecePositionerValues';
-  state[key][axisName] = value;
+  state[key][axisName] = normalizeAxisValue(value);
 }
 
 function getSelectedPartName(){
