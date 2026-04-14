@@ -5553,23 +5553,24 @@ async function exportToPPT(){
   {const sl=pptx.addSlide();sl.background={color:C.white};
    pptHdr(sl,pptx,'Part Overview',projName+' — '+part);
    const ovUrl=findImg(part);const ovB64=await imgB64(ovUrl);
+   sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1.15,w:5.9,h:3.73,fill:{color:'FFFFFF',transparency:100},line:{color:C.black,pt:2.25}});
    if(ovB64) sl.addImage({data:ovB64,x:0.3,y:1.15,w:5.9,h:3.73,sizing:{type:'contain',w:5.9,h:3.73}});
-   else{sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1.15,w:5.9,h:3.73,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
+   else{sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1.15,w:5.9,h:3.73,fill:{color:'F5F5F5'},line:{color:C.black,pt:2.25}});
     sl.addText('[ No Part Image ]',{x:0.3,y:2.7,w:5.9,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
-   sl.addShape(pptx.shapes.RECTANGLE,{x:6.4,y:1,w:3.35,h:4.6,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
+   sl.addShape(pptx.shapes.RECTANGLE,{x:6.34,y:1,w:3.42,h:4.66,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
    const robotSummaryRows=robotCols.map((col,idx)=>{
      const weldCount=col.welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
-     return {l:`ROBOT ${idx+1} WELDS`,v:''+weldCount,c:C.darkGrey,s:16};
+     return {l:`ROBOT ${idx+1} WELDS`,v:''+weldCount,c:C.darkGrey,s:15};
    });
    const totalWelds=robotCols.reduce((sum,col)=>sum+col.welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length,0);
-   const overviewRows=[{l:'PROJECT',v:projName,c:C.darkGrey,s:13},{l:'PART VARIANT',v:part,c:C.orange,s:17},...robotSummaryRows,{l:'TOTAL WELDS',v:''+totalWelds,c:C.orange,s:19},{l:'REPORT DATE',v:today,c:C.darkGrey,s:10.5}];
-   const overviewStep=robotCols.length>=4?0.58:0.7;
-   const overviewDividerOffset=robotCols.length>=4?0.54:0.64;
+   const overviewRows=[{l:'PROJECT',v:projName,c:C.darkGrey,s:12.5},{l:'PART VARIANT',v:part,c:C.orange,s:16},...robotSummaryRows,{l:'TOTAL WELDS',v:''+totalWelds,c:C.orange,s:18},{l:'REPORT DATE',v:today,c:C.darkGrey,s:10}];
+   const overviewStep=robotCols.length>=4?0.5:0.66;
+   const overviewDividerOffset=robotCols.length>=4?0.46:0.6;
    overviewRows
    .reduce((iy,row)=>{
-      sl.addText(row.l,{x:6.55,y:iy,w:3,h:0.22,fontSize:8,color:C.medGrey,fontFace:'Segoe UI',bold:true});
-      sl.addText(row.v,{x:6.55,y:iy+0.2,w:3,h:row.s>16?0.42:0.34,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true,fit:'shrink'});
-      sl.addShape(pptx.shapes.RECTANGLE,{x:6.55,y:iy+overviewDividerOffset,w:2.9,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
+      sl.addText(row.l,{x:6.52,y:iy,w:3.02,h:0.2,fontSize:7.4,color:C.medGrey,fontFace:'Segoe UI',bold:true,fit:'shrink'});
+      sl.addText(row.v,{x:6.52,y:iy+0.16,w:3.02,h:row.s>16?0.34:0.3,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true,fit:'shrink'});
+      sl.addShape(pptx.shapes.RECTANGLE,{x:6.52,y:iy+overviewDividerOffset,w:2.98,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
       return iy+overviewStep;
     },1.06);
    pptFtr(sl,pptx,LS);}
@@ -5639,6 +5640,39 @@ async function weldSlides(pptx,welds,robotLabel,part,ls,imgB64fn){
     if(b64) sl.addImage({data:b64,x:ix,y:iy,w:iw,h:ih,sizing:{type:'contain',w:iw,h:ih}});
     else{sl.addShape(pptx.shapes.RECTANGLE,{x:ix,y:iy,w:iw,h:ih,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
      sl.addText('[ No Image Available ]',{x:ix,y:iy+2.1,w:iw,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
+    pptFtr(sl,pptx,ls);
+  }
+}
+
+// Override with a roomier PPT weld slide layout for current export format.
+async function weldSlides(pptx,welds,robotLabel,part,ls,imgB64fn){
+  for(const w of welds.filter(row=>row.weldNo!=='TSync'&&row.weldNo!=='SYNC')){
+    const sl=pptx.addSlide();sl.background={color:C.white};
+    pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT â€“ ${robotLabel}`);
+    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:3.02,h:4.82,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
+    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:0.07,h:4.82,fill:{color:C.orange},line:{color:C.orange}});
+    [
+      {l:'JOB NAME',v:w.jobName||'â€”',c:C.black,s:11.5,t:0.18,vh:0.34,g:0.12},
+      {l:'WELD NO.',v:w.weldNo||'â€”',c:C.orange,s:20,t:0.18,vh:0.44,g:0.13},
+      {l:'ROBOT',v:robotLabel,c:C.black,s:17,t:0.18,vh:0.34,g:0.12},
+      {l:'ROBOT POSITIONER',v:formatAxisValuesForPpt(w.robotPositionerValues,'Robot Positioner'),c:C.black,s:10.2,t:0.18,vh:0.52,g:0.10},
+      {l:'WORKPIECE POSITIONER',v:formatAxisValuesForPpt(w.workpiecePositionerValues,'Workpiece Positioner'),c:C.black,s:10.2,t:0.18,vh:0.52,g:0.10},
+      {l:'NOTES',v:w.notes||'â€”',c:C.black,s:9.2,t:0.18,vh:0.92,g:0.08}
+    ].reduce((iy,f)=>{
+      sl.addText(f.l,{x:0.2,y:iy,w:2.55,h:f.t,fontSize:7.1,color:C.medGrey,fontFace:'Segoe UI',bold:true});
+      sl.addText(f.v,{x:0.2,y:iy+f.t,w:2.55,h:f.vh,fontSize:f.s,color:f.c,fontFace:'Segoe UI',bold:true,fit:'shrink',breakLine:false,margin:0.02});
+      sl.addShape(pptx.shapes.RECTANGLE,{x:0.2,y:iy+f.t+f.vh+0.04,w:2.38,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
+      return iy+f.t+f.vh+f.g;
+    },0.98);
+    const ix=3.16,iy=1.05,iw=6.56,ih=4.40;
+    const url=w.imageId?findImg(w.imageId):null;
+    const b64=await imgB64fn(url);
+    sl.addShape(pptx.shapes.RECTANGLE,{x:ix,y:iy,w:iw,h:ih,fill:{color:'FFFFFF',transparency:100},line:{color:C.black,pt:2.25}});
+    if(b64) sl.addImage({data:b64,x:ix,y:iy,w:iw,h:ih,sizing:{type:'contain',w:iw,h:ih}});
+    else{
+      sl.addShape(pptx.shapes.RECTANGLE,{x:ix,y:iy,w:iw,h:ih,fill:{color:'F5F5F5'},line:{color:C.black,pt:2.25}});
+      sl.addText('[ No Image Available ]',{x:ix,y:iy+2.1,w:iw,h:0.5,fontSize:13,color:C.medGrey,align:'center'});
+    }
     pptFtr(sl,pptx,ls);
   }
 }
