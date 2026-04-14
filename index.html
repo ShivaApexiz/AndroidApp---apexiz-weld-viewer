@@ -5557,22 +5557,22 @@ async function exportToPPT(){
    if(ovB64) sl.addImage({data:ovB64,x:0.3,y:1.15,w:5.9,h:3.73,sizing:{type:'contain',w:5.9,h:3.73}});
    else{sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1.15,w:5.9,h:3.73,fill:{color:'F5F5F5'},line:{color:C.black,pt:2.25}});
     sl.addText('[ No Part Image ]',{x:0.3,y:2.7,w:5.9,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
-   sl.addShape(pptx.shapes.RECTANGLE,{x:6.34,y:1,w:3.42,h:4.66,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
+   sl.addShape(pptx.shapes.RECTANGLE,{x:6.34,y:0.94,w:3.42,h:4.5,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
    const robotSummaryRows=robotCols.map((col,idx)=>{
      const weldCount=col.welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
      return {l:`ROBOT ${idx+1} WELDS`,v:''+weldCount,c:C.darkGrey,s:15};
    });
    const totalWelds=robotCols.reduce((sum,col)=>sum+col.welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length,0);
-   const overviewRows=[{l:'PROJECT',v:projName,c:C.darkGrey,s:12.5},{l:'PART VARIANT',v:part,c:C.orange,s:16},...robotSummaryRows,{l:'TOTAL WELDS',v:''+totalWelds,c:C.orange,s:18},{l:'REPORT DATE',v:today,c:C.darkGrey,s:10}];
-   const overviewStep=robotCols.length>=4?0.5:0.66;
-   const overviewDividerOffset=robotCols.length>=4?0.46:0.6;
+   const overviewRows=[{l:'PROJECT',v:projName,c:C.darkGrey,s:12},{l:'PART VARIANT',v:part,c:C.orange,s:15.5},...robotSummaryRows,{l:'TOTAL WELDS',v:''+totalWelds,c:C.orange,s:17.5},{l:'REPORT DATE',v:today,c:C.darkGrey,s:9.5}];
+   const overviewStep=robotCols.length>=4?0.46:0.62;
+   const overviewDividerOffset=robotCols.length>=4?0.42:0.56;
    overviewRows
    .reduce((iy,row)=>{
-      sl.addText(row.l,{x:6.52,y:iy,w:3.02,h:0.2,fontSize:7.4,color:C.medGrey,fontFace:'Segoe UI',bold:true,fit:'shrink'});
-      sl.addText(row.v,{x:6.52,y:iy+0.16,w:3.02,h:row.s>16?0.34:0.3,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true,fit:'shrink'});
+      sl.addText(row.l,{x:6.52,y:iy,w:3.02,h:0.18,fontSize:7.1,color:C.medGrey,fontFace:'Segoe UI',bold:true,fit:'shrink'});
+      sl.addText(row.v,{x:6.52,y:iy+0.14,w:3.02,h:row.s>16?0.3:0.26,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true,fit:'shrink'});
       sl.addShape(pptx.shapes.RECTANGLE,{x:6.52,y:iy+overviewDividerOffset,w:2.98,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
       return iy+overviewStep;
-    },1.06);
+    },1.0);
    pptFtr(sl,pptx,LS);}
 
   for(const [index,col] of robotCols.entries()){
