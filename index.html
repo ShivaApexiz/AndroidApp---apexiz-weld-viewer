@@ -332,13 +332,13 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 <!-- ══ AUTH PAGE ══ -->
 <div id="authPage" class="page active">
   <div class="topbar">
-    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+<img class="topbar-logo" crossorigin="anonymous" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <span class="topbar-logo-text" style="display:none">APEXIZ</span>
     <div class="topbar-right"><span class="topbar-title">Weld Viewer</span></div>
   </div>
   <div class="page-body">
     <div class="auth-card">
-    <img class="auth-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+<img class="auth-logo" crossorigin="anonymous" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
       <div class="auth-logo-text" style="display:none">APEXIZ</div>
       <div class="auth-title" id="authTitle">Sign In</div>
       <div class="auth-sub" id="authSub">Access the Apexiz Weld Viewer platform</div>
@@ -425,7 +425,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 <!-- ══ DASHBOARD ══ -->
 <div id="dashPage" class="page">
   <div class="topbar">
-    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+<img class="topbar-logo" crossorigin="anonymous" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <span class="topbar-logo-text" style="display:none">APEXIZ</span>
     <div class="topbar-right">
       <span class="topbar-title">Weld Viewer</span>
@@ -478,7 +478,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 <!-- ══ WELD VIEWER ══ -->
 <div id="viewerPage" class="page">
   <div class="topbar">
-    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+<img class="topbar-logo" crossorigin="anonymous" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <span class="topbar-logo-text" style="display:none">APEXIZ</span>
     <div class="topbar-right">
       <span class="topbar-title" id="viewerTitle">Weld Viewer</span>
@@ -522,7 +522,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 <!-- ══ CUSTOMER PAGE ══ -->
 <div id="customerPage" class="page">
   <div class="topbar">
-    <img class="topbar-logo" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+<img class="topbar-logo" crossorigin="anonymous" src="https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <span class="topbar-logo-text" style="display:none">APEXIZ</span>
     <div class="topbar-right">
       <span class="topbar-title">My Projects</span>
@@ -5483,6 +5483,20 @@ async function loadLogo(){
     if(/logo.*apexiz/i.test(k)||/apexiz.*logo/i.test(k)){
       try{const r=await fetch(v.dataUrl);const b=await r.arrayBuffer();S.logob64='image/png;base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));return;}catch(e){}
     }
+  }
+  const logoEls=[...document.querySelectorAll('.topbar-logo,.auth-logo')];
+  for(const img of logoEls){
+    try{
+      if(!img || !img.complete || !img.naturalWidth) continue;
+      const canvas=document.createElement('canvas');
+      canvas.width=img.naturalWidth;
+      canvas.height=img.naturalHeight;
+      const ctx=canvas.getContext('2d');
+      if(!ctx) continue;
+      ctx.drawImage(img,0,0);
+      S.logob64=canvas.toDataURL('image/png');
+      return;
+    }catch(e){}
   }
   const logoSources=[
     document.querySelector('.topbar-logo')?.src,
