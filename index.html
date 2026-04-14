@@ -608,6 +608,19 @@ const INVITE = {
    UTILS
 ══════════════════════════════════════ */
 function showPage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+function isNativeAppRuntime(){
+  try{
+    if(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function'){
+      return !!window.Capacitor.isNativePlatform();
+    }
+  }catch(_err){}
+  return window.location.protocol === 'capacitor:' || window.location.protocol === 'file:';
+}
+
+function applyRuntimeChrome(){
+  document.body.classList.toggle('web-runtime', !isNativeAppRuntime());
+}
 function loading(on,txt='Loading…'){ document.getElementById('loadingText').innerText=txt; document.getElementById('loadingOverlay').classList.toggle('show',on); }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
@@ -1521,7 +1534,7 @@ function renderCreateProject(el){
           <input type="file" id="createFolderInput" webkitdirectory mozdirectory multiple>
           <span class="folder-zone-icon">📁</span>
           <div class="folder-zone-label">Click to select your Source folder</div>
-        <div class="folder-zone-sub">Reads Weld_Data/, Weld_Images/, Part_Images/ automatically</div>
+        <div class="folder-zone-sub">Reads Weld_Data/, Weld_Images/Robot1, Robot2..., and Part_Images/ automatically</div>
           <div class="folder-zone-status" id="createStatus"></div>
         </div>
         <div class="upload-progress" id="uploadProgress" style="display:none"><div class="upload-progress-bar" id="uploadBar"></div></div>
@@ -2253,7 +2266,7 @@ function renderCreateProject(el){
           <div class="builder-subtitle">Source Folder Structure</div>
           <div class="builder-note">Use this option for the original website-style upload flow.</div>
           <div class="source-guide-grid">
-            <div><strong>Folder Layout</strong><br>Source/<br>Weld_Data/<br>Weld_Images/<br>Part_Images/</div>
+            <div><strong>Folder Layout</strong><br>Source/<br>Weld_Data/<br>Weld_Images/Robot1<br>Weld_Images/Robot2<br>Part_Images/</div>
             <div><strong>Part CSV</strong><br><code>part_data.csv</code><br>Part rows define parts, robots, and axis names.</div>
             <div><strong>Robot CSV</strong><br><code>&lt;part&gt;_robot1.csv</code><br><code>&lt;part&gt;_robot2.csv</code></div>
             <div><strong>Part Image</strong><br><code>&lt;PART_NAME&gt;_part.png</code></div>
@@ -2266,7 +2279,7 @@ function renderCreateProject(el){
           <input id="sourceProjName" class="field-input" type="text" placeholder="e.g. ONEROBOT">
           <label class="field-label" for="sourceFolderInput">Source Folder</label>
           <input id="sourceFolderInput" class="field-input" type="file" webkitdirectory mozdirectory>
-          <div class="builder-note">Choose one source folder that contains Weld_Data, Weld_Images, and Part_Images.</div>
+          <div class="builder-note">Choose one source folder that contains Weld_Data, Weld_Images/Robot1, Robot2... and Part_Images.</div>
         </div>
         <div id="sourceCreateStatus" class="builder-note" style="margin-top:8px"></div>
         <div id="sourceStructureInfo" class="info-msg" style="display:none;margin-top:10px"></div>
@@ -2786,7 +2799,7 @@ async function processSourceSelectedFiles(files, statusText=''){
   if(statusEl) statusEl.innerText = `${statusText || 'Source files ready'} • ${sourceUploadState.csv.size} CSV • ${imageCount} images • ${parts.length} parts`;
   if(infoEl){
     infoEl.style.display = 'block';
-    infoEl.innerHTML = `<strong>Detected parts:</strong> ${parts.length ? parts.join(' • ') : 'None'}<br><strong>Expected folders:</strong> Weld_Data/, Weld_Images/, Part_Images/`;
+    infoEl.innerHTML = `<strong>Detected parts:</strong> ${parts.length ? parts.join(' • ') : 'None'}<br><strong>Expected folders:</strong> Weld_Data/, Weld_Images/Robot1, Robot2..., Part_Images/`;
   }
   if(btn) btn.disabled = sourceUploadState.csv.size === 0;
 }
@@ -2882,8 +2895,11 @@ async function copyExistingProject(projectId){
 }
 
 function classifySourceImagePath(filename){
+  if(/logo/i.test(filename)) return null;
   if(/_part\.(png|jpg|jpeg)$/i.test(filename)) return `Part_Images/${filename}`;
-  return `Weld_Images/${filename}`;
+  const robotMatch = String(filename || '').match(/_robot(\d+)_/i);
+  const robotFolder = robotMatch ? `Robot${robotMatch[1]}` : 'Robot1';
+  return `Weld_Images/${robotFolder}/${filename}`;
 }
 
 async function buildProjectSourceZip(projectId){
@@ -2897,7 +2913,8 @@ async function buildProjectSourceZip(projectId){
     root.file(`Weld_Data/${entry.name}`, entry.text);
   });
   snapshot.imageEntries.forEach(entry => {
-    root.file(classifySourceImagePath(entry.name), entry.blob);
+    const targetPath = classifySourceImagePath(entry.name);
+    if(targetPath) root.file(targetPath, entry.blob);
   });
   return zip;
 }
@@ -2910,23 +2927,20 @@ async function downloadProjectSource(projectId, projectName='PROJECT'){
       const dir = await window.showDirectoryPicker({mode:'readwrite'});
       const root = await dir.getDirectoryHandle(`${String(projectName || 'PROJECT').toUpperCase()}_SOURCE`, {create:true});
       const sourceDir = await root.getDirectoryHandle('Source', {create:true});
-      const folders = {
-        'Weld_Data': await sourceDir.getDirectoryHandle('Weld_Data', {create:true}),
-        'Weld_Images': await sourceDir.getDirectoryHandle('Weld_Images', {create:true}),
-        'Part_Images': await sourceDir.getDirectoryHandle('Part_Images', {create:true})
-      };
       const zipFiles = Object.values(zip.files).filter(f => !f.dir);
       for(const file of zipFiles){
         const parts = file.name.split('/');
         if(parts.length < 3 || parts[0] !== 'Source') continue;
-        const folder = folders[parts[1]];
-        if(!folder) continue;
-        const handle = await folder.getFileHandle(parts.slice(2).join('/'), {create:true});
+        let currentDir = sourceDir;
+        for(let i=1;i<parts.length-1;i++){
+          currentDir = await currentDir.getDirectoryHandle(parts[i], {create:true});
+        }
+        const handle = await currentDir.getFileHandle(parts[parts.length - 1], {create:true});
         const writable = await handle.createWritable();
         await writable.write(await file.async('blob'));
         await writable.close();
       }
-    alert('Source folder exported successfully.');
+      alert('Source folder exported successfully.');
       return;
     }
     const blob = await zip.generateAsync({type:'blob'});
@@ -2966,8 +2980,10 @@ function downloadSourceFolderGuide(){
     '    <part>_robot1.csv',
     '    <part>_robot2.csv',
     '  Weld_Images/',
-    '    <part>_robot1_<weldId>.png',
-    '    <part>_robot2_<weldId>.png',
+    '    Robot1/',
+    '      <part>_robot1_<weldId>.png',
+    '    Robot2/',
+    '      <part>_robot2_<weldId>.png',
     '  Part_Images/',
     '    <PART_NAME>_part.png',
     '',
@@ -2992,8 +3008,8 @@ function downloadSourceFolderGuide(){
     '',
     'Naming examples:',
     '- CHASSIS_part.png',
-    '- CHASSIS_robot1_R101.png',
-    '- CHASSIS_robot2_R201.png'
+    '- Weld_Images/Robot1/CHASSIS_robot1_R101.png',
+    '- Weld_Images/Robot2/CHASSIS_robot2_R201.png'
   ].join('\r\n');
   downloadBlobFile(new Blob([guide], {type:'text/plain;charset=utf-8'}), 'APEXIZ_SOURCE_FOLDER_GUIDE.txt');
 }
@@ -3023,9 +3039,9 @@ async function downloadSampleSourceFolder(){
     const pngData = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9oN8pVgAAAAASUVORK5CYII=';
     const sampleBlob = await fetch(`data:image/png;base64,${pngData}`).then(r => r.blob());
     root.file('Part_Images/PART_A_part.png', sampleBlob);
-    root.file('Weld_Images/PART_A_robot1_R101.png', sampleBlob);
-    root.file('Weld_Images/PART_A_robot1_R102.png', sampleBlob);
-    root.file('Weld_Images/PART_A_robot2_R201.png', sampleBlob);
+    root.file('Weld_Images/Robot1/PART_A_robot1_R101.png', sampleBlob);
+    root.file('Weld_Images/Robot1/PART_A_robot1_R102.png', sampleBlob);
+    root.file('Weld_Images/Robot2/PART_A_robot2_R201.png', sampleBlob);
     const blob = await zip.generateAsync({type:'blob'});
     downloadBlobFile(blob, 'APEXIZ_SAMPLE_SOURCE_FOLDER.zip');
   }catch(err){
@@ -5611,6 +5627,7 @@ async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
    INIT
 ══════════════════════════════════════ */
 window.addEventListener('load',async()=>{
+  applyRuntimeChrome();
   loading(true,'Starting…');
   try {
     // Listen for PASSWORD_RECOVERY event — fired when user arrives from reset email
