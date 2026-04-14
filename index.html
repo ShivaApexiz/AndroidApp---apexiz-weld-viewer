@@ -5484,7 +5484,20 @@ async function loadLogo(){
       try{const r=await fetch(v.dataUrl);const b=await r.arrayBuffer();S.logob64='image/png;base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));return;}catch(e){}
     }
   }
-  try{const r=await fetch('https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png');if(r.ok){const b=await r.arrayBuffer();S.logob64='image/png;base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));}}catch(e){}
+  const logoSources=[
+    document.querySelector('.topbar-logo')?.src,
+    'https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/main/Logo.png',
+    'https://raw.githubusercontent.com/ShivaApexiz/AndroidApp---apexiz-weld-viewer/refs/heads/main/Logo.png'
+  ].filter(Boolean);
+  for(const src of logoSources){
+    try{
+      const r=await fetch(src,{cache:'no-store'});
+      if(!r.ok) continue;
+      const b=await r.arrayBuffer();
+      S.logob64='image/png;base64,'+btoa(String.fromCharCode(...new Uint8Array(b)));
+      return;
+    }catch(e){}
+  }
 }
 
 /* ══════════════════════════════════════
