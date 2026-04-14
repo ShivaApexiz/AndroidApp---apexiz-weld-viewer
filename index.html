@@ -200,19 +200,16 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .section-lbl::before{content:"●";color:var(--orange);font-size:7px;}
 
 /* ══ WELD VIEWER ══ */
-#viewerPage .page-body{flex-direction:row;overflow:auto;}
+#viewerPage .page-body{flex-direction:row;overflow:visible;align-items:flex-start;}
 .viewer-left{
   width:400px;min-width:400px;
   padding:24px 20px;
   background:var(--white);
   border-right:1px solid var(--g2);
   display:flex;flex-direction:column;
-  overflow-y:auto;flex-shrink:0;
+  overflow:visible;flex-shrink:0;
 }
-.viewer-left::-webkit-scrollbar{width:4px;}
-.viewer-left::-webkit-scrollbar-track{background:var(--g1);}
-.viewer-left::-webkit-scrollbar-thumb{background:var(--g2);border-radius:2px;}
-.viewer-right{flex:1;padding:20px 22px;display:flex;flex-direction:column;background:var(--white);overflow:auto;min-width:0;}
+.viewer-right{flex:1;padding:20px 22px;display:flex;flex-direction:column;background:var(--white);overflow:visible;min-width:0;}
 .overview-img{
   width:100%;aspect-ratio:49/31;flex-shrink:0;
   border:3px solid #000;border-radius:4px;
@@ -319,7 +316,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
   .data-table{display:block;overflow-x:auto;white-space:nowrap;}
   .builder-grid{grid-template-columns:1fr;}
   #viewerPage .page-body{flex-direction:column;}
-  .viewer-left,.viewer-right{width:100%;min-width:0;border-right:none;padding:16px;}
+  .viewer-left,.viewer-right{width:100%;min-width:0;border-right:none;padding:16px;overflow:visible;}
   .viewer-left{border-bottom:1px solid var(--g2);}
   .main-image-wrap{width:100%;margin-top:16px;}
   .main-img{min-height:260px;}
@@ -467,7 +464,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
     <button class="mobile-nav-btn" data-panel="projects" onclick="showPanel('projects')"><span class="mobile-nav-icon nav-projects"></span><strong>Projects</strong></button>
     <button class="mobile-nav-btn mobile-nav-create" data-panel="create" onclick="showPanel('create')"><span class="mobile-nav-plus">+</span></button>
     <button class="mobile-nav-btn" data-panel="mycustomers" onclick="showPanel('mycustomers')"><span class="mobile-nav-icon nav-customers"></span><strong>Customers</strong></button>
-    <button class="mobile-nav-btn" data-panel="profile" onclick="toggleProfileQuickMenu()"><span class="mobile-nav-icon nav-customers"></span><strong>Profile</strong></button>
+    <button class="mobile-nav-btn" data-panel="profile" onclick="toggleProfileQuickMenu()"><span class="mobile-nav-icon nav-profile"></span><strong>Profile</strong></button>
     <div class="profile-pop" id="profileQuickMenu">
       <button type="button" onclick="editProfileName()">Edit Profile</button>
       <button type="button" onclick="doLogout()">Sign Out</button>
@@ -2316,7 +2313,7 @@ function renderCreateProject(el){
         <div id="workpiecePositionerAxisNamesWrap" class="part-names-wrap axis-fields-wrap"></div>
       </div>
       <div class="builder-actions single-action">
-        <button class="action-btn" type="button" onclick="continueToWeldBuilder()">Continue To Weld Page</button>
+        <button class="action-btn continue-weld-btn" type="button" onclick="continueToWeldBuilder()">Continue To Weld Page</button>
       </div>
       </div>
 
@@ -2349,9 +2346,6 @@ function renderCreateProject(el){
         <label class="field-label" for="weldImageInput">Weld Image</label>
         <button id="weldImageTrigger" class="field-input image-source-trigger" type="button" onclick="openImageSourcePicker('weld')">Capture or Choose Weld Image</button>
         <input id="weldImageInput" class="field-input" type="file" accept="image/*" hidden>
-        <div class="capture-actions">
-          <button class="action-btn sec" type="button" onclick="openAnnotationFullscreen()">Full Screen Annotate</button>
-        </div>
         <div id="weldAxisValuesCard" class="setup-summary-card axis-values-card"></div>
         <div id="weldAxisValueFields" class="mobile-builder-grid axis-value-fields"></div>
       </div>
@@ -2369,8 +2363,8 @@ function renderCreateProject(el){
           <button class="tbl-btn revoke" type="button" onclick="clearAnnotationCanvas()">Clear</button>
           <button class="tbl-btn revoke" type="button" onclick="deleteSelectedAnnotation()">Delete Selected</button>
           <button class="tbl-btn" type="button" onclick="stampWeldNumber()">Stamp Weld ID</button>
-          <label class="zoom-inline">Zoom <input id="builderZoom" type="range" min="1" max="3" step="0.1" value="1"></label>
-          <label class="zoom-inline">Thickness <input id="builderThickness" type="range" min="1" max="40" step="1" value="4"></label>
+          <label class="zoom-inline">Zoom <input id="builderZoom" type="range" min="1" max="6" step="0.1" value="1"></label>
+          <label class="zoom-inline">Thickness <input id="builderThickness" type="range" min="1" max="80" step="1" value="4"></label>
           <label class="zoom-inline">Stamp Background
             <select id="stampStyle" class="tool-select">
               <option value="transparent">Transparent</option>
@@ -2410,6 +2404,9 @@ function renderCreateProject(el){
         </div>
         <div class="canvas-preview-shell" id="weldCanvasShell">
           <canvas id="weldCanvas" width="1510" height="958"></canvas>
+        </div>
+        <div class="capture-actions annotation-actions">
+          <button class="action-btn sec" type="button" onclick="openAnnotationFullscreen()">Full Screen Annotate</button>
         </div>
       </div>
       <div id="annotationList" class="annotation-list"></div>
@@ -2486,8 +2483,8 @@ function renderCreateProject(el){
           <button class="tbl-btn revoke" type="button" onclick="clearAnnotationCanvas()">Clear</button>
           <button class="tbl-btn revoke" type="button" onclick="deleteSelectedAnnotation()">Delete Selected</button>
           <button class="tbl-btn" type="button" onclick="stampWeldNumber()">Stamp Weld ID</button>
-          <label class="zoom-inline">Zoom <input id="overlayZoom" type="range" min="1" max="4" step="0.1" value="1"></label>
-          <label class="zoom-inline">Thickness <input id="overlayThickness" type="range" min="1" max="40" step="1" value="4"></label>
+          <label class="zoom-inline">Zoom <input id="overlayZoom" type="range" min="1" max="6" step="0.1" value="1"></label>
+          <label class="zoom-inline">Thickness <input id="overlayThickness" type="range" min="1" max="80" step="1" value="4"></label>
           <label class="zoom-inline">Background
             <select id="overlayStampStyle" class="tool-select">
               <option value="transparent">Transparent</option>
@@ -3920,12 +3917,15 @@ function recenterCanvasViews(prevZoom, nextZoom){
   ['weldCanvasShell','fullWeldCanvasShell'].forEach(id => {
     const shell = document.getElementById(id);
     if(!shell) return;
-    const centerX = shell.scrollLeft + (shell.clientWidth / 2);
-    const centerY = shell.scrollTop + (shell.clientHeight / 2);
-    const ratio = nextZoom / prevZoom;
+    const prevScrollWidth = Math.max(shell.scrollWidth, shell.clientWidth, 1);
+    const prevScrollHeight = Math.max(shell.scrollHeight, shell.clientHeight, 1);
+    const relativeCenterX = (shell.scrollLeft + (shell.clientWidth / 2)) / prevScrollWidth;
+    const relativeCenterY = (shell.scrollTop + (shell.clientHeight / 2)) / prevScrollHeight;
     requestAnimationFrame(() => {
-      shell.scrollLeft = Math.max(0, (centerX * ratio) - (shell.clientWidth / 2));
-      shell.scrollTop = Math.max(0, (centerY * ratio) - (shell.clientHeight / 2));
+      const nextScrollWidth = Math.max(shell.scrollWidth, shell.clientWidth, 1);
+      const nextScrollHeight = Math.max(shell.scrollHeight, shell.clientHeight, 1);
+      shell.scrollLeft = Math.max(0, (relativeCenterX * nextScrollWidth) - (shell.clientWidth / 2));
+      shell.scrollTop = Math.max(0, (relativeCenterY * nextScrollHeight) - (shell.clientHeight / 2));
     });
   });
 }
@@ -5215,7 +5215,7 @@ function buildGrid(columns){
   }
 }
 function mkSync(){const d=document.createElement('div');d.className='weld-cell tsync';d.innerText='— SYNC —';return d;}
-function mkEmpty(){const d=document.createElement('div');d.className='weld-cell empty';d.innerText='[empty]';return d;}
+function mkEmpty(){const d=document.createElement('div');d.className='weld-cell empty';d.innerHTML='&nbsp;';return d;}
 function mkCell(row,robot){
   const div=document.createElement('div');div.className='weld-cell weld-item';div.innerText=row.weldNo;
   div.onclick=function(){
