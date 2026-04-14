@@ -619,7 +619,12 @@ function isNativeAppRuntime(){
 }
 
 function applyRuntimeChrome(){
-  document.body.classList.toggle('web-runtime', !isNativeAppRuntime());
+  const nativeRuntime = isNativeAppRuntime();
+  document.body.classList.toggle('web-runtime', !nativeRuntime);
+  const mobileNav = document.getElementById('mobileBottomNav');
+  if(mobileNav){
+    mobileNav.style.display = nativeRuntime ? '' : 'none';
+  }
 }
 function loading(on,txt='Loading…'){ document.getElementById('loadingText').innerText=txt; document.getElementById('loadingOverlay').classList.toggle('show',on); }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
