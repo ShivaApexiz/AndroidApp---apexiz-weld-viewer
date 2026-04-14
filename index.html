@@ -5619,6 +5619,12 @@ function pptFtr(sl,pptx,ls){
   if(S.logob64&&ls) sl.addImage({data:S.logob64,x:0.2,y:5.78,w:ls.w,h:ls.h});
   sl.addText('© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:1.9,y:5.75,w:7.9,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
 }
+// Override footer branding so PPT uses the same website logo source presentation.
+function pptFtr(sl,pptx,ls){
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
+  if(S.logob64) sl.addImage({data:S.logob64,x:0.14,y:5.78,w:0.92,h:0.36});
+  sl.addText('Â© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:4.02,y:5.75,w:4.7,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
+}
 async function weldSlides(pptx,welds,robotLabel,part,ls,imgB64fn){
   for(const w of welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC')){
     const sl=pptx.addSlide();sl.background={color:C.white};
