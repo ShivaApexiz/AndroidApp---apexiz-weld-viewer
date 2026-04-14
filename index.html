@@ -260,7 +260,8 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .profile-pop{position:absolute;right:10px;bottom:82px;background:#fff;border:1px solid #ececec;border-radius:18px;box-shadow:0 16px 36px rgba(0,0,0,.18);padding:10px;display:none;flex-direction:column;gap:8px;z-index:140}
 .profile-pop button{border:none;background:#f6f6f6;border-radius:12px;padding:10px 12px;font-size:12px;font-weight:700;color:#1a1a1a;cursor:pointer;text-align:left}
 .profile-pop button:hover{background:#fff3ee}
-.value-bubble{display:inline-block;padding:8px 12px;background:#fff;border:1px solid #ececec;border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);white-space:pre-line}
+.value-bubble{display:flex;flex-wrap:wrap;gap:8px;background:transparent;border:none;box-shadow:none;white-space:normal}
+.axis-value-chip{display:inline-flex;align-items:center;padding:8px 12px;background:#fff;border:1px solid #ececec;border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);white-space:nowrap;font-size:13px;font-weight:500;color:var(--black)}
 
 /* ══ CUSTOMER ══ */
 #customerPage .page-body{background:#EFEFEF;padding:18px;overflow:auto;}
@@ -4760,6 +4761,17 @@ function formatAxisValuesForWebsite(text, typeLabel){
   return segments.length ? segments.join(' | ') : '—';
 }
 
+function formatAxisValuesForWebsiteBoxes(text, typeLabel){
+  const plain = formatAxisValuesForWebsite(text, typeLabel);
+  if(plain === '—') return '—';
+  return plain
+    .split('|')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .map(item => `<span class="axis-value-chip">${item}</span>`)
+    .join('');
+}
+
 function setViewerNotes(notes){
   S.currentWeldNotes = String(notes || '').trim();
   const bubble = document.getElementById('notesBubble');
@@ -5156,7 +5168,8 @@ function getViewerRobotNames(part){
 
 function loadWeldData(){
   const part=document.getElementById('partDropdown').value;
-  ['weldNumber','jobName','robotName','robotPositionerValuesView','workpiecePositionerValuesView'].forEach(id=>document.getElementById(id).innerText='—');
+  ['weldNumber','jobName','robotName'].forEach(id=>document.getElementById(id).innerText='—');
+  ['robotPositionerValuesView','workpiecePositionerValuesView'].forEach(id=>document.getElementById(id).innerHTML='—');
   const imgEl=document.getElementById('mainImage');
   imgEl.style.backgroundImage='none'; imgEl.innerText='[ Select a weld to view image ]';
   setViewerNotes('');
@@ -5222,8 +5235,8 @@ function mkCell(row,robot){
     setActiveCell(div);
     document.getElementById('weldNumber').innerText=row.weldNo||'—';
     document.getElementById('jobName').innerText=row.jobName||'—';
-    document.getElementById('robotPositionerValuesView').innerText=formatAxisValuesForWebsite(row.robotPositionerValues,'Robot Positioner');
-    document.getElementById('workpiecePositionerValuesView').innerText=formatAxisValuesForWebsite(row.workpiecePositionerValues,'Workpiece Positioner');
+    document.getElementById('robotPositionerValuesView').innerHTML=formatAxisValuesForWebsiteBoxes(row.robotPositionerValues,'Robot Positioner');
+    document.getElementById('workpiecePositionerValuesView').innerHTML=formatAxisValuesForWebsiteBoxes(row.workpiecePositionerValues,'Workpiece Positioner');
     document.getElementById('robotName').innerText=robot;
     const imgEl=document.getElementById('mainImage');
     const url=row.imageId?findImg(row.imageId):null;
