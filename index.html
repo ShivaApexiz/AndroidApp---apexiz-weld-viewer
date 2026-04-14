@@ -5564,15 +5564,17 @@ async function exportToPPT(){
    });
    const totalWelds=robotCols.reduce((sum,col)=>sum+col.welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length,0);
    const overviewRows=[{l:'PROJECT',v:projName,c:C.darkGrey,s:12},{l:'PART VARIANT',v:part,c:C.orange,s:15.5},...robotSummaryRows,{l:'TOTAL WELDS',v:''+totalWelds,c:C.orange,s:17.5},{l:'REPORT DATE',v:today,c:C.darkGrey,s:9.5}];
-   const overviewStep=robotCols.length>=4?0.46:0.62;
-   const overviewDividerOffset=robotCols.length>=4?0.42:0.56;
+   const overviewStart=1.0;
+   const overviewBottom=4.98;
+   const overviewStep=Math.min(0.62,(overviewBottom-overviewStart)/Math.max(overviewRows.length-1,1));
+   const overviewDividerOffset=Math.max(overviewStep-0.06,0.34);
    overviewRows
    .reduce((iy,row)=>{
       sl.addText(row.l,{x:6.52,y:iy,w:3.02,h:0.18,fontSize:7.1,color:C.medGrey,fontFace:'Segoe UI',bold:true,fit:'shrink'});
       sl.addText(row.v,{x:6.52,y:iy+0.14,w:3.02,h:row.s>16?0.3:0.26,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true,fit:'shrink'});
       sl.addShape(pptx.shapes.RECTANGLE,{x:6.52,y:iy+overviewDividerOffset,w:2.98,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
       return iy+overviewStep;
-    },1.0);
+    },overviewStart);
    pptFtr(sl,pptx,LS);}
 
   for(const [index,col] of robotCols.entries()){
@@ -5624,6 +5626,12 @@ function pptFtr(sl,pptx,ls){
   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
   if(S.logob64) sl.addImage({data:S.logob64,x:0.14,y:5.78,w:0.92,h:0.36});
   sl.addText('Â© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:4.02,y:5.75,w:4.7,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
+}
+// Override footer again so the copyright line is centered across the footer.
+function pptFtr(sl,pptx,ls){
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
+  if(S.logob64) sl.addImage({data:S.logob64,x:0.14,y:5.78,w:0.92,h:0.36});
+  sl.addText('Â© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:0,y:5.75,w:10,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
 }
 async function weldSlides(pptx,welds,robotLabel,part,ls,imgB64fn){
   for(const w of welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC')){
