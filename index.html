@@ -5492,6 +5492,18 @@ async function loadLogo(){
 ══════════════════════════════════════ */
 const C={orange:'FF5500',black:'000000',white:'FFFFFF',darkGrey:'4D4D4D',medGrey:'B8B8B8',lightGrey:'CCCCCC'};
 
+function formatAxisValuesForPpt(text, typeLabel){
+  const plain = formatAxisValuesForWebsite(text, typeLabel);
+  return plain === 'â€”' ? plain : plain.replace(/\s\|\s/g,'\n');
+}
+
+function getPptRobotColumns(part){
+  return getRobotCsvColumns(part).map(col => ({
+    ...col,
+    welds: parseCSV(col.text)
+  }));
+}
+
 async function exportToPPT(){
   const btn=document.getElementById('exportBtn');
   btn.disabled=true;btn.innerText='⏳ Generating…';
@@ -5501,6 +5513,7 @@ async function exportToPPT(){
   const pptx=new PptxGenJS();
   pptx.layout='LAYOUT_16x10';pptx.title=`Apexiz – ${projName} – ${part} Weld Report`;
   const LS={w:0.714,h:0.395},LL={w:2.25,h:1.24};
+  const robotCols=getPptRobotColumns(part);
 
   async function imgB64(url){
     if(!url) return null;
@@ -5544,21 +5557,28 @@ async function exportToPPT(){
    else{sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1.15,w:5.9,h:3.73,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
     sl.addText('[ No Part Image ]',{x:0.3,y:2.7,w:5.9,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
    sl.addShape(pptx.shapes.RECTANGLE,{x:6.4,y:1,w:3.35,h:4.6,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
-   const r1=S.welds1.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
-   const r2=S.welds2.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
-   [{l:'PROJECT',v:projName,c:C.darkGrey,s:14},{l:'PART VARIANT',v:part,c:C.orange,s:18},{l:'ROBOT 1 WELDS',v:''+r1,c:C.darkGrey,s:22},{l:'ROBOT 2 WELDS',v:''+r2,c:C.darkGrey,s:22},{l:'TOTAL WELDS',v:''+(r1+r2),c:C.orange,s:22},{l:'REPORT DATE',v:today,c:C.darkGrey,s:11}]
+   const robotSummaryRows=robotCols.map((col,idx)=>{
+     const weldCount=col.welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
+     return {l:`ROBOT ${idx+1} WELDS`,v:''+weldCount,c:C.darkGrey,s:16};
+   });
+   const totalWelds=robotCols.reduce((sum,col)=>sum+col.welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length,0);
+   const overviewRows=[{l:'PROJECT',v:projName,c:C.darkGrey,s:13},{l:'PART VARIANT',v:part,c:C.orange,s:17},...robotSummaryRows,{l:'TOTAL WELDS',v:''+totalWelds,c:C.orange,s:19},{l:'REPORT DATE',v:today,c:C.darkGrey,s:10.5}];
+   const overviewStep=robotCols.length>=4?0.58:0.7;
+   const overviewDividerOffset=robotCols.length>=4?0.54:0.64;
+   overviewRows
    .reduce((iy,row)=>{
-     sl.addText(row.l,{x:6.55,y:iy,w:3,h:0.22,fontSize:8,color:C.medGrey,fontFace:'Segoe UI',bold:true});
-     sl.addText(row.v,{x:6.55,y:iy+0.22,w:3,h:row.s>16?0.46:0.38,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true});
-     sl.addShape(pptx.shapes.RECTANGLE,{x:6.55,y:iy+0.72,w:2.9,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
-     return iy+0.78;
-   },1.06);
+      sl.addText(row.l,{x:6.55,y:iy,w:3,h:0.22,fontSize:8,color:C.medGrey,fontFace:'Segoe UI',bold:true});
+      sl.addText(row.v,{x:6.55,y:iy+0.2,w:3,h:row.s>16?0.42:0.34,fontSize:row.s,color:row.c,fontFace:'Segoe UI',bold:true,fit:'shrink'});
+      sl.addShape(pptx.shapes.RECTANGLE,{x:6.55,y:iy+overviewDividerOffset,w:2.9,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
+      return iy+overviewStep;
+    },1.06);
    pptFtr(sl,pptx,LS);}
 
-  robotDiv(pptx,'Robot 1','Weld Jobs',LL);
-  await weldSlides(pptx,S.welds1,'R1',part,LS,imgB64);
-  robotDiv(pptx,'Robot 2','Weld Jobs',LL);
-  await weldSlides(pptx,S.welds2,'R2',part,LS,imgB64);
+  for(const [index,col] of robotCols.entries()){
+    const robotLabel=col.label||`Robot ${index+1}`;
+    robotDiv(pptx,robotLabel,'Weld Jobs',LL);
+    await weldSlides(pptx,col.welds,robotLabel,part,LS,imgB64);
+  }
 
   // End slide
   {const sl=pptx.addSlide();sl.background={color:C.white};
@@ -5598,32 +5618,27 @@ function pptFtr(sl,pptx,ls){
   if(S.logob64&&ls) sl.addImage({data:S.logob64,x:0.2,y:5.78,w:ls.w,h:ls.h});
   sl.addText('© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:1.9,y:5.75,w:7.9,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
 }
-async function weldSlides(pptx,welds,code,part,ls,imgB64fn){
+async function weldSlides(pptx,welds,robotLabel,part,ls,imgB64fn){
   for(const w of welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC')){
     const sl=pptx.addSlide();sl.background={color:C.white};
-    pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT – ${code}`);
-    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:2.72,h:4.82,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
+    pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT – ${robotLabel}`);
+    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:3.02,h:4.82,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:0.07,h:4.82,fill:{color:C.orange},line:{color:C.orange}});
-    [{l:'JOB NAME',v:w.jobName||'—',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'—',c:C.orange,s:22},{l:'ROBOT',v:code,c:C.black,s:18},{l:'ROBOT POSITIONER',v:formatAxisValuesForWebsite(w.robotPositionerValues,'Robot Positioner').replace(/\s\|\s/g,'\n'),c:C.black,s:11},{l:'WORKPIECE POSITIONER',v:formatAxisValuesForWebsite(w.workpiecePositionerValues,'Workpiece Positioner').replace(/\s\|\s/g,'\n'),c:C.black,s:11}]
+    [{l:'JOB NAME',v:w.jobName||'—',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'—',c:C.orange,s:22},{l:'ROBOT',v:robotLabel,c:C.black,s:18},{l:'ROBOT POSITIONER',v:formatAxisValuesForPpt(w.robotPositionerValues,'Robot Positioner'),c:C.black,s:10.5},{l:'WORKPIECE POSITIONER',v:formatAxisValuesForPpt(w.workpiecePositionerValues,'Workpiece Positioner'),c:C.black,s:10.5},{l:'NOTES',v:w.notes||'—',c:C.black,s:9.5}]
     .reduce((iy,f)=>{
-      const isCompact=f.s<=11;
-      sl.addText(f.l,{x:0.2,y:iy,w:2.32,h:0.22,fontSize:7.2,color:C.medGrey,fontFace:'Segoe UI',bold:true});
-      sl.addText(f.v,{x:0.2,y:iy+0.22,w:2.32,h:isCompact?0.56:(f.s>18?0.58:0.44),fontSize:isCompact?9.5:f.s,color:f.c,fontFace:'Segoe UI',bold:true,fit:'shrink',breakLine:false,paraSpaceAfterPt:isCompact?1:0});
-      sl.addShape(pptx.shapes.RECTANGLE,{x:0.2,y:iy+(isCompact?0.62:(f.s>18?0.88:0.74)),w:2.22,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
-      return iy+(isCompact?0.70:(f.s>18?0.96:0.84));},1.0);
-    const ix=2.82,iy=1.05,iw=6.93,ih=4.40;
+      const isCompact=f.s<=10.5;
+      const isNotes=f.l==='NOTES';
+      const valueHeight=isNotes?0.56:(isCompact?0.5:(f.s>18?0.58:0.44));
+      sl.addText(f.l,{x:0.2,y:iy,w:2.55,h:0.22,fontSize:7.2,color:C.medGrey,fontFace:'Segoe UI',bold:true});
+      sl.addText(f.v,{x:0.2,y:iy+0.22,w:2.55,h:valueHeight,fontSize:f.s,color:f.c,fontFace:'Segoe UI',bold:true,fit:'shrink',breakLine:false,margin:0.02,paraSpaceAfterPt:isCompact?1:0});
+      sl.addShape(pptx.shapes.RECTANGLE,{x:0.2,y:iy+0.22+valueHeight+0.05,w:2.38,h:0.02,fill:{color:C.lightGrey},line:{color:C.lightGrey}});
+      return iy+0.22+valueHeight+0.16;},1.0);
+    const ix=3.16,iy=1.05,iw=6.56,ih=4.40;
     const url=w.imageId?findImg(w.imageId):null;
     const b64=await imgB64fn(url);
     if(b64) sl.addImage({data:b64,x:ix,y:iy,w:iw,h:ih,sizing:{type:'contain',w:iw,h:ih}});
     else{sl.addShape(pptx.shapes.RECTANGLE,{x:ix,y:iy,w:iw,h:ih,fill:{color:'F5F5F5'},line:{color:C.lightGrey}});
      sl.addText('[ No Image Available ]',{x:ix,y:iy+2.1,w:iw,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
-    if(w.notes){
-      sl.addShape(pptx.shapes.ROUNDED_RECTANGLE,{x:ix+iw-1.15,y:iy+0.12,w:0.92,h:0.34,fill:{color:'FFFFFF',transparency:2},line:{color:C.black,width:1.2}});
-      sl.addText('Notes',{x:ix+iw-1.05,y:iy+0.17,w:0.72,h:0.18,fontSize:9,bold:true,color:C.black,fontFace:'Segoe UI',align:'center'});
-      sl.addShape(pptx.shapes.ROUNDED_RECTANGLE,{x:ix+iw-2.4,y:iy+0.52,w:2.08,h:0.82,fill:{color:'FFFFFF',transparency:0},line:{color:C.black,width:1}});
-      sl.addShape(pptx.shapes.CHEVRON,{x:ix+iw-0.88,y:iy+0.43,w:0.22,h:0.16,fill:{color:'FFFFFF',transparency:0},line:{color:C.black,width:1}});
-      sl.addText(w.notes,{x:ix+iw-2.28,y:iy+0.60,w:1.82,h:0.52,fontSize:8.5,bold:true,color:C.black,fontFace:'Segoe UI',fit:'shrink',margin:0.04});
-    }
     pptFtr(sl,pptx,ls);
   }
 }
