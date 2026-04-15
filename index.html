@@ -208,13 +208,13 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .ppt-builder-toolbar{display:flex;gap:8px;flex-wrap:wrap;}
 .ppt-builder-toolbar .mini-btn{border-radius:10px;padding:8px 10px;}
 .ppt-preview-shell{display:flex;flex-direction:column;gap:10px;min-width:0;}
-.ppt-preview-frame{position:relative;width:100%;aspect-ratio:16/10;border-radius:18px;border:1px solid var(--g2);background:#ddd;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.6);}
+.ppt-preview-frame{position:relative;width:100%;max-width:980px;margin:0 auto;aspect-ratio:16/10;border-radius:18px;border:1px solid var(--g2);background:#ddd;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.6);}
 .ppt-preview-canvas{position:absolute;inset:0;background:#fff;overflow:hidden;}
 .ppt-preview-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(26,26,26,0.04) 1px, transparent 1px),linear-gradient(90deg, rgba(26,26,26,0.04) 1px, transparent 1px);background-size:10% 10%;pointer-events:none;}
 .ppt-preview-el{position:absolute;user-select:none;cursor:move;overflow:hidden;}
 .ppt-preview-el.selected{outline:2px solid var(--orange);outline-offset:1px;box-shadow:0 0 0 2px rgba(255,85,0,0.18);}
 .ppt-preview-el.locked{cursor:default;}
-.ppt-preview-text{display:flex;align-items:flex-start;justify-content:flex-start;padding:2px;line-height:1.15;white-space:pre-wrap;word-break:break-word;}
+.ppt-preview-text{display:flex;align-items:flex-start;justify-content:flex-start;padding:2px;line-height:1.15;white-space:pre-wrap;word-break:break-word;overflow:visible;}
 .ppt-preview-shape{border-style:solid;}
 .ppt-preview-image{display:flex;align-items:center;justify-content:center;background:#f3f3f3;border-style:solid;}
 .ppt-preview-image img{width:100%;height:100%;object-fit:contain;pointer-events:none;}
@@ -233,7 +233,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .ppt-modal.open{display:flex;}
 .ppt-modal-card{width:min(1120px,94vw);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.24);}
 .ppt-modal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
-.ppt-modal-slide{display:flex;flex-direction:column;gap:8px;}
+.ppt-modal-slide{display:flex;flex-direction:column;gap:8px;min-width:0;}
 .ppt-modal-slide-title{font-size:12px;font-weight:700;color:var(--g4);letter-spacing:1.2px;text-transform:uppercase;}
 
 @media (max-width:1180px){
@@ -1115,7 +1115,7 @@ async function renderMyProjects(el){
     <tbody>${projects.map(p=>projRow(p)).join('')}</tbody></table>`}`;
 }
 
-const PPT_TEMPLATE_STORAGE_KEY = 'apexiz_custom_ppt_template_v1';
+const PPT_TEMPLATE_STORAGE_KEY = 'apexiz_custom_ppt_templates_v2';
 const PPT_TEMPLATE_SLIDES = ['title','overview','robot','weld','end'];
 const PPT_TEMPLATE_LABELS = {
   title:'Title Slide',
@@ -1152,18 +1152,45 @@ function pptScaleH(h){ return `${pptNum(h,0) / 6.25 * 100}%`; }
 function getPptTemplateStorage(){
   try{
     const raw = localStorage.getItem(PPT_TEMPLATE_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  }catch(_err){
-    return null;
-  }
+    if(!raw) return {version:2,templates:[],lastTemplateId:'apexiz'};
+    const parsed = JSON.parse(raw);
+    if(parsed && Array.isArray(parsed.templates)) return parsed;
+    if(parsed && parsed.slides){
+      return {
+        version:2,
+        templates:[{id:`tpl_${Date.now()}`,name:'Imported Template',template:parsed}],
+        lastTemplateId:'apexiz'
+      };
+    }
+  }catch(_err){}
+  return {version:2,templates:[],lastTemplateId:'apexiz'};
 }
-function setPptTemplateStorage(template){ localStorage.setItem(PPT_TEMPLATE_STORAGE_KEY, JSON.stringify(template)); }
-function clearPptTemplateStorage(){ localStorage.removeItem(PPT_TEMPLATE_STORAGE_KEY); }
+function setPptTemplateStorage(store){ localStorage.setItem(PPT_TEMPLATE_STORAGE_KEY, JSON.stringify(store)); }
+function getPptTemplateRecords(){ return getPptTemplateStorage().templates || []; }
+function savePptTemplateStoreRecord(record){
+  const store = getPptTemplateStorage();
+  const idx = store.templates.findIndex(item => item.id === record.id);
+  if(idx >= 0) store.templates[idx] = record;
+  else store.templates.push(record);
+  store.lastTemplateId = record.id;
+  setPptTemplateStorage(store);
+}
+function deletePptTemplateStoreRecord(id){
+  const store = getPptTemplateStorage();
+  store.templates = store.templates.filter(item => item.id !== id);
+  if(store.lastTemplateId === id) store.lastTemplateId = 'apexiz';
+  setPptTemplateStorage(store);
+}
+function setLastPptTemplateId(id){
+  const store = getPptTemplateStorage();
+  store.lastTemplateId = id || 'apexiz';
+  setPptTemplateStorage(store);
+}
 function defaultSlideFooter(y){
   return {
     footerBox:{id:'footerBox',type:'shape',shape:'rect',x:0,y,w:10,h:0.5,fill:'#FFFFFF',lineColor:'#CCCCCC',lineWidth:1,locked:true},
     footerLogo:{id:'footerLogo',type:'logo',x:0.14,y:y+0.03,w:0.714,h:0.395,locked:true},
-    footerText:{id:'footerText',type:'text',x:0,y,w:10,h:0.5,text:'CONFIDENTIAL    ALL RIGHTS RESERVED',fontSize:7.5,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'center',locked:true}
+    footerText:{id:'footerText',type:'text',x:0,y,w:10,h:0.5,text:'(c) 2026 {companyName}    CONFIDENTIAL    ALL RIGHTS RESERVED',fontSize:7.5,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'center',locked:true}
   };
 }
 function makeDefaultPptTemplate(){
@@ -1182,7 +1209,7 @@ function makeDefaultPptTemplate(){
         reportDate:{id:'reportDate',type:'text',dynamicKey:'reportDate',prefix:'Date: ',x:3.75,y:3.14,w:6,h:0.38,fontSize:12,fontFamily:'Segoe UI',fontWeight:'400',italic:true,color:'#4D4D4D',align:'left',locked:true},
         confidentiality:{id:'confidentiality',type:'text',text:'CONFIDENTIAL - FOR INTERNAL USE ONLY',x:3.75,y:3.60,w:6,h:0.35,fontSize:10,fontFamily:'Segoe UI',fontWeight:'400',italic:true,color:'#B8B8B8',align:'left',locked:true},
         footerBar:{id:'footerBar',type:'shape',shape:'rect',x:0,y:5.88,w:10,h:0.37,fill:'#FF5500',lineColor:'#FF5500',lineWidth:1,locked:true},
-        footerText:{id:'footerText',type:'text',text:'ALL RIGHTS RESERVED',x:0,y:5.88,w:10,h:0.37,fontSize:8,fontFamily:'Segoe UI',fontWeight:'400',color:'#FFFFFF',align:'center',locked:true}
+        footerText:{id:'footerText',type:'text',text:'(c) 2026 {companyName}    ALL RIGHTS RESERVED',x:0,y:5.88,w:10,h:0.37,fontSize:8,fontFamily:'Segoe UI',fontWeight:'400',color:'#FFFFFF',align:'center',locked:true}
       },extras:[]},
       overview:{backgroundColor:'#FFFFFF',slots:{
         topBar:{id:'topBar',type:'shape',shape:'rect',x:0,y:0,w:10,h:0.14,fill:'#FF5500',lineColor:'#FF5500',lineWidth:1,locked:true},
@@ -1224,7 +1251,7 @@ function makeDefaultPptTemplate(){
         partName:{id:'partName',type:'text',dynamicKey:'partName',x:0.5,y:3.36,w:5.7,h:0.44,fontSize:16,fontFamily:'Segoe UI',fontWeight:'700',color:'#FF5500',align:'left',locked:true},
         website:{id:'website',type:'text',dynamicKey:'website',x:0.5,y:3.9,w:4,h:0.36,fontSize:12,fontFamily:'Segoe UI',fontWeight:'400',italic:true,color:'#4D4D4D',align:'left',locked:true},
         footerBar:{id:'footerBar',type:'shape',shape:'rect',x:0,y:5.88,w:10,h:0.37,fill:'#FF5500',lineColor:'#FF5500',lineWidth:1,locked:true},
-        footerText:{id:'footerText',type:'text',text:'CONFIDENTIAL INFORMATION    ALL RIGHTS RESERVED',x:0,y:5.88,w:10,h:0.37,fontSize:8,fontFamily:'Segoe UI',fontWeight:'400',color:'#FFFFFF',align:'center',locked:true}
+        footerText:{id:'footerText',type:'text',text:'(c) 2026 {companyName}    CONFIDENTIAL INFORMATION    ALL RIGHTS RESERVED',x:0,y:5.88,w:10,h:0.37,fontSize:8,fontFamily:'Segoe UI',fontWeight:'400',color:'#FFFFFF',align:'center',locked:true}
       },extras:[]}
     }
   };
@@ -1245,11 +1272,22 @@ function hydratePptTemplate(raw){
   });
   return base;
 }
-function getResolvedPptTemplate(){ return hydratePptTemplate(getPptTemplateStorage()); }
+function getPptTemplateRecordById(id){
+  return getPptTemplateRecords().find(item => item.id === id) || null;
+}
+function getResolvedPptTemplate(id){
+  if(!id || id === 'apexiz') return makeDefaultPptTemplate();
+  const record = getPptTemplateRecordById(id);
+  return record ? hydratePptTemplate(record.template) : makeDefaultPptTemplate();
+}
 function ensurePptTemplateBuilderState(){
   if(!S.pptTemplateBuilder){
+    const store = getPptTemplateStorage();
+    const templateId = store.lastTemplateId || 'apexiz';
     S.pptTemplateBuilder = {
-      template:getResolvedPptTemplate(),
+      currentTemplateId:templateId,
+      templateName:templateId === 'apexiz' ? 'Apexiz Template' : ((getPptTemplateRecordById(templateId) || {}).name || 'Custom Template'),
+      template:deepClone(getResolvedPptTemplate(templateId)),
       slideKey:'title',
       selectedKind:'slot',
       selectedId:'projectName',
@@ -1265,6 +1303,17 @@ function getPptTemplateSelectedElement(){
     ? builder.template.slides[builder.slideKey].extras.find(item => item.id === builder.selectedId) || null
     : builder.template.slides[builder.slideKey].slots[builder.selectedId] || null;
 }
+function setActivePptTemplateBuilderTemplate(id){
+  const builder = ensurePptTemplateBuilderState();
+  builder.currentTemplateId = id || 'apexiz';
+  builder.templateName = id === 'apexiz' ? 'Apexiz Template' : ((getPptTemplateRecordById(id) || {}).name || 'Custom Template');
+  builder.template = deepClone(getResolvedPptTemplate(builder.currentTemplateId));
+  builder.slideKey = 'title';
+  builder.selectedKind = 'slot';
+  builder.selectedId = 'projectName';
+  builder.drag = null;
+  setLastPptTemplateId(builder.currentTemplateId);
+}
 function getPptTemplateContext(overrides){
   const builder = ensurePptTemplateBuilderState();
   return {
@@ -1279,10 +1328,7 @@ function getPptTemplateContext(overrides){
 }
 function resolvePptTemplateText(element, context){
   const raw = element.dynamicKey ? (context[element.dynamicKey] ?? '') : (element.text ?? '');
-  if(element.id === 'footerText'){
-    return `${context.companyName || 'Apexiz'}    ${element.text || ''}`.trim();
-  }
-  return `${element.prefix || ''}${raw}${element.suffix || ''}`;
+  return `${element.prefix || ''}${raw}${element.suffix || ''}`.replace(/\{companyName\}/g, context.companyName || 'Apexiz');
 }
 function getPptTemplateElements(slideKey){
   const builder = ensurePptTemplateBuilderState();
@@ -1301,7 +1347,7 @@ function buildPptTemplatePreviewElement(item, context, builder){
     return `<div class="ppt-preview-el ppt-preview-shape${selected}${locked}" ${click} ${down} style="${commonStyle}background:${pptCssColor(item.fill,'#FFFFFF')};border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px;border-radius:${item.shape==='oval'?'999px':'0px'}"></div>`;
   }
   if(item.type === 'logo' || item.type === 'staticImage' || item.type === 'dynamicImage'){
-    const src = item.type === 'logo' ? (builder.template.logoData || '') : (item.imageData || '');
+    const src = item.type === 'logo' ? (builder.template.logoData || 'Logo.png') : (item.imageData || '');
     const placeholder = item.type === 'dynamicImage' ? 'Dynamic Image' : (item.type === 'logo' ? 'Logo' : 'Static Image');
     const content = src ? `<img src="${src}" alt="${placeholder}">` : placeholder;
     const klass = src ? 'ppt-preview-image' : 'ppt-preview-image placeholder';
@@ -1316,7 +1362,7 @@ function renderPptBuilderPreview(){
   if(!frame) return;
   const context = getPptTemplateContext();
   const slide = builder.template.slides[builder.slideKey];
-  const elements = getPptTemplateElements(builder.slideKey).filter(item => !item.previewOnly);
+  const elements = getPptTemplateElements(builder.slideKey);
   frame.innerHTML = `<div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}"><div class="ppt-preview-grid"></div>${elements.map(item => buildPptTemplatePreviewElement(item, context, builder)).join('')}</div>`;
 }
 function renderPptBuilderSidebar(){
@@ -1326,7 +1372,19 @@ function renderPptBuilderSidebar(){
   const selected = getPptTemplateSelectedElement();
   const slide = builder.template.slides[builder.slideKey];
   const options = Object.entries(slide.slots).map(([key, slot]) => `<option value="${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>${slot.id}</option>`).join('');
+  const templateButtons = [`<button class="ppt-slide-btn ${builder.currentTemplateId==='apexiz'?'active':''}" type="button" onclick="choosePptBuilderTemplate('apexiz')">Apexiz Template</button>`]
+    .concat(getPptTemplateRecords().map(item => `<button class="ppt-slide-btn ${builder.currentTemplateId===item.id?'active':''}" type="button" onclick="choosePptBuilderTemplate('${item.id}')">${item.name}</button>`))
+    .join('');
   host.innerHTML = `
+    <div class="ppt-prop-group">
+      <div class="ppt-prop-title">Templates</div>
+      <div class="ppt-builder-list">${templateButtons}</div>
+      <div><label class="field-label">Template Name</label><input type="text" value="${builder.templateName || ''}" ${builder.currentTemplateId==='apexiz'?'readonly':''} oninput="updatePptTemplateName(this.value)"></div>
+      <div class="ppt-builder-toolbar">
+        <button class="mini-btn dark" type="button" onclick="createPptTemplateFromCurrent()">New Template From Current</button>
+        ${builder.currentTemplateId!=='apexiz' ? `<button class="mini-btn warn" type="button" onclick="deleteActivePptTemplate()">Delete Template</button>` : ''}
+      </div>
+    </div>
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Template Settings</div>
       <div><label class="field-label">Company Name</label><input type="text" value="${builder.template.companyName || 'Apexiz'}" oninput="updatePptTemplateCompanyName(this.value)"></div>
@@ -1349,7 +1407,7 @@ function renderPptBuilderSidebar(){
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Actions</div>
       <div class="ppt-builder-toolbar">
-        <button class="mini-btn primary" type="button" onclick="savePptTemplateBuilder()">Save Template</button>
+        <button class="mini-btn primary" type="button" onclick="savePptTemplateBuilder()">${builder.currentTemplateId==='apexiz'?'Save As New Template':'Save Template'}</button>
         <button class="mini-btn" type="button" onclick="resetPptTemplateBuilder()">Reset To Default</button>
       </div>
       <div id="pptTemplateStatus" class="builder-note"></div>
@@ -1448,6 +1506,7 @@ function selectPptTemplateElement(kind, id){
   renderPptBuilderSidebar();
 }
 function updatePptTemplateCompanyName(value){ ensurePptTemplateBuilderState().template.companyName = value || 'Apexiz'; syncPptTemplateBuilderUI(); }
+function updatePptTemplateName(value){ ensurePptTemplateBuilderState().templateName = value || 'Custom Template'; }
 function updatePptTemplateSlideProp(prop, value){ ensurePptTemplateBuilderState().template.slides[ensurePptTemplateBuilderState().slideKey][prop] = value; syncPptTemplateBuilderUI(); }
 function updatePptTemplateElementProp(prop, value){
   const selected = getPptTemplateSelectedElement();
@@ -1515,23 +1574,45 @@ function deletePptTemplateSelectedElement(){
 }
 function savePptTemplateBuilder(){
   const builder = ensurePptTemplateBuilderState();
-  setPptTemplateStorage(builder.template);
+  if(builder.currentTemplateId === 'apexiz'){
+    const prompted = prompt('Enter template name', (builder.templateName || '').trim() && builder.templateName !== 'Apexiz Template' ? builder.templateName : `Custom Template ${getPptTemplateRecords().length + 1}`);
+    if(!prompted) return;
+    const name = prompted.trim();
+    const record = {id:`tpl_${Date.now()}`,name,template:deepClone(builder.template)};
+    savePptTemplateStoreRecord(record);
+    builder.currentTemplateId = record.id;
+    builder.templateName = record.name;
+  }else{
+    savePptTemplateStoreRecord({id:builder.currentTemplateId,name:(builder.templateName || 'Custom Template').trim() || 'Custom Template',template:deepClone(builder.template)});
+  }
   const status = document.getElementById('pptTemplateStatus');
   if(status) status.innerText = 'Template saved. Future PPT exports will use this custom template automatically.';
+  syncPptTemplateBuilderUI();
 }
 function resetPptTemplateBuilder(){
-  clearPptTemplateStorage();
-  S.pptTemplateBuilder = {
-    template:getResolvedPptTemplate(),
-    slideKey:'title',
-    selectedKind:'slot',
-    selectedId:'projectName',
-    drag:null,
-    pendingImageMode:''
-  };
+  setActivePptTemplateBuilderTemplate(builderCurrentTemplateId());
   syncPptTemplateBuilderUI();
   const status = document.getElementById('pptTemplateStatus');
-  if(status) status.innerText = 'Template reset. PPT export will use the current default template.';
+  if(status) status.innerText = 'Template reset to the saved/base version.';
+}
+function builderCurrentTemplateId(){ return ensurePptTemplateBuilderState().currentTemplateId || 'apexiz'; }
+function choosePptBuilderTemplate(id){ setActivePptTemplateBuilderTemplate(id); syncPptTemplateBuilderUI(); }
+function createPptTemplateFromCurrent(){
+  const builder = ensurePptTemplateBuilderState();
+  const name = prompt('Enter template name', `${builder.templateName || 'Custom Template'} Copy`);
+  if(!name) return;
+  const record = {id:`tpl_${Date.now()}`,name:name.trim(),template:deepClone(builder.template)};
+  savePptTemplateStoreRecord(record);
+  setActivePptTemplateBuilderTemplate(record.id);
+  syncPptTemplateBuilderUI();
+}
+function deleteActivePptTemplate(){
+  const builder = ensurePptTemplateBuilderState();
+  if(builder.currentTemplateId === 'apexiz') return;
+  if(!confirm(`Delete template "${builder.templateName}"?`)) return;
+  deletePptTemplateStoreRecord(builder.currentTemplateId);
+  setActivePptTemplateBuilderTemplate('apexiz');
+  syncPptTemplateBuilderUI();
 }
 function startPptTemplateDrag(event, kind, id){
   const builder = ensurePptTemplateBuilderState();
@@ -6036,9 +6117,38 @@ function formatAxisValuesForPpt(text, typeLabel){
   return plain.replace(/\s\|\s/g,'\n');
 }
 
-function getActiveCustomPptTemplate(){
-  const saved = getPptTemplateStorage();
-  return saved ? hydratePptTemplate(saved) : null;
+function getActiveCustomPptTemplate(id){
+  return id && id !== 'apexiz' ? getResolvedPptTemplate(id) : null;
+}
+function choosePptTemplateForExport(){
+  return new Promise(resolve => {
+    const records = getPptTemplateRecords();
+    const overlay = document.createElement('div');
+    overlay.className = 'ppt-modal open';
+    overlay.innerHTML = `
+      <div class="ppt-modal-card" style="width:min(520px,92vw)">
+        <div class="panel-title">Choose PPT Template</div>
+        <div class="builder-note" style="margin-top:10px">Select which template should be used for this report. Apexiz Template stays the default.</div>
+        <div style="margin-top:14px">
+          <label class="field-label">Template</label>
+          <select id="pptExportTemplateSelect" class="field-select">
+            <option value="apexiz">Apexiz Template</option>
+            ${records.map(item => `<option value="${item.id}">${item.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="ppt-builder-toolbar" style="margin-top:18px;justify-content:flex-end">
+          <button class="mini-btn" type="button" id="pptExportCancelBtn">Cancel</button>
+          <button class="mini-btn primary" type="button" id="pptExportUseBtn">Use Template</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#pptExportCancelBtn').onclick = () => { overlay.remove(); resolve(null); };
+    overlay.querySelector('#pptExportUseBtn').onclick = () => {
+      const selectedId = overlay.querySelector('#pptExportTemplateSelect').value || 'apexiz';
+      overlay.remove();
+      resolve(selectedId);
+    };
+  });
 }
 function applyPptTemplateElement(sl, element, context, template){
   if(!element || element.previewOnly) return;
@@ -6186,10 +6296,11 @@ function getPptPartMeta(part){
   return {robotPositionerEnabled:false,workpiecePositionerEnabled:false};
 }
 
-async function exportToPPT(){
-  const customTemplate = getActiveCustomPptTemplate();
-  if(customTemplate){
-    return exportToPPTWithCustomTemplate(customTemplate);
+async function exportToPPT(templateChoiceId){
+  const chosenTemplateId = templateChoiceId || await choosePptTemplateForExport();
+  if(!chosenTemplateId) return;
+  if(chosenTemplateId !== 'apexiz'){
+    return exportToPPTWithCustomTemplate(getResolvedPptTemplate(chosenTemplateId));
   }
   const btn=document.getElementById('exportBtn');
   btn.disabled=true;btn.innerText=' Generating';
