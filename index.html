@@ -209,7 +209,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .ppt-builder-toolbar .mini-btn{border-radius:10px;padding:8px 10px;}
 .ppt-preview-shell{display:flex;flex-direction:column;gap:10px;min-width:0;}
 .ppt-preview-frame{position:relative;width:100%;max-width:980px;margin:0 auto;aspect-ratio:16/10;border-radius:18px;border:1px solid var(--g2);background:#ddd;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.6);}
-.ppt-preview-canvas{position:absolute;inset:0;background:#fff;overflow:hidden;}
+.ppt-preview-canvas{position:absolute;inset:0;background:#fff;overflow:hidden;font-family:'Segoe UI',sans-serif;}
 .ppt-preview-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(26,26,26,0.04) 1px, transparent 1px),linear-gradient(90deg, rgba(26,26,26,0.04) 1px, transparent 1px);background-size:10% 10%;pointer-events:none;}
 .ppt-preview-el{position:absolute;user-select:none;cursor:move;overflow:hidden;}
 .ppt-preview-el.selected{outline:2px solid var(--orange);outline-offset:1px;box-shadow:0 0 0 2px rgba(255,85,0,0.18);}
@@ -225,6 +225,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .ppt-prop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
 .ppt-prop-grid input,.ppt-prop-grid select,.ppt-prop-group input[type="text"],.ppt-prop-group textarea{width:100%;padding:8px 10px;border:1px solid var(--g2);border-radius:8px;font-family:'Barlow',sans-serif;font-size:12px;color:var(--black);background:var(--white);}
 .ppt-prop-group textarea{min-height:76px;resize:vertical;}
+.ppt-color-row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px;align-items:end;}
 .ppt-prop-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .ppt-preview-meta{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;}
 .ppt-preview-tag{padding:6px 10px;border-radius:999px;background:var(--black);color:var(--white);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
@@ -1149,6 +1150,16 @@ function pptScaleX(x){ return `${pptNum(x,0) * 10}%`; }
 function pptScaleY(y){ return `${pptNum(y,0) / 6.25 * 100}%`; }
 function pptScaleW(w){ return `${pptNum(w,0) * 10}%`; }
 function pptScaleH(h){ return `${pptNum(h,0) / 6.25 * 100}%`; }
+function normalizePptTemplateColorValue(value, fallback='#FFFFFF'){
+  const raw = String(value || '').trim();
+  if(!raw) return pptCssColor(fallback);
+  const prefixed = raw.startsWith('#') ? raw : `#${raw}`;
+  return /^#[0-9a-fA-F]{6}$/.test(prefixed) ? prefixed.toUpperCase() : pptCssColor(fallback);
+}
+function buildPptColorField(label, value, handler){
+  const normalized = normalizePptTemplateColorValue(value, '#FFFFFF');
+  return `<div><label class="field-label">${label}</label><div class="ppt-color-row"><input type="color" value="${normalized}" oninput="${handler}(this.value)"><input type="text" value="${normalized}" oninput="${handler}(this.value)" placeholder="#FFFFFF"></div></div>`;
+}
 function getPptTemplateStorage(){
   try{
     const raw = localStorage.getItem(PPT_TEMPLATE_STORAGE_KEY);
@@ -1354,7 +1365,7 @@ function buildPptTemplatePreviewElement(item, context, builder){
     return `<div class="ppt-preview-el ${klass}${selected}${locked}" ${click} ${down} style="${commonStyle}border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px">${content}</div>`;
   }
   const text = String(resolvePptTemplateText(item, context) || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-  return `<div class="ppt-preview-el ppt-preview-text${selected}${locked}" ${click} ${down} style="${commonStyle}color:${pptCssColor(item.color,'#000000')};font-family:${item.fontFamily || 'Segoe UI'};font-size:${pptNum(item.fontSize,12) * 2.2}px;font-weight:${item.fontWeight || '700'};font-style:${item.italic ? 'italic' : 'normal'};justify-content:${item.align === 'center' ? 'center' : item.align === 'right' ? 'flex-end' : 'flex-start'};text-align:${item.align || 'left'};">${text}</div>`;
+  return `<div class="ppt-preview-el ppt-preview-text${selected}${locked}" ${click} ${down} style="${commonStyle}color:${pptCssColor(item.color,'#000000')};font-family:${item.fontFamily || 'Segoe UI'};font-size:${(pptNum(item.fontSize,12) * 1.36).toFixed(2)}px;font-weight:${item.fontWeight || '700'};font-style:${item.italic ? 'italic' : 'normal'};justify-content:${item.align === 'center' ? 'center' : item.align === 'right' ? 'flex-end' : 'flex-start'};text-align:${item.align || 'left'};">${text}</div>`;
 }
 function renderPptBuilderPreview(){
   const builder = ensurePptTemplateBuilderState();
@@ -1388,7 +1399,7 @@ function renderPptBuilderSidebar(){
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Template Settings</div>
       <div><label class="field-label">Company Name</label><input type="text" value="${builder.template.companyName || 'Apexiz'}" oninput="updatePptTemplateCompanyName(this.value)"></div>
-      <div><label class="field-label">Slide Background</label><input type="color" value="${pptCssColor(slide.backgroundColor,'#FFFFFF')}" oninput="updatePptTemplateSlideProp('backgroundColor',this.value)"></div>
+      ${buildPptColorField('Slide Background', slide.backgroundColor, 'updatePptTemplateSlideColor')}
       <div class="ppt-builder-toolbar">
         <button class="mini-btn dark" type="button" onclick="triggerPptTemplateImageUpload('logo')">Upload Logo</button>
         <button class="mini-btn" type="button" onclick="openPptTemplatePreview()">Preview PPT</button>
@@ -1429,15 +1440,15 @@ function buildPptTemplatePropertyMarkup(selected){
         <div><label class="field-label">Alignment</label><select onchange="updatePptTemplateElementProp('align',this.value)"><option value="left" ${selected.align==='left'?'selected':''}>Left</option><option value="center" ${selected.align==='center'?'selected':''}>Center</option><option value="right" ${selected.align==='right'?'selected':''}>Right</option></select></div>
         <div><label class="field-label">Font Family</label><input type="text" value="${selected.fontFamily || 'Segoe UI'}" oninput="updatePptTemplateElementProp('fontFamily',this.value)"></div>
         <div><label class="field-label">Font Weight</label><select onchange="updatePptTemplateElementProp('fontWeight',this.value)"><option value="400" ${selected.fontWeight==='400'?'selected':''}>Regular</option><option value="700" ${selected.fontWeight==='700'?'selected':''}>Bold</option><option value="800" ${selected.fontWeight==='800'?'selected':''}>Heavy</option></select></div>
-        <div><label class="field-label">Text Color</label><input type="color" value="${pptCssColor(selected.color,'#000000')}" oninput="updatePptTemplateElementProp('color',this.value)"></div>
+        ${buildPptColorField('Text Color', selected.color || '#000000', 'updatePptTemplateTextColor')}
         <div><label class="field-label">Italic</label><select onchange="updatePptTemplateElementProp('italic',this.value==='true')"><option value="false" ${!selected.italic?'selected':''}>Off</option><option value="true" ${selected.italic?'selected':''}>On</option></select></div>
       </div>
       ${selected.dynamicKey ? `<div class="ppt-builder-empty">Dynamic slot: <strong>${selected.dynamicKey}</strong><br>Layout and style are editable, live data binding stays intact.</div>` : `<div><label class="field-label">Text</label><textarea oninput="updatePptTemplateElementProp('text',this.value)">${selected.text || ''}</textarea></div>`}
       ` : ''}
       ${selected.type === 'shape' || selected.type === 'logo' || selected.type === 'staticImage' || selected.type === 'dynamicImage' ? `
       <div class="ppt-prop-grid">
-        <div><label class="field-label">Fill / Background</label><input type="color" value="${pptCssColor(selected.fill || '#FFFFFF')}" oninput="updatePptTemplateElementProp('fill',this.value)"></div>
-        <div><label class="field-label">Border Color</label><input type="color" value="${pptCssColor(selected.lineColor || '#CCCCCC')}" oninput="updatePptTemplateElementProp('lineColor',this.value)"></div>
+        ${buildPptColorField('Fill / Background', selected.fill || '#FFFFFF', 'updatePptTemplateFillColor')}
+        ${buildPptColorField('Border Color', selected.lineColor || '#CCCCCC', 'updatePptTemplateBorderColor')}
         <div><label class="field-label">Border Width</label><input type="number" step="0.1" value="${pptNum(selected.lineWidth,1)}" oninput="updatePptTemplateElementProp('lineWidth',this.value)"></div>
         ${(selected.type === 'logo' || selected.type === 'staticImage' || selected.type === 'dynamicImage') ? `<div><label class="field-label">Image</label><button class="mini-btn dark" type="button" onclick="triggerPptTemplateImageUpload('${selected.type === 'logo' ? 'logo' : 'element'}')">${selected.type === 'logo' ? 'Upload Logo' : 'Upload Image'}</button></div>` : ''}
       </div>` : ''}
@@ -1505,14 +1516,32 @@ function selectPptTemplateElement(kind, id){
   renderPptBuilderPreview();
   renderPptBuilderSidebar();
 }
-function updatePptTemplateCompanyName(value){ ensurePptTemplateBuilderState().template.companyName = value || 'Apexiz'; syncPptTemplateBuilderUI(); }
+function updatePptTemplateCompanyName(value){
+  ensurePptTemplateBuilderState().template.companyName = value || 'Apexiz';
+  renderPptBuilderPreview();
+}
 function updatePptTemplateName(value){ ensurePptTemplateBuilderState().templateName = value || 'Custom Template'; }
-function updatePptTemplateSlideProp(prop, value){ ensurePptTemplateBuilderState().template.slides[ensurePptTemplateBuilderState().slideKey][prop] = value; syncPptTemplateBuilderUI(); }
+function updatePptTemplateSlideProp(prop, value){
+  ensurePptTemplateBuilderState().template.slides[ensurePptTemplateBuilderState().slideKey][prop] = value;
+  renderPptBuilderPreview();
+}
+function updatePptTemplateSlideColor(value){
+  updatePptTemplateSlideProp('backgroundColor', normalizePptTemplateColorValue(value, '#FFFFFF'));
+}
 function updatePptTemplateElementProp(prop, value){
   const selected = getPptTemplateSelectedElement();
   if(!selected) return;
   selected[prop] = ['x','y','w','h','fontSize','lineWidth'].includes(prop) ? pptNum(value, selected[prop] || 0) : value;
-  syncPptTemplateBuilderUI();
+  renderPptBuilderPreview();
+}
+function updatePptTemplateTextColor(value){
+  updatePptTemplateElementProp('color', normalizePptTemplateColorValue(value, '#000000'));
+}
+function updatePptTemplateFillColor(value){
+  updatePptTemplateElementProp('fill', normalizePptTemplateColorValue(value, '#FFFFFF'));
+}
+function updatePptTemplateBorderColor(value){
+  updatePptTemplateElementProp('lineColor', normalizePptTemplateColorValue(value, '#CCCCCC'));
 }
 function addPptTemplateExtra(type){
   const builder = ensurePptTemplateBuilderState();
