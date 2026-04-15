@@ -1260,6 +1260,8 @@ function makeDefaultPptTemplate(){
     version:1,
     companyName:'Apexiz',
     logoData:'',
+    sourcePptName:'',
+    sourcePptData:'',
     slides:{
       title:{backgroundColor:'#FFFFFF',slots:{
         sideAccent:{id:'sideAccent',type:'shape',shape:'rect',x:3.45,y:0,w:0.09,h:6.25,fill:'#FF5500',lineColor:'#FF5500',lineWidth:1,locked:true},
@@ -1368,6 +1370,8 @@ function makeBlankPptTemplate(){
     version:1,
     companyName:'Apexiz',
     logoData:'',
+    sourcePptName:'',
+    sourcePptData:'',
     slides:{
       title:blankSlide(),
       overview:blankSlide(),
@@ -1382,6 +1386,8 @@ function hydratePptTemplate(raw){
   if(!raw || typeof raw !== 'object') return base;
   base.companyName = raw.companyName || base.companyName;
   base.logoData = raw.logoData || '';
+  base.sourcePptName = raw.sourcePptName || '';
+  base.sourcePptData = raw.sourcePptData || '';
   PPT_TEMPLATE_SLIDES.forEach(slideKey => {
     const sourceSlide = raw.slides && raw.slides[slideKey] ? raw.slides[slideKey] : {};
     base.slides[slideKey].backgroundColor = sourceSlide.backgroundColor || base.slides[slideKey].backgroundColor;
@@ -1543,9 +1549,11 @@ function renderPptBuilderSidebar(){
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Template Settings</div>
       <div><label class="field-label">Company Name</label><input type="text" value="${builder.template.companyName || 'Apexiz'}" oninput="updatePptTemplateCompanyName(this.value)"></div>
+      <div class="builder-note">${builder.template.sourcePptName ? `Source PPT: ${builder.template.sourcePptName}` : 'No source PPT uploaded yet.'}</div>
       ${buildPptColorField('Slide Background', slide.backgroundColor, 'updatePptTemplateSlideColor')}
       <div class="ppt-builder-toolbar">
         <button class="mini-btn dark" type="button" onclick="triggerPptTemplateImageUpload('logo')">Upload Logo</button>
+        <button class="mini-btn dark" type="button" onclick="triggerPptTemplatePptUpload()">Upload PPT Base</button>
         <button class="mini-btn" type="button" onclick="openPptTemplatePreview()">Preview PPT</button>
       </div>
     </div>
@@ -1655,7 +1663,6 @@ function bindPptTemplateNumberWheel(){
       const numInput = e.target && e.target.closest ? e.target.closest('input[type="number"]') : null;
       if(!numInput) return;
       e.preventDefault();
-      e.stopPropagation();
     }, {passive:false, capture:true});
   }
 }
@@ -1692,6 +1699,7 @@ function renderPptTemplateBuilder(el){
     </div>
     <input id="pptTemplateLogoInput" type="file" accept="image/*" style="display:none" onchange="handlePptTemplateLogoUpload(event)">
     <input id="pptTemplateElementImageInput" type="file" accept="image/*" style="display:none" onchange="handlePptTemplateElementImageUpload(event)">
+    <input id="pptTemplatePptInput" type="file" accept=".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" style="display:none" onchange="handlePptTemplatePptUpload(event)">
   `;
   syncPptTemplateBuilderUI();
 }
@@ -1779,6 +1787,10 @@ function triggerPptTemplateImageUpload(mode){
   const input = mode === 'logo' ? document.getElementById('pptTemplateLogoInput') : document.getElementById('pptTemplateElementImageInput');
   if(input){ input.value=''; input.click(); }
 }
+function triggerPptTemplatePptUpload(){
+  const input = document.getElementById('pptTemplatePptInput');
+  if(input){ input.value=''; input.click(); }
+}
 function readFileAsDataUrl(file, callback){
   const reader = new FileReader();
   reader.onload = () => callback(String(reader.result || ''));
@@ -1789,6 +1801,18 @@ function handlePptTemplateLogoUpload(event){
   if(!file) return;
   readFileAsDataUrl(file, data => {
     ensurePptTemplateBuilderState().template.logoData = data;
+    syncPptTemplateBuilderUI();
+  });
+}
+function handlePptTemplatePptUpload(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  readFileAsDataUrl(file, data => {
+    const builder = ensurePptTemplateBuilderState();
+    builder.template.sourcePptName = file.name || 'uploaded-template.pptx';
+    builder.template.sourcePptData = data || '';
+    const status = document.getElementById('pptTemplateStatus');
+    if(status) status.innerText = 'PPT uploaded. Use Dynamic Text / Dynamic Image tools to map live data onto your custom layout.';
     syncPptTemplateBuilderUI();
   });
 }
@@ -1916,6 +1940,8 @@ function createBlankPptTemplateFromScratch(){
   setActivePptTemplateBuilderTemplate(record.id);
   builder.dynamicTextKey = 'projectName';
   builder.dynamicImageKey = 'partImage';
+  const status = document.getElementById('pptTemplateStatus');
+  if(status) status.innerText = 'Blank template created with 5 empty slides: Title, Overview, Robot, Weld, End.';
   syncPptTemplateBuilderUI();
 }
 function deleteActivePptTemplate(){
