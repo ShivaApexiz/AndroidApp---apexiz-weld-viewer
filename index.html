@@ -1145,7 +1145,7 @@ const PPT_TEMPLATE_DEMO = {
   robotPositioner:'Axis 1: 1000 mm\nAxis 2: 500 mm\nAxis 3: 100 mm',
   workpiecePositioner:'Axis 1: 10 Deg\nAxis 2: 20 Deg\nAxis 3: 30 Deg',
   notes:'This is a demo notes block for template preview.',
-  overviewSummary:'PROJECT\nDEMO_PROJECT\n\nPART VARIANT\nPART-1\n\nROBOT 1 WELDS\n3\n\nROBOT 2 WELDS\n2\n\nTOTAL WELDS\n5\n\nREPORT DATE\n15 April 2026',
+  overviewSummary:'PROJECT\nDEMO_PROJECT\n\nPART VARIANT\nPART-1\n\nROBOT 1 WELDS\n3\n\nROBOT 2 WELDS\n2\n\nROBOT 3 WELDS\n3\n\nROBOT 4 WELDS\n4\n\nTOTAL WELDS\n12\n\nREPORT DATE\n15 April 2026',
   website:'www.apexiz.com'
 };
 
@@ -1249,7 +1249,29 @@ function makeDefaultPptTemplate(){
         partImageFrame:{id:'partImageFrame',type:'shape',shape:'rect',x:0.3,y:1.15,w:5.9,h:3.73,fill:'#FFFFFF',lineColor:'#000000',lineWidth:2.25,locked:true},
         partImage:{id:'partImage',type:'dynamicImage',dynamicKey:'partImage',x:0.3,y:1.15,w:5.9,h:3.73,fit:'contain',locked:true},
         summaryCard:{id:'summaryCard',type:'shape',shape:'rect',x:6.34,y:0.94,w:3.42,h:4.78,fill:'#F7F7F7',lineColor:'#CCCCCC',lineWidth:1,locked:true},
-        summaryPreview:{id:'summaryPreview',type:'text',dynamicKey:'overviewSummary',x:6.52,y:1.05,w:3.02,h:4.20,fontSize:10,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true,previewOnly:true},
+        ovProjectLabel:{id:'ovProjectLabel',type:'text',text:'PROJECT',x:6.52,y:1.05,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovProjectValue:{id:'ovProjectValue',type:'text',dynamicKey:'overviewProjectValue',x:6.52,y:1.19,w:3.02,h:0.24,fontSize:15,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
+        ovDivider1:{id:'ovDivider1',type:'shape',shape:'rect',x:6.52,y:1.58,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        ovPartLabel:{id:'ovPartLabel',type:'text',text:'PART VARIANT',x:6.52,y:1.69,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovPartValue:{id:'ovPartValue',type:'text',dynamicKey:'overviewPartValue',x:6.52,y:1.83,w:3.02,h:0.28,fontSize:15.5,fontFamily:'Segoe UI',fontWeight:'700',color:'#FF5500',align:'left',locked:true},
+        ovDivider2:{id:'ovDivider2',type:'shape',shape:'rect',x:6.52,y:2.22,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        ovRobot1Label:{id:'ovRobot1Label',type:'text',text:'ROBOT 1 WELDS',x:6.52,y:2.33,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovRobot1Value:{id:'ovRobot1Value',type:'text',dynamicKey:'overviewRobot1Welds',x:6.52,y:2.47,w:3.02,h:0.24,fontSize:15,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
+        ovDivider3:{id:'ovDivider3',type:'shape',shape:'rect',x:6.52,y:2.82,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        ovRobot2Label:{id:'ovRobot2Label',type:'text',text:'ROBOT 2 WELDS',x:6.52,y:2.93,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovRobot2Value:{id:'ovRobot2Value',type:'text',dynamicKey:'overviewRobot2Welds',x:6.52,y:3.07,w:3.02,h:0.24,fontSize:15,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
+        ovDivider4:{id:'ovDivider4',type:'shape',shape:'rect',x:6.52,y:3.42,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        ovRobot3Label:{id:'ovRobot3Label',type:'text',text:'ROBOT 3 WELDS',x:6.52,y:3.53,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovRobot3Value:{id:'ovRobot3Value',type:'text',dynamicKey:'overviewRobot3Welds',x:6.52,y:3.67,w:3.02,h:0.24,fontSize:15,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
+        ovDivider5:{id:'ovDivider5',type:'shape',shape:'rect',x:6.52,y:4.02,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        ovRobot4Label:{id:'ovRobot4Label',type:'text',text:'ROBOT 4 WELDS',x:6.52,y:4.13,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovRobot4Value:{id:'ovRobot4Value',type:'text',dynamicKey:'overviewRobot4Welds',x:6.52,y:4.27,w:3.02,h:0.24,fontSize:15,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
+        ovDivider6:{id:'ovDivider6',type:'shape',shape:'rect',x:6.52,y:4.62,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        ovTotalLabel:{id:'ovTotalLabel',type:'text',text:'TOTAL WELDS',x:6.52,y:4.73,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovTotalValue:{id:'ovTotalValue',type:'text',dynamicKey:'overviewTotalWelds',x:6.52,y:4.87,w:3.02,h:0.26,fontSize:17.5,fontFamily:'Segoe UI',fontWeight:'700',color:'#FF5500',align:'left',locked:true},
+        ovDivider7:{id:'ovDivider7',type:'shape',shape:'rect',x:6.52,y:5.25,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        ovDateLabel:{id:'ovDateLabel',type:'text',text:'REPORT DATE',x:6.52,y:5.36,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovDateValue:{id:'ovDateValue',type:'text',dynamicKey:'overviewDateValue',x:6.52,y:5.50,w:3.02,h:0.22,fontSize:9.5,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
         ...defaultSlideFooter(5.75)
       },extras:[]},
       robot:{backgroundColor:'#FFFFFF',slots:{
@@ -1266,7 +1288,23 @@ function makeDefaultPptTemplate(){
         headerSub:{id:'headerSub',type:'text',dynamicKey:'weldSubtitle',x:7.2,y:0.22,w:2.6,h:0.52,fontSize:13,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'right',locked:true},
         leftPanel:{id:'leftPanel',type:'shape',shape:'rect',x:0,y:0.88,w:3.02,h:4.82,fill:'#F7F7F7',lineColor:'#CCCCCC',lineWidth:1,locked:true},
         leftAccent:{id:'leftAccent',type:'shape',shape:'rect',x:0,y:0.88,w:0.07,h:4.82,fill:'#FF5500',lineColor:'#FF5500',lineWidth:1,locked:true},
-        weldDataPreview:{id:'weldDataPreview',type:'text',dynamicKey:'weldPreviewBlock',x:0.2,y:1.05,w:2.45,h:3.9,fontSize:10,fontFamily:'Segoe UI',fontWeight:'700',color:'#000000',align:'left',locked:true,previewOnly:true},
+        weldJobLabel:{id:'weldJobLabel',type:'text',text:'JOB NAME',x:0.2,y:1.0,w:2.55,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        weldJobValue:{id:'weldJobValue',type:'text',dynamicKey:'weldJobValue',x:0.2,y:1.18,w:2.55,h:0.34,fontSize:11.5,fontFamily:'Segoe UI',fontWeight:'700',color:'#000000',align:'left',locked:true},
+        weldDiv1:{id:'weldDiv1',type:'shape',shape:'rect',x:0.2,y:1.56,w:2.38,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        weldNoLabel:{id:'weldNoLabel',type:'text',text:'WELD NO.',x:0.2,y:1.66,w:2.55,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        weldNoValue:{id:'weldNoValue',type:'text',dynamicKey:'weldNoValue',x:0.2,y:1.84,w:2.55,h:0.44,fontSize:20,fontFamily:'Segoe UI',fontWeight:'700',color:'#FF5500',align:'left',locked:true},
+        weldDiv2:{id:'weldDiv2',type:'shape',shape:'rect',x:0.2,y:2.32,w:2.38,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        weldRobotLabel:{id:'weldRobotLabel',type:'text',text:'ROBOT',x:0.2,y:2.42,w:2.55,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        weldRobotValue:{id:'weldRobotValue',type:'text',dynamicKey:'weldRobotValue',x:0.2,y:2.6,w:2.55,h:0.34,fontSize:17,fontFamily:'Segoe UI',fontWeight:'700',color:'#000000',align:'left',locked:true},
+        weldDiv3:{id:'weldDiv3',type:'shape',shape:'rect',x:0.2,y:2.98,w:2.38,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        weldRobotPosLabel:{id:'weldRobotPosLabel',type:'text',text:'ROBOT POSITIONER',x:0.2,y:3.08,w:2.55,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        weldRobotPosValue:{id:'weldRobotPosValue',type:'text',dynamicKey:'weldRobotPosValue',x:0.2,y:3.26,w:2.55,h:0.52,fontSize:10.2,fontFamily:'Segoe UI',fontWeight:'700',color:'#000000',align:'left',locked:true},
+        weldDiv4:{id:'weldDiv4',type:'shape',shape:'rect',x:0.2,y:3.82,w:2.38,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        weldWorkPosLabel:{id:'weldWorkPosLabel',type:'text',text:'WORKPIECE POSITIONER',x:0.2,y:3.92,w:2.55,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        weldWorkPosValue:{id:'weldWorkPosValue',type:'text',dynamicKey:'weldWorkPosValue',x:0.2,y:4.1,w:2.55,h:0.52,fontSize:10.2,fontFamily:'Segoe UI',fontWeight:'700',color:'#000000',align:'left',locked:true},
+        weldDiv5:{id:'weldDiv5',type:'shape',shape:'rect',x:0.2,y:4.66,w:2.38,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
+        weldNotesLabel:{id:'weldNotesLabel',type:'text',text:'NOTES',x:0.2,y:4.76,w:2.55,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        weldNotesValue:{id:'weldNotesValue',type:'text',dynamicKey:'weldNotesValue',x:0.2,y:4.94,w:2.55,h:0.56,fontSize:9.2,fontFamily:'Segoe UI',fontWeight:'700',color:'#000000',align:'left',locked:true},
         imageFrame:{id:'imageFrame',type:'shape',shape:'rect',x:3.16,y:1.05,w:6.56,h:4.40,fill:'#FFFFFF',lineColor:'#000000',lineWidth:2.25,locked:true},
         weldImage:{id:'weldImage',type:'dynamicImage',dynamicKey:'weldImage',x:3.16,y:1.05,w:6.56,h:4.40,fit:'contain',locked:true},
         ...defaultSlideFooter(5.75)
@@ -1354,8 +1392,22 @@ function getPptTemplateContext(overrides){
     ...PPT_TEMPLATE_DEMO,
     companyName:builder.template.companyName || 'Apexiz',
     overviewSubtitle:`${PPT_TEMPLATE_DEMO.projectName} - ${PPT_TEMPLATE_DEMO.partName}`,
+    overviewProjectValue:PPT_TEMPLATE_DEMO.projectName,
+    overviewPartValue:PPT_TEMPLATE_DEMO.partName,
+    overviewRobot1Welds:'3',
+    overviewRobot2Welds:'2',
+    overviewRobot3Welds:'3',
+    overviewRobot4Welds:'4',
+    overviewTotalWelds:'12',
+    overviewDateValue:PPT_TEMPLATE_DEMO.reportDate,
     weldHeader:`Weld: ${PPT_TEMPLATE_DEMO.weldNo}`,
     weldSubtitle:`ROBOT - ${PPT_TEMPLATE_DEMO.robotLabel}`,
+    weldJobValue:PPT_TEMPLATE_DEMO.jobName,
+    weldNoValue:PPT_TEMPLATE_DEMO.weldNo,
+    weldRobotValue:PPT_TEMPLATE_DEMO.robotLabel,
+    weldRobotPosValue:PPT_TEMPLATE_DEMO.robotPositioner,
+    weldWorkPosValue:PPT_TEMPLATE_DEMO.workpiecePositioner,
+    weldNotesValue:PPT_TEMPLATE_DEMO.notes,
     weldPreviewBlock:`JOB NAME\n${PPT_TEMPLATE_DEMO.jobName}\n\nWELD NO.\n${PPT_TEMPLATE_DEMO.weldNo}\n\nROBOT\n${PPT_TEMPLATE_DEMO.robotLabel}\n\nROBOT POSITIONER\n${PPT_TEMPLATE_DEMO.robotPositioner}\n\nWORKPIECE POSITIONER\n${PPT_TEMPLATE_DEMO.workpiecePositioner}\n\nNOTES\n${PPT_TEMPLATE_DEMO.notes}`,
     ...overrides
   };
@@ -1490,6 +1542,25 @@ function syncPptTemplateBuilderUI(){
   if(tag) tag.innerText = PPT_TEMPLATE_LABELS[builder.slideKey];
   renderPptBuilderPreview();
   renderPptBuilderSidebar();
+  bindPptTemplateNumberWheel();
+}
+function bindPptTemplateNumberWheel(){
+  const host = document.getElementById('pptBuilderSidebar');
+  if(!host) return;
+  host.querySelectorAll('input[type="number"]').forEach(input => {
+    if(input.dataset.wheelBound === '1') return;
+    input.dataset.wheelBound = '1';
+    input.addEventListener('wheel', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const step = Number(input.step || '1') || 1;
+      const current = Number(input.value || '0') || 0;
+      const delta = e.deltaY < 0 ? step : -step;
+      const next = +(current + delta).toFixed(4);
+      input.value = String(next);
+      input.dispatchEvent(new Event('input', {bubbles:true}));
+    }, {passive:false});
+  });
 }
 function renderPptTemplateBuilder(el){
   ensurePptTemplateBuilderState();
@@ -6249,8 +6320,11 @@ function choosePptTemplateForExport(){
 function applyPptTemplateElement(sl, element, context, template){
   if(!element || element.previewOnly) return;
   const rectShape = (window.PptxGenJS && PptxGenJS.shapes && PptxGenJS.shapes.RECTANGLE) ? PptxGenJS.shapes.RECTANGLE : 'rect';
+  const ovalShape = (window.PptxGenJS && PptxGenJS.shapes && PptxGenJS.shapes.OVAL) ? PptxGenJS.shapes.OVAL : 'ellipse';
+  const shapeKey = String(element.shape || 'rect').toLowerCase();
+  const shapeType = shapeKey === 'oval' ? ovalShape : rectShape;
   if(element.type === 'shape'){
-    sl.addShape(rectShape,{
+    sl.addShape(shapeType,{
       x:pptNum(element.x,0),y:pptNum(element.y,0),w:pptNum(element.w,1),h:pptNum(element.h,1),
       fill:{color:pptColor(element.fill,'FFFFFF')},
       line:{color:pptColor(element.lineColor,'CCCCCC'),pt:pptNum(element.lineWidth,1)}
@@ -6266,10 +6340,9 @@ function applyPptTemplateElement(sl, element, context, template){
       italic:!!element.italic,
       color:pptColor(element.color,'000000'),
       align:element.align || 'left',
-      valign:'middle',
-      breakLine:false,
-      margin:0.02,
-      fit:'shrink'
+      valign:'top',
+      breakLine:true,
+      margin:0
     });
     return;
   }
@@ -6306,6 +6379,20 @@ function buildCustomOverviewSummary(robotCols, projName, part, today){
   rows.push(`REPORT DATE\n${today}`);
   return rows.join('\n\n');
 }
+function buildCustomOverviewFields(robotCols, projName, part, today){
+  const counts = robotCols.map(col => col.welds.filter(w => w.weldNo!=='TSync' && w.weldNo!=='SYNC').length);
+  return {
+    overviewProjectValue: projName,
+    overviewPartValue: part,
+    overviewRobot1Welds: String(counts[0] || 0),
+    overviewRobot2Welds: String(counts[1] || 0),
+    overviewRobot3Welds: String(counts[2] || 0),
+    overviewRobot4Welds: String(counts[3] || 0),
+    overviewTotalWelds: String(counts.reduce((sum, v) => sum + v, 0)),
+    overviewDateValue: today,
+    overviewSummary: buildCustomOverviewSummary(robotCols, projName, part, today)
+  };
+}
 function buildCustomWeldPreviewBlock(w, robotLabel){
   return [
     'JOB NAME', w.jobName || '',
@@ -6320,6 +6407,17 @@ function buildCustomWeldPreviewBlock(w, robotLabel){
     '',
     'NOTES', w.notes || ''
   ].join('\n');
+}
+function buildCustomWeldFields(w, robotLabel){
+  return {
+    weldJobValue: w.jobName || '',
+    weldNoValue: w.weldNo || '',
+    weldRobotValue: robotLabel || '',
+    weldRobotPosValue: formatAxisValuesForPpt(w.robotPositionerValues,'Robot Positioner'),
+    weldWorkPosValue: formatAxisValuesForPpt(w.workpiecePositionerValues,'Workpiece Positioner'),
+    weldNotesValue: w.notes || '',
+    weldPreviewBlock: buildCustomWeldPreviewBlock(w, robotLabel)
+  };
 }
 async function exportToPPTWithCustomTemplate(template){
   const part=document.getElementById('partDropdown').value;
@@ -6347,19 +6445,14 @@ async function exportToPPTWithCustomTemplate(template){
   const baseContext = {projectName:projName,partName:part,reportDate:today,companyName:template.companyName || 'Apexiz',website:'www.apexiz.com'};
 
   {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'title',template,baseContext);}
-  {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'overview',template,{...baseContext,overviewSubtitle:`${projName} - ${part}`,partImage,overviewSummary:buildCustomOverviewSummary(robotCols,projName,part,today)});
-   const block = template.slides.overview.slots.summaryPreview;
-   if(block) applyPptTemplateElement(sl,{...block,previewOnly:false}, {...baseContext,overviewSummary:buildCustomOverviewSummary(robotCols,projName,part,today)}, template);
-  }
+  {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'overview',template,{...baseContext,overviewSubtitle:`${projName} - ${part}`,partImage,...buildCustomOverviewFields(robotCols,projName,part,today)});}
   for(const [index,col] of robotCols.entries()){
     const robotLabel=col.label||`Robot ${index+1}`;
     {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'robot',template,{...baseContext,robotLabel});}
     for(const w of col.welds.filter(row=>row.weldNo!=='TSync'&&row.weldNo!=='SYNC')){
       const sl=pptx.addSlide();
       const weldImage = await imgB64(w.imageId ? findImg(w.imageId) : null);
-      renderPptTemplateSlide(sl,'weld',template,{...baseContext,weldHeader:`Weld: ${w.weldNo}`,weldSubtitle:`ROBOT - ${robotLabel}`,weldImage});
-      const block = template.slides.weld.slots.weldDataPreview;
-      if(block) applyPptTemplateElement(sl,{...block,previewOnly:false}, {...baseContext,weldPreviewBlock:buildCustomWeldPreviewBlock(w,robotLabel)}, template);
+      renderPptTemplateSlide(sl,'weld',template,{...baseContext,weldHeader:`Weld: ${w.weldNo}`,weldSubtitle:`ROBOT - ${robotLabel}`,weldImage,...buildCustomWeldFields(w,robotLabel)});
     }
   }
   {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'end',template,baseContext);}
