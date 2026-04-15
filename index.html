@@ -5653,7 +5653,7 @@ function pptFtr(sl,pptx,ls){
 function pptFtr(sl,pptx,ls){
   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
   if(S.logob64&&ls) sl.addImage({data:S.logob64,x:0.14,y:5.78,w:ls.w,h:ls.h});
-  sl.addText('Â© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:4.02,y:5.75,w:4.7,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
+  sl.addText('© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:4.02,y:5.75,w:4.7,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
 }
 // Override footer again so the copyright line is centered across the footer.
 function pptFtr(sl,pptx,ls){
