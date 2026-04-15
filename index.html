@@ -1569,6 +1569,9 @@ function renderPptBuilderSidebar(){
         <button class="mini-btn" type="button" onclick="addPptTemplateShape('line')">Line</button>
         <button class="mini-btn" type="button" onclick="triggerPptTemplateImageUpload('extra')">Add Image</button>
       </div>
+    </div>
+    <div class="ppt-prop-group">
+      <div class="ppt-prop-title">Dynamic Elements</div>
       <div class="ppt-prop-grid">
         <div>
           <label class="field-label">Dynamic Text</label>
@@ -1581,7 +1584,13 @@ function renderPptBuilderSidebar(){
           <button class="mini-btn" type="button" onclick="addPptTemplateDynamicElement('image')" style="margin-top:6px">Add Dynamic Image</button>
         </div>
       </div>
+    </div>
+    <div class="ppt-prop-group">
+      <div class="ppt-prop-title">Quick Select Slot</div>
       <div><label class="field-label">Quick Select Slot</label><select onchange="selectPptTemplateElement('slot',this.value)"><option value="">Select slot</option>${options}</select></div>
+    </div>
+    <div class="ppt-prop-group">
+      <div class="ppt-prop-title">Select Any Element (for overlaps)</div>
       <div><label class="field-label">Select Any Element (for overlaps)</label><select onchange="selectPptTemplateElementByValue(this.value)"><option value="">Select element</option>${allOptions}</select></div>
     </div>
     ${selected ? buildPptTemplatePropertyMarkup(selected) : `<div class="ppt-builder-empty">Select an element from the preview to edit its properties.</div>`}
