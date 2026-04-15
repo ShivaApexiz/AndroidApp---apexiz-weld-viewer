@@ -5585,7 +5585,7 @@ async function exportToPPT(){
    if(ovB64) sl.addImage({data:ovB64,x:0.3,y:1.15,w:5.9,h:3.73,sizing:{type:'contain',w:5.9,h:3.73}});
    else{sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1.15,w:5.9,h:3.73,fill:{color:'F5F5F5'},line:{color:C.black,pt:2.25}});
     sl.addText('[ No Part Image ]',{x:0.3,y:2.7,w:5.9,h:0.5,fontSize:13,color:C.medGrey,align:'center'});}
-   sl.addShape(pptx.shapes.RECTANGLE,{x:6.34,y:0.94,w:3.42,h:4.5,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
+   sl.addShape(pptx.shapes.RECTANGLE,{x:6.34,y:0.94,w:3.42,h:4.62,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
    const robotSummaryRows=robotCols.map((col,idx)=>{
      const weldCount=col.welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length;
      return {l:`ROBOT ${idx+1} WELDS`,v:''+weldCount,c:C.darkGrey,s:15};
@@ -5593,7 +5593,7 @@ async function exportToPPT(){
    const totalWelds=robotCols.reduce((sum,col)=>sum+col.welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC').length,0);
    const overviewRows=[{l:'PROJECT',v:projName,c:C.darkGrey,s:12},{l:'PART VARIANT',v:part,c:C.orange,s:15.5},...robotSummaryRows,{l:'TOTAL WELDS',v:''+totalWelds,c:C.orange,s:17.5},{l:'REPORT DATE',v:today,c:C.darkGrey,s:9.5}];
    const overviewStart=1.0;
-   const overviewBottom=4.98;
+   const overviewBottom=5.08;
    const overviewStep=Math.min(0.62,(overviewBottom-overviewStart)/Math.max(overviewRows.length-1,1));
    const overviewDividerOffset=Math.max(overviewStep-0.06,0.34);
    overviewRows
@@ -5652,13 +5652,13 @@ function pptFtr(sl,pptx,ls){
 // Override footer branding so PPT uses the same website logo source presentation.
 function pptFtr(sl,pptx,ls){
   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
-  if(S.logob64) sl.addImage({data:S.logob64,x:0.14,y:5.78,w:0.92,h:0.36});
+  if(S.logob64&&ls) sl.addImage({data:S.logob64,x:0.14,y:5.78,w:ls.w,h:ls.h});
   sl.addText('Â© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:4.02,y:5.75,w:4.7,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
 }
 // Override footer again so the copyright line is centered across the footer.
 function pptFtr(sl,pptx,ls){
   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
-  if(S.logob64) sl.addImage({data:S.logob64,x:0.14,y:5.78,w:0.92,h:0.36});
+  if(S.logob64&&ls) sl.addImage({data:S.logob64,x:0.14,y:5.78,w:ls.w,h:ls.h});
   sl.addText('Â© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:0,y:5.75,w:10,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
 }
 async function weldSlides(pptx,welds,robotLabel,part,ls,imgB64fn){
