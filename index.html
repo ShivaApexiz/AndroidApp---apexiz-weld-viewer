@@ -20,11 +20,11 @@
 html{font-size:14px;}
 body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--black);width:100vw;height:100vh;overflow:auto;display:flex;flex-direction:column;}
 
-/* ── PAGES ── */
+/* â”€â”€ PAGES â”€â”€ */
 .page{width:100vw;height:100vh;display:none;flex-direction:column;overflow:auto;}
 .page.active{display:flex;}
 
-/* ── TOPBAR ── */
+/* â”€â”€ TOPBAR â”€â”€ */
 .topbar{background:var(--white);height:70px;min-height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:3px solid var(--orange);box-shadow:0 2px 8px rgba(0,0,0,0.07);flex-shrink:0;z-index:50;}
 .topbar-logo{height:57px;width:auto;object-fit:contain;}
 .topbar-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--orange);letter-spacing:2px;}
@@ -38,16 +38,16 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .role-badge.engineer{background:var(--orange);color:var(--white);}
 .role-badge.customer{background:var(--g2);color:var(--g4);}
 
-/* ── FOOTER ── */
+/* â”€â”€ FOOTER â”€â”€ */
 .footer{background:var(--white);height:40px;min-height:40px;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:1px;color:var(--g3);border-top:3px solid var(--orange);flex-shrink:0;}
 .footer-dot{color:var(--orange);margin:0 10px;font-size:8px;}
 
-/* ── PAGE BODY ── */
+/* â”€â”€ PAGE BODY â”€â”€ */
 .page-body{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;}
 .page-body::-webkit-scrollbar{width:5px;}
 .page-body::-webkit-scrollbar-thumb{background:var(--g2);border-radius:3px;}
 
-/* ══ AUTH ══ */
+/* â•â• AUTH â•â• */
 #authPage .page-body{align-items:center;justify-content:center;background:#EFEFEF;}
 .auth-card{background:var(--white);border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.12);padding:38px 42px;width:420px;border-top:4px solid var(--orange);animation:fadeUp 0.35s ease;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
@@ -83,13 +83,13 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .auth-msg.error{background:#FEE;color:var(--red);display:block;}
 .auth-msg.success{background:#EFE;color:var(--green);display:block;}
 
-/* ══ DASHBOARD ══ */
+/* â•â• DASHBOARD â•â• */
 #dashPage .page-body{flex-direction:row;padding:14px;gap:12px;overflow:auto;}
 .dash-sidebar{width:210px;min-width:210px;background:var(--white);border-radius:8px;border:1px solid var(--g2);padding:14px;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
 .dash-sidebar::-webkit-scrollbar{width:3px;}
 .dash-sidebar::-webkit-scrollbar-thumb{background:var(--g2);}
 .sidebar-section{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin:12px 0 5px;display:flex;align-items:center;gap:5px;}
-.sidebar-section::before{content:"●";color:var(--orange);font-size:7px;}
+.sidebar-section::before{content:"â—";color:var(--orange);font-size:7px;}
 .sidebar-btn{width:100%;padding:8px 11px;text-align:left;background:none;border:none;border-radius:6px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:600;color:var(--black);cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:7px;}
 .sidebar-btn:hover{background:var(--orange-light);color:var(--orange);}
 .sidebar-btn.active{background:var(--orange);color:var(--white);box-shadow:0 0 0 2px rgba(26,26,26,0.18);}
@@ -198,9 +198,9 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .empty-state-text{font-size:12px;}
 .info-msg{background:var(--orange-light);border:1px solid var(--orange);border-radius:6px;padding:9px 13px;font-size:12px;color:var(--orange-dark);font-weight:600;}
 .section-lbl{display:flex;align-items:center;gap:6px;color:var(--g3);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:10px 0 5px;}
-.section-lbl::before{content:"●";color:var(--orange);font-size:7px;}
+.section-lbl::before{content:"â—";color:var(--orange);font-size:7px;}
 
-/* ══ WELD VIEWER ══ */
+/* â•â• WELD VIEWER â•â• */
 #viewerPage .page-body{flex-direction:row;overflow:visible;align-items:flex-start;}
 .viewer-left{
   width:400px;min-width:400px;
@@ -264,7 +264,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .value-bubble{display:flex;flex-wrap:wrap;gap:8px;background:transparent;border:none;box-shadow:none;white-space:normal}
 .axis-value-chip{display:inline-flex;align-items:center;padding:8px 12px;background:#fff;border:1px solid #ececec;border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);white-space:nowrap;font-size:13px;font-weight:500;color:var(--black)}
 
-/* ══ CUSTOMER ══ */
+/* â•â• CUSTOMER â•â• */
 #customerPage .page-body{background:#EFEFEF;padding:18px;overflow:auto;}
 .project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
 .project-card{background:var(--white);border-radius:8px;border:1px solid var(--g2);padding:15px 17px;cursor:pointer;transition:all 0.15s;animation:fadeUp 0.3s ease;}
@@ -273,7 +273,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .project-card-meta{font-size:11px;color:var(--g3);line-height:1.6;}
 .project-card-badge{margin-top:8px;}
 
-/* ══ MODAL ══ */
+/* â•â• MODAL â•â• */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--white);border-radius:10px;box-shadow:0 16px 60px rgba(0,0,0,0.2);padding:26px 30px;width:500px;max-width:95vw;border-top:4px solid var(--orange);animation:fadeUp 0.25s ease;max-height:90vh;overflow-y:auto;}
@@ -283,14 +283,14 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .share-link-box{background:var(--g1);border:1px solid var(--g2);border-radius:6px;padding:9px 13px;font-size:11px;font-family:monospace;color:var(--g4);word-break:break-all;margin:8px 0;}
 .modal-btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
 
-/* ══ LOADING ══ */
+/* â•â• LOADING â•â• */
 #loadingOverlay{position:fixed;inset:0;background:rgba(255,255,255,0.88);z-index:300;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
 #loadingOverlay.show{display:flex;}
 .spinner{width:34px;height:34px;border:3px solid var(--g2);border-top-color:var(--orange);border-radius:50%;animation:spin 0.7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loading-text{font-size:11px;font-weight:700;color:var(--g3);letter-spacing:1px;}
 
-/* ══ UPLOAD PROGRESS ══ */
+/* â•â• UPLOAD PROGRESS â•â• */
 .upload-progress{background:var(--g1);border-radius:6px;overflow:hidden;height:8px;margin-top:6px;}
 .upload-progress-bar{height:100%;background:var(--orange);border-radius:6px;transition:width 0.3s;width:0%;}
 
@@ -329,7 +329,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 </head>
 <body>
 
-<!-- ══ AUTH PAGE ══ -->
+<!-- â•â• AUTH PAGE â•â• -->
 <div id="authPage" class="page active">
   <div class="topbar">
 <img class="topbar-logo" crossorigin="anonymous" src="Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
@@ -350,8 +350,8 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
       <!-- LOGIN FORM -->
       <div id="loginForm">
         <div class="field-group"><label class="field-label">Email</label><input type="email" id="loginEmail" class="field-input" placeholder="your@email.com"></div>
-        <div class="field-group"><label class="field-label">Password</label><input type="password" id="loginPassword" class="field-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-        <button class="auth-btn" onclick="doLogin()">Sign In →</button>
+        <div class="field-group"><label class="field-label">Password</label><input type="password" id="loginPassword" class="field-input" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <button class="auth-btn" onclick="doLogin()">Sign In â†’</button>
         <div style="text-align:center;margin-top:10px">
           <button onclick="showForgotPassword()" style="background:none;border:none;color:var(--orange);font-size:11px;font-weight:700;cursor:pointer;text-decoration:underline;font-family:'Barlow',sans-serif">Forgot Password?</button>
         </div>
@@ -362,9 +362,9 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
       <div id="forgotForm" style="display:none">
         <div style="font-size:12px;color:var(--g3);margin-bottom:14px">Enter your email address and we'll send you a link to reset your password.</div>
         <div class="field-group"><label class="field-label">Email</label><input type="email" id="forgotEmail" class="field-input" placeholder="your@email.com"></div>
-        <button class="auth-btn" onclick="doForgotPassword()">Send Reset Link →</button>
+        <button class="auth-btn" onclick="doForgotPassword()">Send Reset Link â†’</button>
         <div style="text-align:center;margin-top:10px">
-          <button onclick="showLoginForm()" style="background:none;border:none;color:var(--g3);font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif">← Back to Login</button>
+          <button onclick="showLoginForm()" style="background:none;border:none;color:var(--g3);font-size:11px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif">â† Back to Login</button>
         </div>
         <div id="forgotMsg" class="auth-msg"></div>
       </div>
@@ -374,13 +374,13 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
         <div style="font-size:12px;color:var(--g3);margin-bottom:14px">Enter your new password below.</div>
         <div class="field-group"><label class="field-label">New Password</label><input type="password" id="resetNewPassword" class="field-input" placeholder="Min 6 characters"></div>
         <div class="field-group"><label class="field-label">Confirm Password</label><input type="password" id="resetConfirmPassword" class="field-input" placeholder="Repeat new password"></div>
-        <button class="auth-btn" onclick="doResetPassword()">Set New Password →</button>
+        <button class="auth-btn" onclick="doResetPassword()">Set New Password â†’</button>
         <div id="resetMsg" class="auth-msg"></div>
       </div>
 
       <!-- REGISTER FORM -->
       <div id="registerForm" style="display:none">
-        <!-- Invite banner — shown only when arriving via invite link -->
+        <!-- Invite banner â€” shown only when arriving via invite link -->
         <div id="inviteBanner" style="display:none;background:var(--orange-light);border:1px solid var(--orange);border-radius:6px;padding:9px 13px;font-size:12px;color:var(--orange-dark);font-weight:600;margin-bottom:14px"></div>
 
         <div class="field-group"><label class="field-label">Full Name</label><input type="text" id="regName" class="field-input" placeholder="John Smith"></div>
@@ -389,14 +389,14 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 
         <!--
           Role field:
-          • Open registration  → show the <select> (engineer / customer / company_admin options)
-          • Invite-link flow   → hide the select, show a read-only role pill instead
+          â€¢ Open registration  â†’ show the <select> (engineer / customer / company_admin options)
+          â€¢ Invite-link flow   â†’ hide the select, show a read-only role pill instead
         -->
         <div class="field-group" id="roleSelectGroup">
           <label class="field-label">Role</label>
           <select id="regRole" class="field-select">
-            <option value="engineer">Engineer — Upload &amp; manage projects</option>
-            <option value="customer">Customer — View shared projects</option>
+            <option value="engineer">Engineer â€” Upload &amp; manage projects</option>
+            <option value="customer">Customer â€” View shared projects</option>
             <option value="company_admin">Company Admin</option>
           </select>
         </div>
@@ -414,15 +414,15 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
         <!-- THIS is the single source of truth for role during registration -->
         <input type="hidden" id="regRoleFinal"       value="">
 
-        <button class="auth-btn" onclick="doRegister()">Create Account →</button>
+        <button class="auth-btn" onclick="doRegister()">Create Account â†’</button>
         <div id="regMsg" class="auth-msg"></div>
       </div>
     </div>
   </div>
-  <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL INFORMATION<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
+  <div class="footer">Â© 2026 Apexiz<span class="footer-dot">â—</span>CONFIDENTIAL INFORMATION<span class="footer-dot">â—</span>ALL RIGHTS RESERVED</div>
 </div>
 
-<!-- ══ DASHBOARD ══ -->
+<!-- â•â• DASHBOARD â•â• -->
 <div id="dashPage" class="page">
   <div class="topbar">
 <img class="topbar-logo" crossorigin="anonymous" src="Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
@@ -438,26 +438,26 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
   <div class="page-body" style="flex-direction:row;padding:14px;gap:12px;overflow:auto;">
     <div class="dash-sidebar">
       <div class="sidebar-section">Navigation</div>
-      <button class="sidebar-btn active" onclick="showPanel('overview')" id="nav-overview"><span>📊</span> Overview</button>
-      <button class="sidebar-btn" onclick="showPanel('projects')" id="nav-projects"><span>📁</span> My Projects</button>
-      <button class="sidebar-btn" onclick="showPanel('create')" id="nav-create"><span>➕</span> New Project</button>
-      <button class="sidebar-btn" onclick="showPanel('enrolCustomer')" id="nav-enrolCustomer"><span>🧑‍💼</span> Enrol Customer</button>
-      <button class="sidebar-btn" onclick="showPanel('mycustomers')" id="nav-mycustomers"><span>👥</span> My Customers</button>
+      <button class="sidebar-btn active" onclick="showPanel('overview')" id="nav-overview"><span>ðŸ“Š</span> Overview</button>
+      <button class="sidebar-btn" onclick="showPanel('projects')" id="nav-projects"><span>ðŸ“</span> My Projects</button>
+      <button class="sidebar-btn" onclick="showPanel('create')" id="nav-create"><span>âž•</span> New Project</button>
+      <button class="sidebar-btn" onclick="showPanel('enrolCustomer')" id="nav-enrolCustomer"><span>ðŸ§‘â€ðŸ’¼</span> Enrol Customer</button>
+      <button class="sidebar-btn" onclick="showPanel('mycustomers')" id="nav-mycustomers"><span>ðŸ‘¥</span> My Customers</button>
       <div id="cadminNav" style="display:none">
         <div class="sidebar-section">Company Admin</div>
-        <button class="sidebar-btn" onclick="showPanel('enrolEngineer')" id="nav-enrolEngineer"><span>➕</span> Enrol Engineer</button>
-        <button class="sidebar-btn" onclick="showPanel('myengineers')" id="nav-myengineers"><span>🧑‍🔧</span> My Engineers</button>
-        <button class="sidebar-btn" onclick="showPanel('companyprojects')" id="nav-companyprojects"><span>🗂️</span> Company Projects</button>
+        <button class="sidebar-btn" onclick="showPanel('enrolEngineer')" id="nav-enrolEngineer"><span>âž•</span> Enrol Engineer</button>
+        <button class="sidebar-btn" onclick="showPanel('myengineers')" id="nav-myengineers"><span>ðŸ§‘â€ðŸ”§</span> My Engineers</button>
+        <button class="sidebar-btn" onclick="showPanel('companyprojects')" id="nav-companyprojects"><span>ðŸ—‚ï¸</span> Company Projects</button>
       </div>
       <div id="adminNav" style="display:none">
         <div class="sidebar-section">Admin</div>
-        <button class="sidebar-btn" onclick="showPanel('enrolCAdmin')" id="nav-enrolCAdmin"><span>➕</span> Enrol Company Admin</button>
-        <button class="sidebar-btn" onclick="showPanel('companies')" id="nav-companies"><span>🏢</span> Companies</button>
-        <button class="sidebar-btn" onclick="showPanel('users')" id="nav-users"><span>👥</span> All Users</button>
-        <button class="sidebar-btn" onclick="showPanel('allprojects')" id="nav-allprojects"><span>🗂️</span> All Projects</button>
+        <button class="sidebar-btn" onclick="showPanel('enrolCAdmin')" id="nav-enrolCAdmin"><span>âž•</span> Enrol Company Admin</button>
+        <button class="sidebar-btn" onclick="showPanel('companies')" id="nav-companies"><span>ðŸ¢</span> Companies</button>
+        <button class="sidebar-btn" onclick="showPanel('users')" id="nav-users"><span>ðŸ‘¥</span> All Users</button>
+        <button class="sidebar-btn" onclick="showPanel('allprojects')" id="nav-allprojects"><span>ðŸ—‚ï¸</span> All Projects</button>
       </div>
       <div class="sidebar-divider"></div>
-      <button class="logout-btn" onclick="doLogout()">↩ Sign Out</button>
+      <button class="logout-btn" onclick="doLogout()">â†© Sign Out</button>
     </div>
     <div class="dash-main" id="dashMain"></div>
   </div>
@@ -472,17 +472,17 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
       <button type="button" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
-  <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
+  <div class="footer">Â© 2026 Apexiz<span class="footer-dot">â—</span>CONFIDENTIAL<span class="footer-dot">â—</span>ALL RIGHTS RESERVED</div>
 </div>
 
-<!-- ══ WELD VIEWER ══ -->
+<!-- â•â• WELD VIEWER â•â• -->
 <div id="viewerPage" class="page">
   <div class="topbar">
 <img class="topbar-logo" crossorigin="anonymous" src="Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
     <span class="topbar-logo-text" style="display:none">APEXIZ</span>
     <div class="topbar-right">
       <span class="topbar-title" id="viewerTitle">Weld Viewer</span>
-      <button class="back-btn" onclick="goBack()">← Back</button>
+      <button class="back-btn" onclick="goBack()">â† Back</button>
       <div class="viewer-user-block" style="display:flex;align-items:center;gap:7px;">
         <div class="user-avatar" id="viewerAvatar">?</div>
         <div class="user-name" id="viewerUserName"></div>
@@ -495,17 +495,17 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
       <div class="section-lbl">Weld Overview</div>
       <div class="robot-cols-hdr"><div class="robot-title">Robot 1</div><div class="robot-title">Robot 2</div></div>
       <div class="weld-grid-wrap"><div class="weld-col" id="robot1Col"></div><div class="weld-col" id="robot2Col"></div></div>
-      <button class="export-btn" id="exportBtn" onclick="exportToPPT()">⬇ Download PPT Report</button>
+      <button class="export-btn" id="exportBtn" onclick="exportToPPT()">â¬‡ Download PPT Report</button>
     </div>
     <div class="viewer-right">
       <div class="section-lbl">Part &amp; Weld Details</div>
       <div class="info-section">
-        <div class="info-row"><span class="info-label">Part Variant</span><select id="partDropdown" class="part-dd"><option>—</option></select></div>
-        <div class="info-row"><span class="info-label">Robot Name</span><span class="info-value" id="robotName">—</span></div>
-        <div class="info-row"><span class="info-label">Job Name</span><span class="info-value" id="jobName">—</span></div>
-        <div class="info-row"><span class="info-label">Robot Positioner</span><span class="info-value value-bubble" id="robotPositionerValuesView">—</span></div>
-        <div class="info-row"><span class="info-label">Workpiece Positioner</span><span class="info-value value-bubble" id="workpiecePositionerValuesView">—</span></div>
-        <div class="info-row"><span class="info-label">Weld Number</span><span class="info-value hl" id="weldNumber">—</span></div>
+        <div class="info-row"><span class="info-label">Part Variant</span><select id="partDropdown" class="part-dd"><option>â€”</option></select></div>
+        <div class="info-row"><span class="info-label">Robot Name</span><span class="info-value" id="robotName">â€”</span></div>
+        <div class="info-row"><span class="info-label">Job Name</span><span class="info-value" id="jobName">â€”</span></div>
+        <div class="info-row"><span class="info-label">Robot Positioner</span><span class="info-value value-bubble" id="robotPositionerValuesView">â€”</span></div>
+        <div class="info-row"><span class="info-label">Workpiece Positioner</span><span class="info-value value-bubble" id="workpiecePositionerValuesView">â€”</span></div>
+        <div class="info-row"><span class="info-label">Weld Number</span><span class="info-value hl" id="weldNumber">â€”</span></div>
       </div>
       <div class="main-image-wrap">
         <div id="mainImage" class="main-img">[ Select a weld to view image ]</div>
@@ -514,12 +514,12 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
       </div>
     </div>
   </div>
-  <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL INFORMATION<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
+  <div class="footer">Â© 2026 Apexiz<span class="footer-dot">â—</span>CONFIDENTIAL INFORMATION<span class="footer-dot">â—</span>ALL RIGHTS RESERVED</div>
 </div>
 
 
 
-<!-- ══ CUSTOMER PAGE ══ -->
+<!-- â•â• CUSTOMER PAGE â•â• -->
 <div id="customerPage" class="page">
   <div class="topbar">
 <img class="topbar-logo" crossorigin="anonymous" src="Logo.png" alt="Apexiz" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
@@ -530,57 +530,57 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
         <div class="user-avatar" id="custAvatar">?</div>
         <div><div class="user-name" id="custUserName"></div><div class="role-badge customer">Customer</div></div>
       </div>
-      <button class="logout-btn" onclick="doLogout()">↩ Sign Out</button>
+      <button class="logout-btn" onclick="doLogout()">â†© Sign Out</button>
     </div>
   </div>
   <div class="page-body" style="padding:18px;">
     <div style="margin-bottom:14px;" class="flex-row"><div class="panel-title">Accessible Projects</div></div>
     <div id="custProjectList" class="project-grid"></div>
   </div>
-  <div class="footer">© 2026 Apexiz<span class="footer-dot">●</span>CONFIDENTIAL<span class="footer-dot">●</span>ALL RIGHTS RESERVED</div>
+  <div class="footer">Â© 2026 Apexiz<span class="footer-dot">â—</span>CONFIDENTIAL<span class="footer-dot">â—</span>ALL RIGHTS RESERVED</div>
 </div>
 
-<!-- ══ SHARE MODAL ══ -->
+<!-- â•â• SHARE MODAL â•â• -->
 <div id="shareModal" class="modal-overlay">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal('shareModal')">✕</button>
+    <button class="modal-close" onclick="closeModal('shareModal')">âœ•</button>
     <div class="modal-title">Share Project</div>
     <div style="font-size:12px;color:var(--g3);margin-bottom:6px;">Share this link with your customer. They register, then you approve their access.</div>
     <div class="share-link-box" id="shareLinkBox"></div>
     <div class="info-msg" style="margin:8px 0;">After the customer registers and requests access, go to <strong>Manage Access</strong> to approve them.</div>
     <div class="modal-btns">
-      <button class="tbl-btn copy" onclick="copyLink()">📋 Copy Link</button>
+      <button class="tbl-btn copy" onclick="copyLink()">ðŸ“‹ Copy Link</button>
       <button class="tbl-btn view" onclick="closeModal('shareModal')">Done</button>
     </div>
   </div>
 </div>
 
-<!-- ══ ACCESS MODAL ══ -->
+<!-- â•â• ACCESS MODAL â•â• -->
 <div id="accessModal" class="modal-overlay">
   <div class="modal" style="width:560px">
-    <button class="modal-close" onclick="closeModal('accessModal')">✕</button>
-    <div class="modal-title">Access Requests — <span id="accessModalTitle"></span></div>
+    <button class="modal-close" onclick="closeModal('accessModal')">âœ•</button>
+    <div class="modal-title">Access Requests â€” <span id="accessModalTitle"></span></div>
     <div id="accessModalBody"></div>
   </div>
 </div>
 
-<!-- ══ LOADING ══ -->
+<!-- â•â• LOADING â•â• -->
 <div id="loadingOverlay">
   <div class="spinner"></div>
-  <div class="loading-text" id="loadingText">Loading…</div>
+  <div class="loading-text" id="loadingText">Loadingâ€¦</div>
 </div>
 
 <script>
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SUPABASE INIT
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const SUPABASE_URL = 'https://wnetdfxysbcbkmysbuxl.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InduZXRkZnh5c2JjYmtteXNidXhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mzk5ODMsImV4cCI6MjA4OTMxNTk4M30.vpf9UQ9YyfVLOzRfQq6NFboLfdfM2T9HsTu2gf7fZt4';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    STATE
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const S = {
   user: null,
   profile: null,
@@ -598,15 +598,15 @@ const S = {
 window.S = S;
 window.sb = sb;
 
-// In-memory invite state — avoids sessionStorage (blocked by tracking prevention)
+// In-memory invite state â€” avoids sessionStorage (blocked by tracking prevention)
 const INVITE = {
   token: '', role: '', email: '', invitedBy: '', projectId: '', company: '',
   clear(){ this.token=''; this.role=''; this.email=''; this.invitedBy=''; this.projectId=''; this.company=''; }
 };
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    UTILS
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function showPage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 
 function isNativeAppRuntime(){
@@ -626,20 +626,20 @@ function applyRuntimeChrome(){
     mobileNav.style.display = nativeRuntime ? '' : 'none';
   }
 }
-function loading(on,txt='Loading…'){ document.getElementById('loadingText').innerText=txt; document.getElementById('loadingOverlay').classList.toggle('show',on); }
+function loading(on,txt='Loadingâ€¦'){ document.getElementById('loadingText').innerText=txt; document.getElementById('loadingOverlay').classList.toggle('show',on); }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 function showMsg(id,txt,type){ const e=document.getElementById(id); e.innerText=txt; e.className='auth-msg '+type; e.style.display='block'; }
 
-/* ══════════════════════════════════════
-   AUTH — TAB SWITCH
-══════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   AUTH â€” TAB SWITCH
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 // Called when user manually clicks the Register tab
 function onRegisterTabClick(){
   if(!INVITE.token){
     showMsg('loginMsg',
-      '⚠️ Registration is by invitation only. Please use the invite link sent to your email.',
+      'âš ï¸ Registration is by invitation only. Please use the invite link sent to your email.',
       'error'
     );
     return;
@@ -666,14 +666,14 @@ function switchTab(tab, fromInvite=false){
   }
 }
 
-/* ══════════════════════════════════════
-   AUTH — LOGIN
-══════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   AUTH â€” LOGIN
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function doLogin(){
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPassword').value;
   if(!email||!pass){ showMsg('loginMsg','Please fill in all fields','error'); return; }
-  loading(true,'Signing in…');
+  loading(true,'Signing inâ€¦');
   try {
     const {data,error} = await sb.auth.signInWithPassword({email,password:pass});
     if(error){ loading(false); showMsg('loginMsg',error.message,'error'); return; }
@@ -685,12 +685,12 @@ async function doLogin(){
   }
 }
 
-/* ══════════════════════════════════════
-   AUTH — REGISTER
-   Role priority (highest → lowest):
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   AUTH â€” REGISTER
+   Role priority (highest â†’ lowest):
      1. regRoleFinal hidden field  (set by invite or by select onChange)
      2. regRole select value       (open registration fallback)
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function doRegister(){
   const name  = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
@@ -708,7 +708,7 @@ async function doRegister(){
   if(!name||!email||!pass){ showMsg('regMsg','Please fill in all fields','error'); return; }
   if(pass.length<6){ showMsg('regMsg','Password must be at least 6 characters','error'); return; }
   if(!inviteTokenFinal){
-    showMsg('regMsg','⚠️ A valid invitation link is required to register. Please use the link sent to your email.','error');
+    showMsg('regMsg','âš ï¸ A valid invitation link is required to register. Please use the link sent to your email.','error');
     return;
   }
   if(!roleFinal){
@@ -716,17 +716,17 @@ async function doRegister(){
     return;
   }
 
-  loading(true,'Creating account…');
+  loading(true,'Creating accountâ€¦');
   try {
     const {data,error} = await sb.auth.signUp({email, password:pass});
     if(error){ loading(false); showMsg('regMsg',error.message,'error'); return; }
 
     const userId = data.user?.id;
-    if(!userId){ loading(false); showMsg('regMsg','Sign-up failed — no user ID returned. This email may already be registered; try signing in instead.','error'); return; }
+    if(!userId){ loading(false); showMsg('regMsg','Sign-up failed â€” no user ID returned. This email may already be registered; try signing in instead.','error'); return; }
 
-    // ── User is now signed in. Do ALL db work while authenticated, THEN sign out. ──
+    // â”€â”€ User is now signed in. Do ALL db work while authenticated, THEN sign out. â”€â”€
 
-    // Build profile data — store email so admin can send password resets
+    // Build profile data â€” store email so admin can send password resets
     const profileData = { id: userId, name, email, role: roleFinal };
     if(roleFinal === 'engineer'      && invitedByFinal) profileData.company_admin_id = invitedByFinal;
     if(roleFinal === 'company_admin' && invitedByFinal) profileData.invited_by_admin = invitedByFinal;
@@ -738,7 +738,7 @@ async function doRegister(){
     const {error:insertErr} = await sb.from('profiles').insert(profileData);
     if(insertErr){
       if(insertErr.code === '23505' || insertErr.message.includes('duplicate') || insertErr.message.includes('unique')){
-        // Profile already exists — UPDATE it while still authenticated
+        // Profile already exists â€” UPDATE it while still authenticated
         const updateData = { name, role: roleFinal };
         if(profileData.company_admin_id) updateData.company_admin_id = profileData.company_admin_id;
         if(profileData.invited_by_admin) updateData.invited_by_admin = profileData.invited_by_admin;
@@ -767,14 +767,14 @@ async function doRegister(){
     // Mark invite as used
     await sb.from('invitations').update({used:true, used_by:userId}).eq('token',inviteTokenFinal);
 
-    // NOW sign out — after all db work is done
+    // NOW sign out â€” after all db work is done
     await sb.auth.signOut();
 
     // Clear in-memory invite state
     INVITE.clear();
 
     loading(false);
-    showMsg('regMsg','✅ Account created! Please sign in.','success');
+    showMsg('regMsg','âœ… Account created! Please sign in.','success');
     setTimeout(()=>switchTab('login'), 1500);
   } catch(e) {
     loading(false);
@@ -784,9 +784,9 @@ async function doRegister(){
 }
 
 
-/* ══════════════════════════════════════
-   AUTH — AFTER AUTH
-══════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   AUTH â€” AFTER AUTH
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function afterAuth(authUser){
   const {data:profile,error} = await sb.from('profiles').select('*').eq('id',authUser.id).single();
   if(error||!profile){
@@ -843,9 +843,9 @@ async function doLogout(){
   showPage('authPage');
 }
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PASSWORD RESET FLOW
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function showForgotPassword(){
   document.getElementById('loginForm').style.display   = 'none';
   document.getElementById('forgotForm').style.display  = 'block';
@@ -875,7 +875,7 @@ async function doForgotPassword(){
   const email = document.getElementById('forgotEmail').value.trim();
   if(!email){ showMsg('forgotMsg','Please enter your email address','error'); return; }
 
-  loading(true,'Checking account…');
+  loading(true,'Checking accountâ€¦');
 
   // Check if user exists in profiles table first
   const {data:profile, error:lookupErr} = await sb
@@ -892,18 +892,18 @@ async function doForgotPassword(){
 
   if(!profile){
     loading(false);
-    showMsg('forgotMsg','⚠️ No account found for this email address. Please register first or check the email you entered.','error');
+    showMsg('forgotMsg','âš ï¸ No account found for this email address. Please register first or check the email you entered.','error');
     return;
   }
 
-  // User exists — send the reset email
-  loading(true,'Sending reset email…');
+  // User exists â€” send the reset email
+  loading(true,'Sending reset emailâ€¦');
   const {error} = await sb.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + window.location.pathname + '?reset=1'
   });
   loading(false);
   if(error){ showMsg('forgotMsg',error.message,'error'); return; }
-  showMsg('forgotMsg','✅ Reset link sent to '+email+'! Check your inbox (and spam folder).','success');
+  showMsg('forgotMsg','âœ… Reset link sent to '+email+'! Check your inbox (and spam folder).','success');
 }
 
 async function doResetPassword(){
@@ -912,11 +912,11 @@ async function doResetPassword(){
   if(!newPass||!confPass){ showMsg('resetMsg','Please fill in both fields','error'); return; }
   if(newPass.length<6){ showMsg('resetMsg','Password must be at least 6 characters','error'); return; }
   if(newPass!==confPass){ showMsg('resetMsg','Passwords do not match','error'); return; }
-  loading(true,'Updating password…');
+  loading(true,'Updating passwordâ€¦');
   const {error} = await sb.auth.updateUser({password: newPass});
   loading(false);
   if(error){ showMsg('resetMsg','Failed: '+error.message,'error'); return; }
-  showMsg('resetMsg','✅ Password updated! Signing you in…','success');
+  showMsg('resetMsg','âœ… Password updated! Signing you inâ€¦','success');
   // Sign out so the user logs in fresh with new password
   setTimeout(async()=>{
     await sb.auth.signOut();
@@ -926,11 +926,11 @@ async function doResetPassword(){
   },1500);
 }
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    INVITE TOKEN HANDLER
    Called on page load when ?invite=TOKEN is present.
    Sets regRoleFinal hidden field as single source of truth.
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function handleInviteToken(token){
   const {data:invite,error} = await sb.from('invitations').select('*').eq('token',token).eq('used',false).single();
   if(error||!invite){
@@ -960,7 +960,7 @@ async function handleInviteToken(token){
 function applyInviteToForm(){
   if(!INVITE.token) return;
   const roleLabels = { company_admin:'Company Admin', engineer:'Engineer', customer:'Customer' };
-  const roleIcons  = { company_admin:'🏢', engineer:'🔧', customer:'👤' };
+  const roleIcons  = { company_admin:'ðŸ¢', engineer:'ðŸ”§', customer:'ðŸ‘¤' };
 
   // 1. Set hidden fields
   document.getElementById('regRoleFinal').value       = INVITE.role;
@@ -982,14 +982,14 @@ function applyInviteToForm(){
   // 4. Show banner
   const companyPart = INVITE.company ? ` at <strong>${INVITE.company}</strong>` : '';
   const banner = document.getElementById('inviteBanner');
-  banner.innerHTML = `✉ You've been invited to join as <strong>${roleLabels[INVITE.role]||INVITE.role}</strong>${companyPart}. Complete your registration below.`;
+  banner.innerHTML = `âœ‰ You've been invited to join as <strong>${roleLabels[INVITE.role]||INVITE.role}</strong>${companyPart}. Complete your registration below.`;
   banner.style.display = 'block';
 }
 
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    DASHBOARD PANELS
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function setNav(panel){
   document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
@@ -1004,7 +1004,7 @@ function setNav(panel){
 async function showPanel(panel){
   setNav(panel);
   const main=document.getElementById('dashMain');
-  main.innerHTML='<div class="empty-state"><span class="empty-state-icon">⏳</span></div>';
+  main.innerHTML='<div class="empty-state"><span class="empty-state-icon">â³</span></div>';
   if(panel==='overview')             await renderOverview(main);
   else if(panel==='projects')        await renderMyProjects(main);
   else if(panel==='create')          renderCreateProject(main);
@@ -1044,9 +1044,9 @@ async function renderOverview(el){
       <div class="stat-card"><div class="stat-num" style="color:var(--orange)">${pending}</div><div class="stat-label">Pending Requests</div></div>
       ${extraStat}
     </div>
-    ${pending>0?`<div class="info-msg">⚠️ You have <strong>${pending}</strong> pending access request(s).</div>`:''}
+    ${pending>0?`<div class="info-msg">âš ï¸ You have <strong>${pending}</strong> pending access request(s).</div>`:''}
     <div class="panel-title">Recent Projects</div>
-    ${projects.length===0?'<div class="empty-state"><span class="empty-state-icon">📁</span><div class="empty-state-text">No projects yet.</div></div>':`
+    ${projects.length===0?'<div class="empty-state"><span class="empty-state-icon">ðŸ“</span><div class="empty-state-text">No projects yet.</div></div>':`
     <table class="data-table"><thead><tr><th>Project</th><th>Parts</th><th>Customers</th><th>Pending</th><th>Actions</th></tr></thead>
     <tbody>${projects.slice(0,6).map(p=>projRow(p)).join('')}</tbody></table>`}`;
 }
@@ -1064,7 +1064,7 @@ async function renderMyProjects(el){
   el.innerHTML=`
     <div class="flex-row"><div class="panel-title">${role==='company_admin'?'Company Projects':'My Projects'}</div>
     ${role==='engineer'?`<button class="action-btn" onclick="showPanel('create')" style="margin-left:auto">+ New Project</button>`:''}</div>
-    ${projects.length===0?'<div class="empty-state"><span class="empty-state-icon">📁</span><div class="empty-state-text">No projects yet.</div></div>':`
+    ${projects.length===0?'<div class="empty-state"><span class="empty-state-icon">ðŸ“</span><div class="empty-state-text">No projects yet.</div></div>':`
     <table class="data-table"><thead><tr><th>Project</th><th>Parts</th><th>Customers</th><th>Pending</th><th>Actions</th></tr></thead>
     <tbody>${projects.map(p=>projRow(p)).join('')}</tbody></table>`}`;
 }
@@ -1077,7 +1077,7 @@ function projRow(p){
     <td><strong>${p.name}</strong></td>
     <td>${(p.parts||[]).length}</td>
     <td><span class="tbl-badge approved">${approved}</span></td>
-    <td>${pending>0?`<span class="tbl-badge pending">${pending}</span>`:'—'}</td>
+    <td>${pending>0?`<span class="tbl-badge pending">${pending}</span>`:'â€”'}</td>
     <td>
       <button class="tbl-btn view" onclick="openViewer('${p.id}')">View</button>
       <button class="tbl-btn manage" onclick="editProject('${p.id}')">Edit</button>
@@ -1099,12 +1099,12 @@ async function renderUsers(el){
         <div style="font-size:10px;color:var(--g3);margin-top:2px">${u.email||''}</div>
       </td>
       <td><span class="tbl-badge ${u.role}">${u.role==='company_admin'?'Company Admin':u.role}</span></td>
-      <td>${u.company_name||'—'}</td>
+      <td>${u.company_name||'â€”'}</td>
       <td style="white-space:nowrap">
         ${u.role!=='admin'?`
           <button class="tbl-btn copy" onclick="sendPasswordReset('${u.id}','${(u.email||'').replace(/'/g,"\'")}')">Reset PWD</button>
           <button class="tbl-btn delete" onclick="deleteUser('${u.id}')">Remove</button>
-        `:'—'}
+        `:'â€”'}
       </td>
     </tr>`).join('')}</tbody></table>
     <div id="usersMsg" class="auth-msg" style="margin-top:10px"></div>`;
@@ -1127,31 +1127,31 @@ async function renderAllProjects(el){
       </td></tr>`).join('')}</tbody></table>`;
 }
 
-/* ── Admin: Enrol Company Admin ── */
+/* â”€â”€ Admin: Enrol Company Admin â”€â”€ */
 function renderEnrolCAdmin(el){
   el.innerHTML=`
     <div class="panel-title">Enrol Company Admin</div>
     <div class="create-form">
-      <div class="info-msg">Enter the company details and the admin's email. An invitation link will be generated — share it with them so they can self-register with the <strong>Company Admin</strong> role locked in.</div>
+      <div class="info-msg">Enter the company details and the admin's email. An invitation link will be generated â€” share it with them so they can self-register with the <strong>Company Admin</strong> role locked in.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="field-group" style="margin:0"><label class="field-label">Company Name</label><input type="text" id="enrolCACompany" class="field-input" placeholder="Acme Corp Ltd"></div>
         <div class="field-group" style="margin:0"><label class="field-label">Admin's Email</label><input type="email" id="enrolCAEmail" class="field-input" placeholder="admin@acme.com"></div>
         <div class="field-group" style="margin:0;grid-column:1/-1"><label class="field-label">Note to Admin <span style="font-weight:400;color:var(--g3)">(optional)</span></label><input type="text" id="enrolCANote" class="field-input" placeholder="e.g. Please register to manage your team's weld inspection portal"></div>
       </div>
-      <button class="action-btn" onclick="generateCAdminInvite()">Generate Invite Link →</button>
+      <button class="action-btn" onclick="generateCAdminInvite()">Generate Invite Link â†’</button>
       <div id="enrolCAMsg" class="auth-msg"></div>
       <div id="enrolCALinkBox" style="display:none">
         <div class="section-lbl" style="margin-top:12px">Invitation Link</div>
         <div class="share-link-box" id="enrolCALink"></div>
         <div style="font-size:11px;color:var(--g3);margin-top:4px">Copy and send this link to the Company Admin. When they click it, the register form will be locked to the <strong>Company Admin</strong> role.</div>
         <div class="modal-btns" style="margin-top:8px">
-          <button class="tbl-btn copy" onclick="copyText('enrolCALink')">📋 Copy Link</button>
-          <button class="tbl-btn view" onclick="showPanel('companies')">Done → View Companies</button>
+          <button class="tbl-btn copy" onclick="copyText('enrolCALink')">ðŸ“‹ Copy Link</button>
+          <button class="tbl-btn view" onclick="showPanel('companies')">Done â†’ View Companies</button>
         </div>
       </div>
       <div class="sidebar-divider"></div>
       <div class="section-lbl">Pending Invitations</div>
-      <div id="caPendingInvites"><div class="empty-state" style="padding:12px"><span class="empty-state-text">Loading…</span></div></div>
+      <div id="caPendingInvites"><div class="empty-state" style="padding:12px"><span class="empty-state-text">Loadingâ€¦</span></div></div>
     </div>`;
   loadPendingInvites('company_admin','caPendingInvites');
 }
@@ -1161,7 +1161,7 @@ async function generateCAdminInvite(){
   const email   = document.getElementById('enrolCAEmail').value.trim();
   const note    = document.getElementById('enrolCANote').value.trim();
   if(!company||!email){ showMsg('enrolCAMsg','Please enter company name and admin email','error'); return; }
-  loading(true,'Generating invite…');
+  loading(true,'Generating inviteâ€¦');
   const token = crypto.randomUUID();
   const {error} = await sb.from('invitations').insert({
     token, role:'company_admin', email, company_name:company,
@@ -1187,16 +1187,16 @@ async function loadPendingInvites(role,containerId){
 
   el.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;flex-wrap:wrap;gap:6px">
-      <span style="font-size:11px;color:var(--g3);font-weight:600">${invites.length} invitation(s) — ${registeredIds.length} registered</span>
+      <span style="font-size:11px;color:var(--g3);font-weight:600">${invites.length} invitation(s) â€” ${registeredIds.length} registered</span>
       ${hasRegistered ? `<button class="tbl-btn delete" onclick="clearRegisteredInvites('${containerId}','${role}')"
         style="font-size:10px;padding:4px 12px">
-        🗑 Clear Registered (${registeredIds.length})
+        ðŸ—‘ Clear Registered (${registeredIds.length})
       </button>` : ''}
     </div>
     <table class="data-table"><thead><tr><th>Email</th><th>Company</th><th>Sent</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody>${invites.map(inv=>`<tr>
-      <td>${inv.email||'—'}</td>
-      <td>${inv.company_name||'—'}</td>
+      <td>${inv.email||'â€”'}</td>
+      <td>${inv.company_name||'â€”'}</td>
       <td>${new Date(inv.created_at).toLocaleDateString()}</td>
       <td>${inv.used
         ? '<span class="tbl-badge approved">Registered</span>'
@@ -1211,7 +1211,7 @@ async function loadPendingInvites(role,containerId){
 
 async function clearRegisteredInvites(containerId, role){
   if(!confirm('Clear all Registered invitations from this list?')) return;
-  loading(true,'Clearing…');
+  loading(true,'Clearingâ€¦');
   // Fetch the IDs of used invites for this role by this user
   const {data:used=[]} = await sb.from('invitations').select('id')
     .eq('role',role).eq('invited_by',S.profile.id).eq('used',true);
@@ -1224,7 +1224,7 @@ async function clearRegisteredInvites(containerId, role){
 }
 
 async function clearSingleInvite(id, containerId, role){
-  loading(true,'Clearing…');
+  loading(true,'Clearingâ€¦');
   await sb.from('invitations').delete().eq('id', id);
   loading(false);
   loadPendingInvites(role, containerId);
@@ -1245,7 +1245,7 @@ function copyText(elId){
   navigator.clipboard.writeText(document.getElementById(elId).innerText).then(()=>alert('Copied!'));
 }
 
-/* ── Admin: Companies ── */
+/* â”€â”€ Admin: Companies â”€â”€ */
 async function renderCompanies(el){
   const {data:cadmins=[]}=await sb.from('profiles').select('*').eq('role','company_admin').order('created_at');
   const {data:allEngs=[]}=await sb.from('profiles').select('id,company_admin_id').eq('role','engineer');
@@ -1254,13 +1254,13 @@ async function renderCompanies(el){
       <div class="panel-title">All Company Admins</div>
       <button class="action-btn" onclick="showPanel('enrolCAdmin')" style="margin-left:auto">+ Enrol New Company Admin</button>
     </div>
-    ${cadmins.length===0?'<div class="empty-state"><span class="empty-state-icon">🏢</span><div class="empty-state-text">No company admins yet.<br>Use "Enrol Company Admin" to add the first one.</div></div>':`
+    ${cadmins.length===0?'<div class="empty-state"><span class="empty-state-icon">ðŸ¢</span><div class="empty-state-text">No company admins yet.<br>Use "Enrol Company Admin" to add the first one.</div></div>':`
     <table class="data-table"><thead><tr><th>Name</th><th>Company</th><th>Engineers</th><th>Actions</th></tr></thead>
     <tbody>${cadmins.map(ca=>{
       const engCount=allEngs.filter(e=>e.company_admin_id===ca.id).length;
       return `<tr>
         <td><strong>${ca.name}</strong></td>
-        <td>${ca.company_name||'—'}</td>
+        <td>${ca.company_name||'â€”'}</td>
         <td><span class="tbl-badge approved">${engCount}</span></td>
         <td>
           <button class="tbl-btn manage" onclick="showAssignEngineers('${ca.id}','${ca.name}')">Assign Engineers</button>
@@ -1272,7 +1272,7 @@ async function renderCompanies(el){
 async function showAssignEngineers(cadminId,cadminName){
   const f=document.getElementById('assignEngForm');
   f.style.display='flex';
-  f.innerHTML=`<div class="panel-title" style="font-size:15px">Assign Engineers to ${cadminName}</div><div class="empty-state"><span class="empty-state-icon">⏳</span></div>`;
+  f.innerHTML=`<div class="panel-title" style="font-size:15px">Assign Engineers to ${cadminName}</div><div class="empty-state"><span class="empty-state-icon">â³</span></div>`;
   const {data:engineers=[]}=await sb.from('profiles').select('id,name,company_admin_id').eq('role','engineer');
   f.innerHTML=`
     <div class="panel-title" style="font-size:15px">Assign Engineers to ${cadminName}</div>
@@ -1284,7 +1284,7 @@ async function showAssignEngineers(cadminId,cadminName){
         ${e.company_admin_id&&e.company_admin_id!==cadminId?'<span class="tbl-badge pending" style="font-size:9px">Other company</span>':''}
       </label>`).join('')}
     </div>
-    <button class="action-btn" onclick="saveEngineerAssignments('${cadminId}')">Save Assignments →</button>
+    <button class="action-btn" onclick="saveEngineerAssignments('${cadminId}')">Save Assignments â†’</button>
     <div id="assignMsg" class="auth-msg"></div>`;
 }
 
@@ -1292,7 +1292,7 @@ async function saveEngineerAssignments(cadminId){
   const checks=[...document.querySelectorAll('#assignEngForm input[type=checkbox]')];
   const toAssign=checks.filter(c=>c.checked).map(c=>c.value);
   const toUnassign=checks.filter(c=>!c.checked).map(c=>c.value);
-  loading(true,'Saving…');
+  loading(true,'Savingâ€¦');
   if(toAssign.length)   await sb.from('profiles').update({company_admin_id:cadminId}).in('id',toAssign);
   if(toUnassign.length) await sb.from('profiles').update({company_admin_id:null}).in('id',toUnassign);
   loading(false);
@@ -1300,7 +1300,7 @@ async function saveEngineerAssignments(cadminId){
   setTimeout(()=>showPanel('companies'),800);
 }
 
-/* ── Company Admin: My Engineers ── */
+/* â”€â”€ Company Admin: My Engineers â”€â”€ */
 async function renderMyEngineers(el){
   const uid=S.profile.id;
   const {data:engineers=[]}=await sb.from('profiles').select('id,name,role,created_at').eq('company_admin_id',uid).order('created_at');
@@ -1309,7 +1309,7 @@ async function renderMyEngineers(el){
       <div class="panel-title">My Engineers</div>
       <button class="action-btn" onclick="showPanel('enrolEngineer')" style="margin-left:auto">+ Enrol Engineer</button>
     </div>
-    ${engineers.length===0?'<div class="empty-state"><span class="empty-state-icon">🧑‍🔧</span><div class="empty-state-text">No engineers yet. Use "Enrol Engineer" to invite one.</div></div>':`
+    ${engineers.length===0?'<div class="empty-state"><span class="empty-state-icon">ðŸ§‘â€ðŸ”§</span><div class="empty-state-text">No engineers yet. Use "Enrol Engineer" to invite one.</div></div>':`
     <table class="data-table"><thead><tr><th>Name</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
     <tbody>${engineers.map(u=>`<tr>
       <td><strong>${u.name}</strong></td>
@@ -1326,10 +1326,10 @@ async function showEngineerProjects(engId,engName){
   const main=document.getElementById('dashMain');
   main.innerHTML=`
     <div class="flex-row">
-      <div class="panel-title">Projects — ${engName}</div>
-      <button class="action-btn" style="margin-left:auto;background:var(--g2);color:var(--black)" onclick="showPanel('myengineers')">← Back</button>
+      <div class="panel-title">Projects â€” ${engName}</div>
+      <button class="action-btn" style="margin-left:auto;background:var(--g2);color:var(--black)" onclick="showPanel('myengineers')">â† Back</button>
     </div>
-    ${projects.length===0?'<div class="empty-state"><span class="empty-state-icon">📁</span><div class="empty-state-text">No projects yet.</div></div>':`
+    ${projects.length===0?'<div class="empty-state"><span class="empty-state-icon">ðŸ“</span><div class="empty-state-text">No projects yet.</div></div>':`
     <table class="data-table"><thead><tr><th>Project</th><th>Parts</th><th>Customers</th><th>Pending</th><th>Actions</th></tr></thead>
     <tbody>${projects.map(p=>projRow(p)).join('')}</tbody></table>`}`;
 }
@@ -1342,31 +1342,31 @@ async function removeEngineerFromCompany(engId){
   showPanel('myengineers');
 }
 
-/* ── Company Admin: Enrol Engineer ── */
+/* â”€â”€ Company Admin: Enrol Engineer â”€â”€ */
 function renderEnrolEngineer(el){
   el.innerHTML=`
     <div class="panel-title">Enrol Engineer</div>
     <div class="create-form">
-      <div class="info-msg">Enter the engineer's email. An invitation link will be generated — when they click it and register, the <strong>Engineer</strong> role is locked in and they are automatically assigned to your company.</div>
+      <div class="info-msg">Enter the engineer's email. An invitation link will be generated â€” when they click it and register, the <strong>Engineer</strong> role is locked in and they are automatically assigned to your company.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="field-group" style="margin:0"><label class="field-label">Engineer's Email</label><input type="email" id="enrolEngEmail" class="field-input" placeholder="engineer@company.com"></div>
         <div class="field-group" style="margin:0"><label class="field-label">Job Title <span style="font-weight:400;color:var(--g3)">(optional)</span></label><input type="text" id="enrolEngTitle" class="field-input" placeholder="Weld Engineer"></div>
         <div class="field-group" style="margin:0;grid-column:1/-1"><label class="field-label">Note to Engineer <span style="font-weight:400;color:var(--g3)">(optional)</span></label><input type="text" id="enrolEngNote" class="field-input" placeholder="e.g. Register to access the weld inspection system"></div>
       </div>
-      <button class="action-btn" onclick="generateEngineerInvite()">Generate Invite Link →</button>
+      <button class="action-btn" onclick="generateEngineerInvite()">Generate Invite Link â†’</button>
       <div id="enrolEngMsg" class="auth-msg"></div>
       <div id="enrolEngLinkBox" style="display:none">
         <div class="section-lbl" style="margin-top:12px">Invitation Link</div>
         <div class="share-link-box" id="enrolEngLink"></div>
         <div style="font-size:11px;color:var(--g3);margin-top:4px">Send this link to the engineer. They will register as an <strong>Engineer</strong> under your company.</div>
         <div class="modal-btns" style="margin-top:8px">
-          <button class="tbl-btn copy" onclick="copyText('enrolEngLink')">📋 Copy Link</button>
-          <button class="tbl-btn view" onclick="showPanel('myengineers')">Done → My Engineers</button>
+          <button class="tbl-btn copy" onclick="copyText('enrolEngLink')">ðŸ“‹ Copy Link</button>
+          <button class="tbl-btn view" onclick="showPanel('myengineers')">Done â†’ My Engineers</button>
         </div>
       </div>
       <div class="sidebar-divider"></div>
       <div class="section-lbl">Pending Engineer Invitations</div>
-      <div id="engPendingInvites"><div class="empty-state" style="padding:12px"><span class="empty-state-text">Loading…</span></div></div>
+      <div id="engPendingInvites"><div class="empty-state" style="padding:12px"><span class="empty-state-text">Loadingâ€¦</span></div></div>
     </div>`;
   loadPendingInvites('engineer','engPendingInvites');
 }
@@ -1376,7 +1376,7 @@ async function generateEngineerInvite(){
   const title = document.getElementById('enrolEngTitle').value.trim();
   const note  = document.getElementById('enrolEngNote').value.trim();
   if(!email){ showMsg('enrolEngMsg','Please enter the engineer\'s email','error'); return; }
-  loading(true,'Generating invite…');
+  loading(true,'Generating inviteâ€¦');
   const token = crypto.randomUUID();
   const {data:caProfile} = await sb.from('profiles').select('company_name').eq('id',S.profile.id).single();
   const {error} = await sb.from('invitations').insert({
@@ -1394,7 +1394,7 @@ async function generateEngineerInvite(){
   loadPendingInvites('engineer','engPendingInvites');
 }
 
-/* ── Company Admin: Company Projects ── */
+/* â”€â”€ Company Admin: Company Projects â”€â”€ */
 async function renderCompanyProjects(el){
   const uid=S.profile.id;
   const {data:myEngs=[]}=await sb.from('profiles').select('id').eq('company_admin_id',uid);
@@ -1403,17 +1403,17 @@ async function renderCompanyProjects(el){
     .select('id,name,created_at,parts,owner_id,access_requests(id,status),profiles(name)')
     .in('owner_id',engIds).order('created_at',{ascending:false});
   el.innerHTML=`<div class="panel-title">All Company Projects</div>
-    ${projects.length===0?'<div class="empty-state"><span class="empty-state-icon">📁</span><div class="empty-state-text">No company projects yet.</div></div>':`
+    ${projects.length===0?'<div class="empty-state"><span class="empty-state-icon">ðŸ“</span><div class="empty-state-text">No company projects yet.</div></div>':`
     <table class="data-table"><thead><tr><th>Project</th><th>Engineer</th><th>Parts</th><th>Customers</th><th>Pending</th><th>Actions</th></tr></thead>
     <tbody>${projects.map(p=>{
       const approved=(p.access_requests||[]).filter(r=>r.status==='approved').length;
       const pending=(p.access_requests||[]).filter(r=>r.status==='pending').length;
       return `<tr>
         <td><strong>${p.name}</strong></td>
-        <td>${p.profiles?.name||'—'}</td>
+        <td>${p.profiles?.name||'â€”'}</td>
         <td>${(p.parts||[]).length}</td>
         <td><span class="tbl-badge approved">${approved}</span></td>
-        <td>${pending>0?`<span class="tbl-badge pending">${pending}</span>`:'—'}</td>
+        <td>${pending>0?`<span class="tbl-badge pending">${pending}</span>`:'â€”'}</td>
         <td>
           <button class="tbl-btn view" onclick="openViewer('${p.id}')">View</button>
           <button class="tbl-btn manage" onclick="showAccess('${p.id}','${p.name}')">Access</button>
@@ -1421,35 +1421,35 @@ async function renderCompanyProjects(el){
         </td></tr>`;}).join('')}</tbody></table>`}`;
 }
 
-/* ── Engineer: Enrol Customer ── */
+/* â”€â”€ Engineer: Enrol Customer â”€â”€ */
 function renderEnrolCustomer(el){
   el.innerHTML=`
     <div class="panel-title">Enrol Customer</div>
     <div class="create-form">
-      <div class="info-msg">Enter the customer's email and select a project to share. An invitation link is generated — when they click it and register, the <strong>Customer</strong> role is locked in and they automatically get access to the selected project.</div>
+      <div class="info-msg">Enter the customer's email and select a project to share. An invitation link is generated â€” when they click it and register, the <strong>Customer</strong> role is locked in and they automatically get access to the selected project.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="field-group" style="margin:0"><label class="field-label">Customer's Email</label><input type="email" id="enrolCustEmail" class="field-input" placeholder="contact@customer.com"></div>
         <div class="field-group" style="margin:0"><label class="field-label">Customer's Organisation <span style="font-weight:400;color:var(--g3)">(optional)</span></label><input type="text" id="enrolCustOrg" class="field-input" placeholder="Customer Corp Ltd"></div>
         <div class="field-group" style="margin:0;grid-column:1/-1">
-          <label class="field-label">Project to Share <span style="font-weight:400;color:var(--g3)">(optional — can share more later)</span></label>
-          <select id="enrolCustProject" class="field-select"><option value="">— Select a project —</option></select>
+          <label class="field-label">Project to Share <span style="font-weight:400;color:var(--g3)">(optional â€” can share more later)</span></label>
+          <select id="enrolCustProject" class="field-select"><option value="">â€” Select a project â€”</option></select>
         </div>
         <div class="field-group" style="margin:0;grid-column:1/-1"><label class="field-label">Note to Customer <span style="font-weight:400;color:var(--g3)">(optional)</span></label><input type="text" id="enrolCustNote" class="field-input" placeholder="e.g. Register to view your weld inspection reports"></div>
       </div>
-      <button class="action-btn" onclick="generateCustomerInvite()">Generate Invite Link →</button>
+      <button class="action-btn" onclick="generateCustomerInvite()">Generate Invite Link â†’</button>
       <div id="enrolCustMsg" class="auth-msg"></div>
       <div id="enrolCustLinkBox" style="display:none">
         <div class="section-lbl" style="margin-top:12px">Invitation Link</div>
         <div class="share-link-box" id="enrolCustLink"></div>
         <div style="font-size:11px;color:var(--g3);margin-top:4px">Send this link to the customer. They will register as a <strong>Customer</strong> with automatic access to the selected project.</div>
         <div class="modal-btns" style="margin-top:8px">
-          <button class="tbl-btn copy" onclick="copyText('enrolCustLink')">📋 Copy Link</button>
-          <button class="tbl-btn view" onclick="showPanel('mycustomers')">Done → My Customers</button>
+          <button class="tbl-btn copy" onclick="copyText('enrolCustLink')">ðŸ“‹ Copy Link</button>
+          <button class="tbl-btn view" onclick="showPanel('mycustomers')">Done â†’ My Customers</button>
         </div>
       </div>
       <div class="sidebar-divider"></div>
       <div class="section-lbl">Pending Customer Invitations</div>
-      <div id="custPendingInvites"><div class="empty-state" style="padding:12px"><span class="empty-state-text">Loading…</span></div></div>
+      <div id="custPendingInvites"><div class="empty-state" style="padding:12px"><span class="empty-state-text">Loadingâ€¦</span></div></div>
     </div>`;
   (async()=>{
     const {data:projs=[]}=await sb.from('projects').select('id,name').eq('owner_id',S.profile.id).order('name');
@@ -1465,7 +1465,7 @@ async function generateCustomerInvite(){
   const projId = document.getElementById('enrolCustProject').value;
   const note   = document.getElementById('enrolCustNote').value.trim();
   if(!email){ showMsg('enrolCustMsg','Please enter the customer\'s email','error'); return; }
-  loading(true,'Generating invite…');
+  loading(true,'Generating inviteâ€¦');
   const token = crypto.randomUUID();
   const {error} = await sb.from('invitations').insert({
     token, role:'customer', email,
@@ -1481,12 +1481,12 @@ async function generateCustomerInvite(){
   loadPendingInvites('customer','custPendingInvites');
 }
 
-/* ── Engineer: My Customers ── */
+/* â”€â”€ Engineer: My Customers â”€â”€ */
 async function renderMyCustomers(el){
   const uid=S.profile.id;
   const {data:projs=[]}=await sb.from('projects').select('id,name').eq('owner_id',uid);
   if(projs.length===0){
-    el.innerHTML=`<div class="panel-title">My Customers</div><div class="empty-state"><span class="empty-state-icon">🔒</span><div class="empty-state-text">No projects yet. Create a project first, then enrol customers.</div></div>`;
+    el.innerHTML=`<div class="panel-title">My Customers</div><div class="empty-state"><span class="empty-state-icon">ðŸ”’</span><div class="empty-state-text">No projects yet. Create a project first, then enrol customers.</div></div>`;
     return;
   }
   const projIds=projs.map(p=>p.id);
@@ -1497,12 +1497,12 @@ async function renderMyCustomers(el){
       <div class="panel-title">My Customers</div>
       <button class="action-btn" onclick="showPanel('enrolCustomer')" style="margin-left:auto">+ Enrol Customer</button>
     </div>
-    ${reqs.length===0?'<div class="empty-state"><span class="empty-state-icon">👥</span><div class="empty-state-text">No customers yet. Enrol one or share a project link.</div></div>':`
+    ${reqs.length===0?'<div class="empty-state"><span class="empty-state-icon">ðŸ‘¥</span><div class="empty-state-text">No customers yet. Enrol one or share a project link.</div></div>':`
     <table class="data-table"><thead><tr><th>Customer</th><th>Organisation</th><th>Project</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
     <tbody>${reqs.map(r=>`<tr>
       <td><strong>${r.profiles?.name||'Unknown'}</strong></td>
-      <td>${r.profiles?.company_name||'—'}</td>
-      <td>${projMap[r.project_id]||'—'}</td>
+      <td>${r.profiles?.company_name||'â€”'}</td>
+      <td>${projMap[r.project_id]||'â€”'}</td>
       <td><span class="tbl-badge ${r.status}">${r.status}</span></td>
       <td>${new Date(r.requested_at).toLocaleDateString()}</td>
       <td>
@@ -1519,9 +1519,9 @@ async function setAccessAndRefresh(reqId,status){
   showPanel('mycustomers');
 }
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CREATE PROJECT
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 let newFiles = { csv: new Map(), images: new Map() };
 
 function renderCreateProject(el){
@@ -1537,7 +1537,7 @@ function renderCreateProject(el){
         <div class="section-lbl">Source Folder</div>
         <div class="folder-zone" id="createZone">
           <input type="file" id="createFolderInput" webkitdirectory mozdirectory multiple>
-          <span class="folder-zone-icon">📁</span>
+          <span class="folder-zone-icon">ðŸ“</span>
           <div class="folder-zone-label">Click to select your Source folder</div>
         <div class="folder-zone-sub">Reads Weld_Data/, Weld_Images/Robot1, Robot2..., and Part_Images/ automatically</div>
           <div class="folder-zone-status" id="createStatus"></div>
@@ -1562,7 +1562,7 @@ function renderCreateProject(el){
         <div class="mobile-upload-hint" style="margin-top:10px">Desktop engineers can keep using the folder picker above. Android engineers can upload with these two file pickers instead.</div>
       </div>
       <div id="scanResult" style="display:none" class="info-msg"></div>
-      <button class="action-btn" id="createProjBtn" onclick="createProject()" disabled>Create &amp; Upload Project →</button>
+      <button class="action-btn" id="createProjBtn" onclick="createProject()" disabled>Create &amp; Upload Project â†’</button>
     </div>`;
   document.getElementById('createFolderInput').addEventListener('change',e=>processNewFolder(e.target.files));
   document.getElementById('createCsvInput').addEventListener('change',processMobileSelection);
@@ -1589,7 +1589,7 @@ async function processNewFolder(files){
 async function processSelectedFiles(files,statusText=''){
   newFiles = { csv: new Map(), images: new Map() };
   const arr=Array.from(files||[]);
-  document.getElementById('createStatus').innerText=arr.length?'⏳ Scanning…':'';
+  document.getElementById('createStatus').innerText=arr.length?'â³ Scanningâ€¦':'';
   if(arr.length===0){
     document.getElementById('createStatus').innerText='';
     document.getElementById('scanResult').style.display='none';
@@ -1622,11 +1622,11 @@ async function processSelectedFiles(files,statusText=''){
   const parts=detectParts(newFiles.csv);
   const imgCount=new Set([...newFiles.images.values()].map(v=>v.path)).size;
   document.getElementById('createStatus').innerText=statusText
-    ? `${statusText} • ✅ ${newFiles.csv.size} CSV files · ${imgCount} images · ${parts.length} part(s)`
-    : `✅ ${newFiles.csv.size} CSV files · ${imgCount} images · ${parts.length} part(s)`;
+    ? `${statusText} â€¢ âœ… ${newFiles.csv.size} CSV files Â· ${imgCount} images Â· ${parts.length} part(s)`
+    : `âœ… ${newFiles.csv.size} CSV files Â· ${imgCount} images Â· ${parts.length} part(s)`;
   const sr=document.getElementById('scanResult');
   sr.style.display='block';
-  sr.innerHTML=`<strong>Detected parts:</strong> ${parts.length>0?parts.join(' · '):'None — check folder structure'}`;
+  sr.innerHTML=`<strong>Detected parts:</strong> ${parts.length>0?parts.join(' Â· '):'None â€” check folder structure'}`;
   document.getElementById('createProjBtn').disabled=newFiles.csv.size===0;
 }
 
@@ -1635,10 +1635,10 @@ async function createProject(){
   if(!name){ alert('Please enter a project name.'); return; }
   const parts=detectParts(newFiles.csv);
   const btn=document.getElementById('createProjBtn');
-  btn.disabled=true; btn.innerText='⏳ Uploading…';
-  loading(true,'Creating project…');
+  btn.disabled=true; btn.innerText='â³ Uploadingâ€¦';
+  loading(true,'Creating projectâ€¦');
   const {data:proj,error:pe}=await sb.from('projects').insert({name,owner_id:S.profile.id,parts}).select().single();
-  if(pe){ loading(false); btn.disabled=false; btn.innerText='Create & Upload Project →'; alert('Error: '+pe.message); return; }
+  if(pe){ loading(false); btn.disabled=false; btn.innerText='Create & Upload Project â†’'; alert('Error: '+pe.message); return; }
   const projId=proj.id;
   const csvEntries=[...newFiles.csv.values()];
   for(let i=0;i<csvEntries.length;i++){
@@ -1657,8 +1657,8 @@ async function createProject(){
     if(ie) console.warn('Image upload error:',v.name,ie.message);
   }
   loading(false);
-  btn.disabled=false; btn.innerText='Create & Upload Project →';
-  alert(`Project "${name}" created!\n${csvEntries.length} CSV files · ${uniqueImages.length} images uploaded.`);
+  btn.disabled=false; btn.innerText='Create & Upload Project â†’';
+  alert(`Project "${name}" created!\n${csvEntries.length} CSV files Â· ${uniqueImages.length} images uploaded.`);
   showPanel('projects');
 }
 
@@ -2801,10 +2801,10 @@ async function processSourceSelectedFiles(files, statusText=''){
   })));
   const parts = detectParts(sourceUploadState.csv);
   const imageCount = new Set([...sourceUploadState.images.values()].map(v => v.path)).size;
-  if(statusEl) statusEl.innerText = `${statusText || 'Source files ready'} • ${sourceUploadState.csv.size} CSV • ${imageCount} images • ${parts.length} parts`;
+  if(statusEl) statusEl.innerText = `${statusText || 'Source files ready'} â€¢ ${sourceUploadState.csv.size} CSV â€¢ ${imageCount} images â€¢ ${parts.length} parts`;
   if(infoEl){
     infoEl.style.display = 'block';
-    infoEl.innerHTML = `<strong>Detected parts:</strong> ${parts.length ? parts.join(' • ') : 'None'}<br><strong>Expected folders:</strong> Weld_Data/, Weld_Images/Robot1, Robot2..., Part_Images/`;
+    infoEl.innerHTML = `<strong>Detected parts:</strong> ${parts.length ? parts.join(' â€¢ ') : 'None'}<br><strong>Expected folders:</strong> Weld_Data/, Weld_Images/Robot1, Robot2..., Part_Images/`;
   }
   if(btn) btn.disabled = sourceUploadState.csv.size === 0;
 }
@@ -4945,30 +4945,30 @@ function buildProjectPayload(){
 }
 
 function escapeCsvValue(value){
-  const text = String(value ?? '');
+  const text = String(value || '');
   if(/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
   return text;
 }
 
 function serializeAxisValues(values){
   return Object.entries(values || {})
-    .filter(([, value]) => String(value ?? '').trim() !== '')
+    .filter(([, value]) => String(value || '').trim() !== '')
     .map(([key, value]) => `${key}:${value}`)
     .join('|');
 }
 
 function formatAxisValuesForDisplay(text){
-  if(!text) return '—';
+  if(!text) return 'â€”';
   const lines = String(text)
     .split('|')
     .map(item => item.trim())
     .filter(Boolean)
     .map(item => item.replace(':', ': '));
-  return lines.length ? lines.join('\n') : '—';
+  return lines.length ? lines.join('\n') : 'â€”';
 }
 
 function formatAxisValuesForWebsite(text, typeLabel){
-  if(!text) return '—';
+  if(!text) return 'â€”';
   const segments = String(text)
     .split('|')
     .map(item => item.trim())
@@ -4982,12 +4982,12 @@ function formatAxisValuesForWebsite(text, typeLabel){
       if(!value) return `${key}`;
       return `${key}: ${value}${value.endsWith(` ${unit}`) ? '' : ` ${unit}`}`;
     });
-  return segments.length ? segments.join(' | ') : '—';
+  return segments.length ? segments.join(' | ') : 'â€”';
 }
 
 function formatAxisValuesForWebsiteBoxes(text, typeLabel){
   const plain = formatAxisValuesForWebsite(text, typeLabel);
-  if(plain === '—') return '—';
+  if(plain === 'â€”') return 'â€”';
   return plain
     .split('|')
     .map(item => item.trim())
@@ -5064,7 +5064,7 @@ function parseAxisValueString(text){
 
 async function deleteProject(id){
   if(!confirm('Delete this project? This cannot be undone.')) return;
-  loading(true,'Deleting…');
+  loading(true,'Deletingâ€¦');
   const {data:files}=await sb.storage.from('projects').list(id,{limit:1000});
   if(files&&files.length>0){
     const paths=files.map(f=>`${id}/${f.name}`);
@@ -5077,14 +5077,14 @@ async function deleteProject(id){
 
 async function deleteUser(id){
   if(!confirm('Remove this user? This permanently deletes their account from the system.')) return;
-  loading(true,'Removing user…');
+  loading(true,'Removing userâ€¦');
 
-  // Step 1 — clean up related data
+  // Step 1 â€” clean up related data
   await sb.from('access_requests').delete().eq('user_id',id);
   await sb.from('invitations').delete().eq('invited_by',id);
   await sb.from('profiles').update({company_admin_id:null}).eq('company_admin_id',id);
 
-  // Step 2 — delete profile row
+  // Step 2 â€” delete profile row
   const {error:profileErr} = await sb.from('profiles').delete().eq('id',id);
   if(profileErr){
     loading(false);
@@ -5094,12 +5094,12 @@ async function deleteUser(id){
     return;
   }
 
-  // Step 3 — delete the auth user via RPC (runs as SECURITY DEFINER with service role)
-  // Requires this function in Supabase — see setup instructions shown if it fails
+  // Step 3 â€” delete the auth user via RPC (runs as SECURITY DEFINER with service role)
+  // Requires this function in Supabase â€” see setup instructions shown if it fails
   const {error:authErr} = await sb.rpc('delete_auth_user', {target_user_id: id});
   if(authErr){
     loading(false);
-    // Profile is already deleted — auth user deletion failed
+    // Profile is already deleted â€” auth user deletion failed
     // Show the one-time SQL setup instructions
     showDeleteAuthSetup(id, authErr.message);
     return;
@@ -5132,10 +5132,10 @@ GRANT EXECUTE ON FUNCTION delete_auth_user(uuid) TO authenticated;`;
   modal.innerHTML=`
     <div style="background:#fff;border-radius:10px;padding:28px 32px;width:600px;max-width:95vw;border-top:4px solid var(--orange);max-height:90vh;overflow-y:auto">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;color:#1A1A1A">
-        ⚙️ One-Time Setup Required
+        âš™ï¸ One-Time Setup Required
       </div>
       <div style="font-size:12px;color:#4D4D4D;margin-bottom:6px">
-        The user's profile has been deleted ✅<br>
+        The user's profile has been deleted âœ…<br>
         To also delete their login credentials from Supabase Auth, run this SQL <strong>once</strong> in your Supabase SQL Editor:
       </div>
       <div style="font-size:11px;color:#767676;margin-bottom:10px">Error: ${errMsg}</div>
@@ -5143,11 +5143,11 @@ GRANT EXECUTE ON FUNCTION delete_auth_user(uuid) TO authenticated;`;
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button onclick="navigator.clipboard.writeText(document.getElementById('setupSql').innerText).then(()=>alert('SQL copied!'))"
           style="padding:7px 16px;background:#1A1A1A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer">
-          📋 Copy SQL
+          ðŸ“‹ Copy SQL
         </button>
         <a href="https://supabase.com/dashboard/project/wnetdfxysbcbkmysbuxl/sql/new" target="_blank"
           style="padding:7px 16px;background:var(--orange);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center">
-          🔗 Open Supabase SQL Editor
+          ðŸ”— Open Supabase SQL Editor
         </a>
         <button onclick="this.closest('div[style*=fixed]').remove();showPanel('users')"
           style="padding:7px 16px;background:#E8E8E8;color:#4D4D4D;border:none;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer">
@@ -5161,18 +5161,18 @@ GRANT EXECUTE ON FUNCTION delete_auth_user(uuid) TO authenticated;`;
 async function sendPasswordReset(id, email){
   if(!email){ showMsg('usersMsg','No email found for this user.','error'); return; }
   if(!confirm('Send password reset email to: '+email+'?')) return;
-  loading(true,'Sending reset email…');
+  loading(true,'Sending reset emailâ€¦');
   const {error}=await sb.auth.resetPasswordForEmail(email,{
     redirectTo: window.location.origin+window.location.pathname+'?reset=1'
   });
   loading(false);
   if(error){ showMsg('usersMsg','Failed to send reset email: '+error.message,'error'); return; }
-  showMsg('usersMsg','✅ Password reset email sent to '+email,'success');
+  showMsg('usersMsg','âœ… Password reset email sent to '+email,'success');
 }
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SHARE & ACCESS
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function showShare(projId){
   const link=`${window.location.origin}${window.location.pathname}?project=${projId}`;
   document.getElementById('shareLinkBox').innerText=link;
@@ -5185,10 +5185,10 @@ function copyLink(){
 async function showAccess(projId,projName){
   document.getElementById('accessModalTitle').innerText=projName;
   const body=document.getElementById('accessModalBody');
-  body.innerHTML='<div class="empty-state"><span class="empty-state-icon">⏳</span></div>';
+  body.innerHTML='<div class="empty-state"><span class="empty-state-icon">â³</span></div>';
   openModal('accessModal');
   const {data:reqs=[]}=await sb.from('access_requests').select('id,status,requested_at,user_id,profiles(name)').eq('project_id',projId);
-  if(reqs.length===0){ body.innerHTML='<div class="empty-state"><span class="empty-state-icon">👥</span><div class="empty-state-text">No access requests yet.</div></div>'; return; }
+  if(reqs.length===0){ body.innerHTML='<div class="empty-state"><span class="empty-state-icon">ðŸ‘¥</span><div class="empty-state-text">No access requests yet.</div></div>'; return; }
   body.innerHTML=`<table class="data-table" style="margin-top:8px">
     <thead><tr><th>Customer</th><th>Status</th><th>Requested</th><th>Actions</th></tr></thead>
     <tbody>${reqs.map(r=>`<tr>
@@ -5222,39 +5222,39 @@ async function requestAccess(projId){
   alert('Access requested! Please wait for engineer approval.');
 }
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CUSTOMER
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function loadCustomerProjects(){
-  loading(true,'Loading projects…');
+  loading(true,'Loading projectsâ€¦');
   const {data:reqs=[]}=await sb.from('access_requests').select('project_id,projects(id,name,parts,created_at)').eq('user_id',S.profile.id).eq('status','approved');
   loading(false);
   const el=document.getElementById('custProjectList');
   if(reqs.length===0){
-    el.innerHTML='<div class="empty-state" style="grid-column:1/-1"><span class="empty-state-icon">🔒</span><div class="empty-state-text">No approved projects yet.<br>Use a shared link from your engineer to request access.</div></div>';
+    el.innerHTML='<div class="empty-state" style="grid-column:1/-1"><span class="empty-state-icon">ðŸ”’</span><div class="empty-state-text">No approved projects yet.<br>Use a shared link from your engineer to request access.</div></div>';
     return;
   }
   el.innerHTML=reqs.map(r=>{
     const p=r.projects;
     return `<div class="project-card" onclick="openViewer('${p.id}')">
       <div class="project-card-title">${p.name}</div>
-      <div class="project-card-meta">Parts: ${(p.parts||[]).join(', ')||'—'}<br>Created: ${new Date(p.created_at).toLocaleDateString()}</div>
-      <div class="project-card-badge"><span class="tbl-badge approved">✓ Access Approved</span></div>
+      <div class="project-card-meta">Parts: ${(p.parts||[]).join(', ')||'â€”'}<br>Created: ${new Date(p.created_at).toLocaleDateString()}</div>
+      <div class="project-card-badge"><span class="tbl-badge approved">âœ“ Access Approved</span></div>
     </div>`;
   }).join('');
 }
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    VIEWER
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function openViewer(projId){
-  loading(true,'Loading project files…');
+  loading(true,'Loading project filesâ€¦');
   S.currentProjectId=projId;
   S.csvFiles=new Map(); S.imageFiles=new Map();
   S.welds1=[]; S.welds2=[]; S.activeCell=null;
   const {data:proj}=await sb.from('projects').select('*').eq('id',projId).single();
   if(!proj){ loading(false); alert('Project not found.'); return; }
-  loading(true,'Loading CSV data…');
+  loading(true,'Loading CSV dataâ€¦');
   const {data:csvList}=await sb.storage.from('projects').list(`${projId}/csv`,{limit:500});
   for(const f of csvList||[]){
     if(!f.name.toLowerCase().endsWith('.csv')) continue;
@@ -5263,7 +5263,7 @@ async function openViewer(projId){
     const text=await blob.text();
     S.csvFiles.set(f.name.toLowerCase(),{name:f.name,text});
   }
-  loading(true,'Loading images…');
+  loading(true,'Loading imagesâ€¦');
   const {data:imgList}=await sb.storage.from('projects').list(`${projId}/images`,{limit:1000});
   for(const f of imgList||[]){
     if(!f.name) continue;
@@ -5290,7 +5290,7 @@ function goBack(){
   else{ showPage('dashPage'); showPanel('projects'); }
 }
 
-/* ── Viewer helpers ── */
+/* â”€â”€ Viewer helpers â”€â”€ */
 function detectParts(csvMap){
   const pd=csvMap.get('part_data.csv');
   if(pd){
@@ -5392,8 +5392,8 @@ function getViewerRobotNames(part){
 
 function loadWeldData(){
   const part=document.getElementById('partDropdown').value;
-  ['weldNumber','jobName','robotName'].forEach(id=>document.getElementById(id).innerText='—');
-  ['robotPositionerValuesView','workpiecePositionerValuesView'].forEach(id=>document.getElementById(id).innerHTML='—');
+  ['weldNumber','jobName','robotName'].forEach(id=>document.getElementById(id).innerText='â€”');
+  ['robotPositionerValuesView','workpiecePositionerValuesView'].forEach(id=>document.getElementById(id).innerHTML='â€”');
   const imgEl=document.getElementById('mainImage');
   imgEl.style.backgroundImage='none'; imgEl.innerText='[ Select a weld to view image ]';
   setViewerNotes('');
@@ -5451,14 +5451,14 @@ function buildGrid(columns){
     }
   }
 }
-function mkSync(){const d=document.createElement('div');d.className='weld-cell tsync';d.innerText='— SYNC —';return d;}
+function mkSync(){const d=document.createElement('div');d.className='weld-cell tsync';d.innerText='â€” SYNC â€”';return d;}
 function mkEmpty(){const d=document.createElement('div');d.className='weld-cell empty';d.innerHTML='&nbsp;';return d;}
 function mkCell(row,robot){
   const div=document.createElement('div');div.className='weld-cell weld-item';div.innerText=row.weldNo;
   div.onclick=function(){
     setActiveCell(div);
-    document.getElementById('weldNumber').innerText=row.weldNo||'—';
-    document.getElementById('jobName').innerText=row.jobName||'—';
+    document.getElementById('weldNumber').innerText=row.weldNo||'â€”';
+    document.getElementById('jobName').innerText=row.jobName||'â€”';
     document.getElementById('robotPositionerValuesView').innerHTML=formatAxisValuesForWebsiteBoxes(row.robotPositionerValues,'Robot Positioner');
     document.getElementById('workpiecePositionerValuesView').innerHTML=formatAxisValuesForWebsiteBoxes(row.workpiecePositionerValues,'Workpiece Positioner');
     document.getElementById('robotName').innerText=robot;
@@ -5475,9 +5475,9 @@ function setActiveCell(el){
   S.activeCell=el; if(el) el.classList.add('active');
 }
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LOGO
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function loadLogo(){
   for(const [k,v] of S.imageFiles){
     if(/logo.*apexiz/i.test(k)||/apexiz.*logo/i.test(k)){
@@ -5515,14 +5515,14 @@ async function loadLogo(){
   }
 }
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PPT EXPORT
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const C={orange:'FF5500',black:'000000',white:'FFFFFF',darkGrey:'4D4D4D',medGrey:'B8B8B8',lightGrey:'CCCCCC'};
 
 function formatAxisValuesForPpt(text, typeLabel){
   const plain = formatAxisValuesForWebsite(text, typeLabel);
-  return plain === 'â€”' ? plain : plain.replace(/\s\|\s/g,'\n');
+  return plain === 'Ã¢â‚¬â€' ? plain : plain.replace(/\s\|\s/g,'\n');
 }
 
 function getPptRobotColumns(part){
@@ -5532,14 +5532,32 @@ function getPptRobotColumns(part){
   }));
 }
 
+function getPptPartMeta(part){
+  const pd=S.csvFiles.get('part_data.csv');
+  if(!pd) return {robotPositionerEnabled:false,workpiecePositionerEnabled:false};
+  const rows=pd.text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(Boolean);
+  for(let i=1;i<rows.length;i++){
+    const cols=rows[i].split(',');
+    const partName=(cols[1]||'').trim().replace(/^"|"$/g,'');
+    if(partName!==part) continue;
+    const robotPos=(cols[4]||'').trim().replace(/^"|"$/g,'');
+    const workPos=(cols[5]||'').trim().replace(/^"|"$/g,'');
+    return {
+      robotPositionerEnabled: !!robotPos && !/^no$/i.test(robotPos) && !/^n$/i.test(robotPos),
+      workpiecePositionerEnabled: !!workPos && !/^no$/i.test(workPos) && !/^n$/i.test(workPos)
+    };
+  }
+  return {robotPositionerEnabled:false,workpiecePositionerEnabled:false};
+}
+
 async function exportToPPT(){
   const btn=document.getElementById('exportBtn');
-  btn.disabled=true;btn.innerText='⏳ Generating…';
+  btn.disabled=true;btn.innerText='â³ Generatingâ€¦';
   const part=document.getElementById('partDropdown').value;
   const projName=document.getElementById('viewerTitle').innerText||part;
   const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
   const pptx=new PptxGenJS();
-  pptx.layout='LAYOUT_16x10';pptx.title=`Apexiz – ${projName} – ${part} Weld Report`;
+  pptx.layout='LAYOUT_16x10';pptx.title=`Apexiz â€“ ${projName} â€“ ${part} Weld Report`;
   const LS={w:0.714,h:0.395},LL={w:2.25,h:1.24};
   const robotCols=getPptRobotColumns(part);
 
@@ -5573,13 +5591,13 @@ async function exportToPPT(){
    sl.addText('Weld Inspection Report',{x:3.75,y:2.38,w:6,h:0.55,fontSize:20,color:C.darkGrey,fontFace:'Segoe UI'});
    sl.addShape(pptx.shapes.RECTANGLE,{x:3.75,y:2.98,w:5.2,h:0.07,fill:{color:C.orange},line:{color:C.orange}});
    sl.addText('Date: '+today,{x:3.75,y:3.14,w:6,h:0.38,fontSize:12,color:C.darkGrey,fontFace:'Segoe UI',italic:true});
-   sl.addText('CONFIDENTIAL  •  FOR INTERNAL USE ONLY',{x:3.75,y:3.6,w:6,h:0.35,fontSize:10,color:C.medGrey,fontFace:'Segoe UI',italic:true});
+   sl.addText('CONFIDENTIAL  â€¢  FOR INTERNAL USE ONLY',{x:3.75,y:3.6,w:6,h:0.35,fontSize:10,color:C.medGrey,fontFace:'Segoe UI',italic:true});
    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.88,w:10,h:0.37,fill:{color:C.orange},line:{color:C.orange}});
-   sl.addText('© 2026 Apexiz    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
+   sl.addText('Â© 2026 Apexiz    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
 
   // Overview slide
   {const sl=pptx.addSlide();sl.background={color:C.white};
-   pptHdr(sl,pptx,'Part Overview',projName+' — '+part);
+   pptHdr(sl,pptx,'Part Overview',projName+' â€” '+part);
    const ovUrl=findImg(part);const ovB64=await imgB64(ovUrl);
    sl.addShape(pptx.shapes.RECTANGLE,{x:0.3,y:1.15,w:5.9,h:3.73,fill:{color:'FFFFFF',transparency:100},line:{color:C.black,pt:2.25}});
    if(ovB64) sl.addImage({data:ovB64,x:0.3,y:1.15,w:5.9,h:3.73,sizing:{type:'contain',w:5.9,h:3.73}});
@@ -5625,10 +5643,10 @@ async function exportToPPT(){
      sl.addShape(pptx.shapes.OVAL,{x:d.x,y:5.18,w:0.22,h:0.22,fill:{color:d.c},line:{color:'none'}});
    });
    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.88,w:10,h:0.37,fill:{color:C.orange},line:{color:C.orange}});
-   sl.addText('© 2026 Apexiz    CONFIDENTIAL INFORMATION    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
+   sl.addText('Â© 2026 Apexiz    CONFIDENTIAL INFORMATION    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
 
   await pptx.writeFile({fileName:`Apexiz_${projName}_${part}_Weld_Report.pptx`});
-  btn.disabled=false;btn.innerText='⬇ Download PPT Report';
+  btn.disabled=false;btn.innerText='â¬‡ Download PPT Report';
 }
 
 function robotDiv(pptx,lbl,sub,ls){
@@ -5647,27 +5665,27 @@ function pptHdr(sl,pptx,title,sub){
 function pptFtr(sl,pptx,ls){
   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
   if(S.logob64&&ls) sl.addImage({data:S.logob64,x:0.2,y:5.78,w:ls.w,h:ls.h});
-  sl.addText('© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:1.9,y:5.75,w:7.9,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
+  sl.addText('Â© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:1.9,y:5.75,w:7.9,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
 }
 // Override footer branding so PPT uses the same website logo source presentation.
 function pptFtr(sl,pptx,ls){
   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
   if(S.logob64&&ls) sl.addImage({data:S.logob64,x:0.14,y:5.78,w:ls.w,h:ls.h});
-  sl.addText('© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:4.02,y:5.75,w:4.7,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
+  sl.addText('Ã‚Â© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:4.02,y:5.75,w:4.7,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
 }
 // Override footer again so the copyright line is centered across the footer.
 function pptFtr(sl,pptx,ls){
   sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.75,w:10,h:0.5,fill:{color:C.white},line:{color:C.lightGrey}});
   if(S.logob64&&ls) sl.addImage({data:S.logob64,x:0.14,y:5.78,w:ls.w,h:ls.h});
-  sl.addText('Â© 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:0,y:5.75,w:10,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
+  sl.addText('\u00A9 2026 Apexiz    CONFIDENTIAL    ALL RIGHTS RESERVED',{x:0,y:5.75,w:10,h:0.5,fontSize:7.5,color:C.darkGrey,align:'center',valign:'middle',fontFace:'Segoe UI'});
 }
 async function weldSlides(pptx,welds,robotLabel,part,ls,imgB64fn){
   for(const w of welds.filter(w=>w.weldNo!=='TSync'&&w.weldNo!=='SYNC')){
     const sl=pptx.addSlide();sl.background={color:C.white};
-    pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT – ${robotLabel}`);
+    pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT â€“ ${robotLabel}`);
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:3.02,h:4.82,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:0.07,h:4.82,fill:{color:C.orange},line:{color:C.orange}});
-    [{l:'JOB NAME',v:w.jobName||'—',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'—',c:C.orange,s:22},{l:'ROBOT',v:robotLabel,c:C.black,s:18},{l:'ROBOT POSITIONER',v:formatAxisValuesForPpt(w.robotPositionerValues,'Robot Positioner'),c:C.black,s:10.5},{l:'WORKPIECE POSITIONER',v:formatAxisValuesForPpt(w.workpiecePositionerValues,'Workpiece Positioner'),c:C.black,s:10.5},{l:'NOTES',v:w.notes||'—',c:C.black,s:9.5}]
+    [{l:'JOB NAME',v:w.jobName||'â€”',c:C.black,s:12},{l:'WELD NO.',v:w.weldNo||'â€”',c:C.orange,s:22},{l:'ROBOT',v:robotLabel,c:C.black,s:18},{l:'ROBOT POSITIONER',v:formatAxisValuesForPpt(w.robotPositionerValues,'Robot Positioner'),c:C.black,s:10.5},{l:'WORKPIECE POSITIONER',v:formatAxisValuesForPpt(w.workpiecePositionerValues,'Workpiece Positioner'),c:C.black,s:10.5},{l:'NOTES',v:w.notes||'â€”',c:C.black,s:9.5}]
     .reduce((iy,f)=>{
       const isCompact=f.s<=10.5;
       const isNotes=f.l==='NOTES';
@@ -5688,18 +5706,19 @@ async function weldSlides(pptx,welds,robotLabel,part,ls,imgB64fn){
 
 // Override with a roomier PPT weld slide layout for current export format.
 async function weldSlides(pptx,welds,robotLabel,part,ls,imgB64fn){
+  const partMeta=getPptPartMeta(part);
   for(const w of welds.filter(row=>row.weldNo!=='TSync'&&row.weldNo!=='SYNC')){
     const sl=pptx.addSlide();sl.background={color:C.white};
-    pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT â€“ ${robotLabel}`);
+    pptHdr(sl,pptx,`Weld: ${w.weldNo}`,`ROBOT - ${robotLabel}`);
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:3.02,h:4.82,fill:{color:'F7F7F7'},line:{color:C.lightGrey}});
     sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0.88,w:0.07,h:4.82,fill:{color:C.orange},line:{color:C.orange}});
     [
-      {l:'JOB NAME',v:w.jobName||'â€”',c:C.black,s:11.5,t:0.18,vh:0.34,g:0.12},
-      {l:'WELD NO.',v:w.weldNo||'â€”',c:C.orange,s:20,t:0.18,vh:0.44,g:0.13},
+      {l:'JOB NAME',v:w.jobName||'',c:C.black,s:11.5,t:0.18,vh:0.34,g:0.12},
+      {l:'WELD NO.',v:w.weldNo||'',c:C.orange,s:20,t:0.18,vh:0.44,g:0.13},
       {l:'ROBOT',v:robotLabel,c:C.black,s:17,t:0.18,vh:0.34,g:0.12},
-      {l:'ROBOT POSITIONER',v:formatAxisValuesForPpt(w.robotPositionerValues,'Robot Positioner'),c:C.black,s:10.2,t:0.18,vh:0.52,g:0.10},
-      {l:'WORKPIECE POSITIONER',v:formatAxisValuesForPpt(w.workpiecePositionerValues,'Workpiece Positioner'),c:C.black,s:10.2,t:0.18,vh:0.52,g:0.10},
-      {l:'NOTES',v:w.notes||'â€”',c:C.black,s:9.2,t:0.18,vh:0.92,g:0.08}
+      ...(partMeta.robotPositionerEnabled ? [{l:'ROBOT POSITIONER',v:formatAxisValuesForPpt(w.robotPositionerValues,'Robot Positioner'),c:C.black,s:10.2,t:0.18,vh:0.52,g:0.10}] : []),
+      ...(partMeta.workpiecePositionerEnabled ? [{l:'WORKPIECE POSITIONER',v:formatAxisValuesForPpt(w.workpiecePositionerValues,'Workpiece Positioner'),c:C.black,s:10.2,t:0.18,vh:0.52,g:0.10}] : []),
+      {l:'NOTES',v:w.notes||'',c:C.black,s:9.2,t:0.18,vh:0.92,g:0.08}
     ].reduce((iy,f)=>{
       sl.addText(f.l,{x:0.2,y:iy,w:2.55,h:f.t,fontSize:7.1,color:C.medGrey,fontFace:'Segoe UI',bold:true});
       sl.addText(f.v,{x:0.2,y:iy+f.t,w:2.55,h:f.vh,fontSize:f.s,color:f.c,fontFace:'Segoe UI',bold:true,fit:'shrink',breakLine:false,margin:0.02});
@@ -5719,14 +5738,14 @@ async function weldSlides(pptx,welds,robotLabel,part,ls,imgB64fn){
   }
 }
 
-/* ══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    INIT
-══════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 window.addEventListener('load',async()=>{
   applyRuntimeChrome();
-  loading(true,'Starting…');
+  loading(true,'Startingâ€¦');
   try {
-    // Listen for PASSWORD_RECOVERY event — fired when user arrives from reset email
+    // Listen for PASSWORD_RECOVERY event â€” fired when user arrives from reset email
     sb.auth.onAuthStateChange((event, session)=>{
       if(event === 'PASSWORD_RECOVERY'){
         loading(false);
@@ -5740,7 +5759,7 @@ window.addEventListener('load',async()=>{
       // Check if this is a password reset session
       const params = new URLSearchParams(window.location.search);
       if(params.get('reset')==='1'){
-        // User arrived via reset email link — show reset form, don't auto-login
+        // User arrived via reset email link â€” show reset form, don't auto-login
         loading(false);
         showPage('authPage');
         showResetForm();
@@ -5765,6 +5784,10 @@ window.addEventListener('load',async()=>{
 <script src="mobile-builder.js"></script>
 </body>
 </html>
+
+
+
+
 
 
 
