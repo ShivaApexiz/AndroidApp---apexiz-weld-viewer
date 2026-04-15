@@ -1125,6 +1125,16 @@ const PPT_TEMPLATE_LABELS = {
   weld:'Weld Slide',
   end:'End Slide'
 };
+const PPT_TEMPLATE_FONT_OPTIONS = [
+  'Segoe UI','Arial','Arial Black','Calibri','Candara','Cambria','Constantia','Corbel',
+  'Helvetica','Verdana','Tahoma','Trebuchet MS','Gill Sans','Franklin Gothic Medium',
+  'Century Gothic','Futura','Avenir Next','Lucida Sans Unicode','Book Antiqua',
+  'Palatino Linotype','Times New Roman','Georgia','Garamond','Baskerville','Didot',
+  'Courier New','Consolas','Roboto','Open Sans','Inter','Lato','Montserrat',
+  'Barlow','Barlow Condensed','Poppins','Source Sans Pro','Nunito','Ubuntu',
+  'Merriweather','Playfair Display','Oswald','PT Sans','Raleway','DM Sans',
+  'Noto Sans','Noto Serif','Work Sans','Manrope','Mukta','Bebas Neue','Impact'
+];
 const PPT_TEMPLATE_DEMO = {
   projectName:'DEMO_PROJECT',
   partName:'PART-1',
@@ -1159,6 +1169,12 @@ function normalizePptTemplateColorValue(value, fallback='#FFFFFF'){
 function buildPptColorField(label, value, handler){
   const normalized = normalizePptTemplateColorValue(value, '#FFFFFF');
   return `<div><label class="field-label">${label}</label><div class="ppt-color-row"><input type="color" value="${normalized}" oninput="${handler}(this.value)"><input type="text" value="${normalized}" oninput="${handler}(this.value)" placeholder="#FFFFFF"></div></div>`;
+}
+function buildPptFontField(selected){
+  const current = selected.fontFamily || 'Segoe UI';
+  const optionMarkup = Array.from(new Set([current, ...PPT_TEMPLATE_FONT_OPTIONS]))
+    .map(font => `<option value="${font}" ${font===current?'selected':''}>${font}</option>`).join('');
+  return `<div><label class="field-label">Font Family</label><select onchange="updatePptTemplateElementProp('fontFamily',this.value)">${optionMarkup}</select><input type="text" value="${current}" oninput="updatePptTemplateElementProp('fontFamily',this.value)" placeholder="Add custom font" style="margin-top:8px"></div>`;
 }
 function getPptTemplateStorage(){
   try{
@@ -1219,6 +1235,9 @@ function makeDefaultPptTemplate(){
         divider:{id:'divider',type:'shape',shape:'rect',x:3.75,y:2.98,w:5.2,h:0.07,fill:'#FF5500',lineColor:'#FF5500',lineWidth:1,locked:true},
         reportDate:{id:'reportDate',type:'text',dynamicKey:'reportDate',prefix:'Date: ',x:3.75,y:3.14,w:6,h:0.38,fontSize:12,fontFamily:'Segoe UI',fontWeight:'400',italic:true,color:'#4D4D4D',align:'left',locked:true},
         confidentiality:{id:'confidentiality',type:'text',text:'CONFIDENTIAL - FOR INTERNAL USE ONLY',x:3.75,y:3.60,w:6,h:0.35,fontSize:10,fontFamily:'Segoe UI',fontWeight:'400',italic:true,color:'#B8B8B8',align:'left',locked:true},
+        dotOne:{id:'dotOne',type:'shape',shape:'oval',x:0.42,y:5.18,w:0.22,h:0.22,fill:'#FF5500',lineColor:'#FF5500',lineWidth:1,locked:true},
+        dotTwo:{id:'dotTwo',type:'shape',shape:'oval',x:0.82,y:5.18,w:0.22,h:0.22,fill:'#4D4D4D',lineColor:'#4D4D4D',lineWidth:1,locked:true},
+        dotThree:{id:'dotThree',type:'shape',shape:'oval',x:1.22,y:5.18,w:0.22,h:0.22,fill:'#4D4D4D',lineColor:'#4D4D4D',lineWidth:1,locked:true},
         footerBar:{id:'footerBar',type:'shape',shape:'rect',x:0,y:5.88,w:10,h:0.37,fill:'#FF5500',lineColor:'#FF5500',lineWidth:1,locked:true},
         footerText:{id:'footerText',type:'text',text:'(c) 2026 {companyName}    ALL RIGHTS RESERVED',x:0,y:5.88,w:10,h:0.37,fontSize:8,fontFamily:'Segoe UI',fontWeight:'400',color:'#FFFFFF',align:'center',locked:true}
       },extras:[]},
@@ -1260,7 +1279,10 @@ function makeDefaultPptTemplate(){
         subtitle:{id:'subtitle',type:'text',text:'End of Weld Inspection Report',x:0.5,y:2.42,w:5.7,h:0.42,fontSize:15,fontFamily:'Segoe UI',fontWeight:'400',color:'#4D4D4D',align:'left',locked:true},
         projectName:{id:'projectName',type:'text',dynamicKey:'projectName',x:0.5,y:2.9,w:5.7,h:0.44,fontSize:18,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
         partName:{id:'partName',type:'text',dynamicKey:'partName',x:0.5,y:3.36,w:5.7,h:0.44,fontSize:16,fontFamily:'Segoe UI',fontWeight:'700',color:'#FF5500',align:'left',locked:true},
-        website:{id:'website',type:'text',dynamicKey:'website',x:0.5,y:3.9,w:4,h:0.36,fontSize:12,fontFamily:'Segoe UI',fontWeight:'400',italic:true,color:'#4D4D4D',align:'left',locked:true},
+        website:{id:'website',type:'text',text:'www.apexiz.com',x:0.5,y:3.9,w:4,h:0.36,fontSize:12,fontFamily:'Segoe UI',fontWeight:'400',italic:true,color:'#4D4D4D',align:'left',locked:true},
+        dotOne:{id:'dotOne',type:'shape',shape:'oval',x:7.1,y:5.18,w:0.22,h:0.22,fill:'#4D4D4D',lineColor:'#4D4D4D',lineWidth:1,locked:true},
+        dotTwo:{id:'dotTwo',type:'shape',shape:'oval',x:7.52,y:5.18,w:0.22,h:0.22,fill:'#4D4D4D',lineColor:'#4D4D4D',lineWidth:1,locked:true},
+        dotThree:{id:'dotThree',type:'shape',shape:'oval',x:7.94,y:5.18,w:0.22,h:0.22,fill:'#FF5500',lineColor:'#FF5500',lineWidth:1,locked:true},
         footerBar:{id:'footerBar',type:'shape',shape:'rect',x:0,y:5.88,w:10,h:0.37,fill:'#FF5500',lineColor:'#FF5500',lineWidth:1,locked:true},
         footerText:{id:'footerText',type:'text',text:'(c) 2026 {companyName}    CONFIDENTIAL INFORMATION    ALL RIGHTS RESERVED',x:0,y:5.88,w:10,h:0.37,fontSize:8,fontFamily:'Segoe UI',fontWeight:'400',color:'#FFFFFF',align:'center',locked:true}
       },extras:[]}
@@ -1303,6 +1325,7 @@ function ensurePptTemplateBuilderState(){
       selectedKind:'slot',
       selectedId:'projectName',
       drag:null,
+      clipboard:null,
       pendingImageMode:''
     };
   }
@@ -1352,7 +1375,7 @@ function buildPptTemplatePreviewElement(item, context, builder){
   const commonStyle = `left:${pptScaleX(item.x)};top:${pptScaleY(item.y)};width:${pptScaleW(item.w)};height:${pptScaleH(item.h)};`;
   const selected = builder.selectedId === item.id && builder.selectedKind === item.kind ? ' selected' : '';
   const locked = item.locked ? ' locked' : '';
-  const down = item.locked ? '' : `onmousedown="startPptTemplateDrag(event,'${item.kind}','${item.id}')"`
+  const down = `onmousedown="startPptTemplateDrag(event,'${item.kind}','${item.id}')" ontouchstart="startPptTemplateDrag(event,'${item.kind}','${item.id}')"`
   const click = `onclick="selectPptTemplateElement('${item.kind}','${item.id}')"`
   if(item.type === 'shape'){
     return `<div class="ppt-preview-el ppt-preview-shape${selected}${locked}" ${click} ${down} style="${commonStyle}background:${pptCssColor(item.fill,'#FFFFFF')};border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px;border-radius:${item.shape==='oval'?'999px':'0px'}"></div>`;
@@ -1420,6 +1443,8 @@ function renderPptBuilderSidebar(){
       <div class="ppt-builder-toolbar">
         <button class="mini-btn primary" type="button" onclick="savePptTemplateBuilder()">${builder.currentTemplateId==='apexiz'?'Save As New Template':'Save Template'}</button>
         <button class="mini-btn" type="button" onclick="resetPptTemplateBuilder()">Reset To Default</button>
+        <button class="mini-btn dark" type="button" onclick="copyPptTemplateSelectedElement()" ${selected ? '' : 'disabled'}>Copy Selected</button>
+        <button class="mini-btn" type="button" onclick="pastePptTemplateElement()" ${builder.clipboard ? '' : 'disabled'}>Paste</button>
       </div>
       <div id="pptTemplateStatus" class="builder-note"></div>
     </div>`;
@@ -1438,7 +1463,7 @@ function buildPptTemplatePropertyMarkup(selected){
       <div class="ppt-prop-grid">
         <div><label class="field-label">Font Size</label><input type="number" step="0.1" value="${pptNum(selected.fontSize,12)}" oninput="updatePptTemplateElementProp('fontSize',this.value)"></div>
         <div><label class="field-label">Alignment</label><select onchange="updatePptTemplateElementProp('align',this.value)"><option value="left" ${selected.align==='left'?'selected':''}>Left</option><option value="center" ${selected.align==='center'?'selected':''}>Center</option><option value="right" ${selected.align==='right'?'selected':''}>Right</option></select></div>
-        <div><label class="field-label">Font Family</label><input type="text" value="${selected.fontFamily || 'Segoe UI'}" oninput="updatePptTemplateElementProp('fontFamily',this.value)"></div>
+        ${buildPptFontField(selected)}
         <div><label class="field-label">Font Weight</label><select onchange="updatePptTemplateElementProp('fontWeight',this.value)"><option value="400" ${selected.fontWeight==='400'?'selected':''}>Regular</option><option value="700" ${selected.fontWeight==='700'?'selected':''}>Bold</option><option value="800" ${selected.fontWeight==='800'?'selected':''}>Heavy</option></select></div>
         ${buildPptColorField('Text Color', selected.color || '#000000', 'updatePptTemplateTextColor')}
         <div><label class="field-label">Italic</label><select onchange="updatePptTemplateElementProp('italic',this.value==='true')"><option value="false" ${!selected.italic?'selected':''}>Off</option><option value="true" ${selected.italic?'selected':''}>On</option></select></div>
@@ -1643,33 +1668,75 @@ function deleteActivePptTemplate(){
   setActivePptTemplateBuilderTemplate('apexiz');
   syncPptTemplateBuilderUI();
 }
+function clonePptTemplateElementForClipboard(source){
+  if(!source) return null;
+  const cloned = deepClone(source);
+  delete cloned.kind;
+  return cloned;
+}
+function copyPptTemplateSelectedElement(){
+  const builder = ensurePptTemplateBuilderState();
+  const selected = getPptTemplateSelectedElement();
+  if(!selected) return;
+  builder.clipboard = clonePptTemplateElementForClipboard(selected);
+  const status = document.getElementById('pptTemplateStatus');
+  if(status) status.innerText = `${selected.id} copied.`;
+  renderPptBuilderSidebar();
+}
+function pastePptTemplateElement(){
+  const builder = ensurePptTemplateBuilderState();
+  if(!builder.clipboard) return;
+  const pasted = deepClone(builder.clipboard);
+  pasted.id = `extra_${Date.now()}`;
+  pasted.kind = 'extra';
+  pasted.x = +(pptNum(pasted.x, 1) + 0.15).toFixed(2);
+  pasted.y = +(pptNum(pasted.y, 1) + 0.15).toFixed(2);
+  builder.template.slides[builder.slideKey].extras.push(pasted);
+  builder.selectedKind = 'extra';
+  builder.selectedId = pasted.id;
+  const status = document.getElementById('pptTemplateStatus');
+  if(status) status.innerText = 'Element pasted onto the current slide.';
+  syncPptTemplateBuilderUI();
+}
+function getPptPointer(event){
+  const point = event.touches && event.touches[0] ? event.touches[0] : (event.changedTouches && event.changedTouches[0] ? event.changedTouches[0] : event);
+  return {x:point.clientX, y:point.clientY};
+}
 function startPptTemplateDrag(event, kind, id){
   const builder = ensurePptTemplateBuilderState();
   const frame = document.getElementById('pptBuilderPreviewFrame');
   if(!frame) return;
-  builder.drag = {kind,id,startX:event.clientX,startY:event.clientY,rect:frame.getBoundingClientRect()};
+  const point = getPptPointer(event);
+  builder.drag = {kind,id,startX:point.x,startY:point.y,rect:frame.getBoundingClientRect()};
   selectPptTemplateElement(kind,id);
+  if(event.cancelable) event.preventDefault();
   document.addEventListener('mousemove', movePptTemplateDrag);
+  document.addEventListener('touchmove', movePptTemplateDrag, {passive:false});
   document.addEventListener('mouseup', endPptTemplateDrag);
+  document.addEventListener('touchend', endPptTemplateDrag);
 }
 function movePptTemplateDrag(event){
   const builder = ensurePptTemplateBuilderState();
   if(!builder.drag) return;
   const selected = getPptTemplateSelectedElement();
   if(!selected) return;
-  const dx = ((event.clientX - builder.drag.startX) / builder.drag.rect.width) * 10;
-  const dy = ((event.clientY - builder.drag.startY) / builder.drag.rect.height) * 6.25;
+  const point = getPptPointer(event);
+  if(event.cancelable) event.preventDefault();
+  const dx = ((point.x - builder.drag.startX) / builder.drag.rect.width) * 10;
+  const dy = ((point.y - builder.drag.startY) / builder.drag.rect.height) * 6.25;
   selected.x = Math.max(0, +(pptNum(selected.x,0) + dx).toFixed(2));
   selected.y = Math.max(0, +(pptNum(selected.y,0) + dy).toFixed(2));
-  builder.drag.startX = event.clientX;
-  builder.drag.startY = event.clientY;
+  builder.drag.startX = point.x;
+  builder.drag.startY = point.y;
   renderPptBuilderPreview();
   renderPptBuilderSidebar();
 }
 function endPptTemplateDrag(){
   ensurePptTemplateBuilderState().drag = null;
   document.removeEventListener('mousemove', movePptTemplateDrag);
+  document.removeEventListener('touchmove', movePptTemplateDrag);
   document.removeEventListener('mouseup', endPptTemplateDrag);
+  document.removeEventListener('touchend', endPptTemplateDrag);
 }
 function openPptTemplatePreview(){
   const grid = document.getElementById('pptTemplatePreviewGrid');
