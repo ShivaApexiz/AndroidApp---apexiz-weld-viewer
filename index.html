@@ -216,6 +216,10 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .ppt-preview-el.locked{cursor:default;}
 .ppt-preview-text{display:flex;align-items:flex-start;justify-content:flex-start;padding:2px;line-height:1.15;white-space:pre-wrap;word-break:break-word;overflow:visible;}
 .ppt-preview-shape{border-style:solid;}
+.ppt-preview-shape.roundRect{border-radius:14px !important;}
+.ppt-preview-shape.triangle{clip-path:polygon(50% 0,100% 100%,0 100%);}
+.ppt-preview-shape.diamond{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);}
+.ppt-preview-shape.line{background:transparent !important;border-left:none !important;border-right:none !important;border-bottom:none !important;border-top-style:solid !important;}
 .ppt-preview-image{display:flex;align-items:center;justify-content:center;background:#f3f3f3;border-style:solid;}
 .ppt-preview-image img{width:100%;height:100%;object-fit:contain;pointer-events:none;}
 .ppt-preview-image.placeholder{font-size:11px;font-weight:700;color:var(--g3);text-transform:uppercase;letter-spacing:0.8px;}
@@ -1255,16 +1259,16 @@ function makeDefaultPptTemplate(){
         ovPartLabel:{id:'ovPartLabel',type:'text',text:'PART VARIANT',x:6.52,y:1.69,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
         ovPartValue:{id:'ovPartValue',type:'text',dynamicKey:'overviewPartValue',x:6.52,y:1.83,w:3.02,h:0.28,fontSize:15.5,fontFamily:'Segoe UI',fontWeight:'700',color:'#FF5500',align:'left',locked:true},
         ovDivider2:{id:'ovDivider2',type:'shape',shape:'rect',x:6.52,y:2.22,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
-        ovRobot1Label:{id:'ovRobot1Label',type:'text',text:'ROBOT 1 WELDS',x:6.52,y:2.33,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovRobot1Label:{id:'ovRobot1Label',type:'text',dynamicKey:'overviewRobot1Label',x:6.52,y:2.33,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
         ovRobot1Value:{id:'ovRobot1Value',type:'text',dynamicKey:'overviewRobot1Welds',x:6.52,y:2.47,w:3.02,h:0.24,fontSize:15,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
         ovDivider3:{id:'ovDivider3',type:'shape',shape:'rect',x:6.52,y:2.82,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
-        ovRobot2Label:{id:'ovRobot2Label',type:'text',text:'ROBOT 2 WELDS',x:6.52,y:2.93,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovRobot2Label:{id:'ovRobot2Label',type:'text',dynamicKey:'overviewRobot2Label',x:6.52,y:2.93,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
         ovRobot2Value:{id:'ovRobot2Value',type:'text',dynamicKey:'overviewRobot2Welds',x:6.52,y:3.07,w:3.02,h:0.24,fontSize:15,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
         ovDivider4:{id:'ovDivider4',type:'shape',shape:'rect',x:6.52,y:3.42,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
-        ovRobot3Label:{id:'ovRobot3Label',type:'text',text:'ROBOT 3 WELDS',x:6.52,y:3.53,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovRobot3Label:{id:'ovRobot3Label',type:'text',dynamicKey:'overviewRobot3Label',x:6.52,y:3.53,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
         ovRobot3Value:{id:'ovRobot3Value',type:'text',dynamicKey:'overviewRobot3Welds',x:6.52,y:3.67,w:3.02,h:0.24,fontSize:15,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
         ovDivider5:{id:'ovDivider5',type:'shape',shape:'rect',x:6.52,y:4.02,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
-        ovRobot4Label:{id:'ovRobot4Label',type:'text',text:'ROBOT 4 WELDS',x:6.52,y:4.13,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
+        ovRobot4Label:{id:'ovRobot4Label',type:'text',dynamicKey:'overviewRobot4Label',x:6.52,y:4.13,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
         ovRobot4Value:{id:'ovRobot4Value',type:'text',dynamicKey:'overviewRobot4Welds',x:6.52,y:4.27,w:3.02,h:0.24,fontSize:15,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left',locked:true},
         ovDivider6:{id:'ovDivider6',type:'shape',shape:'rect',x:6.52,y:4.62,w:2.98,h:0.02,fill:'#CCCCCC',lineColor:'#CCCCCC',lineWidth:1,locked:true},
         ovTotalLabel:{id:'ovTotalLabel',type:'text',text:'TOTAL WELDS',x:6.52,y:4.73,w:3.02,h:0.18,fontSize:7.1,fontFamily:'Segoe UI',fontWeight:'700',color:'#B8B8B8',align:'left',locked:true},
@@ -1371,9 +1375,10 @@ function ensurePptTemplateBuilderState(){
 }
 function getPptTemplateSelectedElement(){
   const builder = ensurePptTemplateBuilderState();
-  return builder.selectedKind === 'extra'
-    ? builder.template.slides[builder.slideKey].extras.find(item => item.id === builder.selectedId) || null
-    : builder.template.slides[builder.slideKey].slots[builder.selectedId] || null;
+  if(builder.selectedKind === 'extra'){
+    return builder.template.slides[builder.slideKey].extras.find(item => item.id === builder.selectedId) || null;
+  }
+  return builder.template.slides[builder.slideKey].slots[builder.selectedId] || null;
 }
 function setActivePptTemplateBuilderTemplate(id){
   const builder = ensurePptTemplateBuilderState();
@@ -1394,6 +1399,10 @@ function getPptTemplateContext(overrides){
     overviewSubtitle:`${PPT_TEMPLATE_DEMO.projectName} - ${PPT_TEMPLATE_DEMO.partName}`,
     overviewProjectValue:PPT_TEMPLATE_DEMO.projectName,
     overviewPartValue:PPT_TEMPLATE_DEMO.partName,
+    overviewRobot1Label:'ROBOT 1 WELDS',
+    overviewRobot2Label:'ROBOT 2 WELDS',
+    overviewRobot3Label:'ROBOT 3 WELDS',
+    overviewRobot4Label:'ROBOT 4 WELDS',
     overviewRobot1Welds:'3',
     overviewRobot2Welds:'2',
     overviewRobot3Welds:'3',
@@ -1430,10 +1439,13 @@ function buildPptTemplatePreviewElement(item, context, builder){
   const down = `onmousedown="startPptTemplateDrag(event,'${item.kind}','${item.id}')" ontouchstart="startPptTemplateDrag(event,'${item.kind}','${item.id}')"`
   const click = `onclick="selectPptTemplateElement('${item.kind}','${item.id}')"`
   if(item.type === 'shape'){
-    return `<div class="ppt-preview-el ppt-preview-shape${selected}${locked}" ${click} ${down} style="${commonStyle}background:${pptCssColor(item.fill,'#FFFFFF')};border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px;border-radius:${item.shape==='oval'?'999px':'0px'}"></div>`;
+    const shapeKey = String(item.shape || 'rect');
+    const radius = shapeKey === 'oval' ? '999px' : (shapeKey === 'roundRect' ? '14px' : '0px');
+    const extraClass = ['roundRect','triangle','diamond','line'].includes(shapeKey) ? ` ${shapeKey}` : '';
+    return `<div class="ppt-preview-el ppt-preview-shape${extraClass}${selected}${locked}" ${click} ${down} style="${commonStyle}background:${pptCssColor(item.fill,'#FFFFFF')};border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px;border-radius:${radius}"></div>`;
   }
   if(item.type === 'logo' || item.type === 'staticImage' || item.type === 'dynamicImage'){
-    const src = item.type === 'logo' ? (builder.template.logoData || 'Logo.png') : (item.imageData || '');
+    const src = item.type === 'logo' ? (item.imageData || builder.template.logoData || 'Logo.png') : (item.imageData || '');
     const placeholder = item.type === 'dynamicImage' ? 'Dynamic Image' : (item.type === 'logo' ? 'Logo' : 'Static Image');
     const content = src ? `<img src="${src}" alt="${placeholder}">` : placeholder;
     const klass = src ? 'ppt-preview-image' : 'ppt-preview-image placeholder';
@@ -1458,6 +1470,10 @@ function renderPptBuilderSidebar(){
   const selected = getPptTemplateSelectedElement();
   const slide = builder.template.slides[builder.slideKey];
   const options = Object.entries(slide.slots).map(([key, slot]) => `<option value="${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>${slot.id}</option>`).join('');
+  const allOptions = []
+    .concat(Object.entries(slide.slots).map(([key, slot]) => `<option value="slot:${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>[Slot] ${slot.id}</option>`))
+    .concat(slide.extras.map(item => `<option value="extra:${item.id}" ${builder.selectedKind==='extra'&&builder.selectedId===item.id?'selected':''}>[Extra] ${item.id}</option>`))
+    .join('');
   const templateButtons = [`<button class="ppt-slide-btn ${builder.currentTemplateId==='apexiz'?'active':''}" type="button" onclick="choosePptBuilderTemplate('apexiz')">Apexiz Template</button>`]
     .concat(getPptTemplateRecords().map(item => `<button class="ppt-slide-btn ${builder.currentTemplateId===item.id?'active':''}" type="button" onclick="choosePptBuilderTemplate('${item.id}')">${item.name}</button>`))
     .join('');
@@ -1484,10 +1500,16 @@ function renderPptBuilderSidebar(){
       <div class="ppt-prop-title">Add Elements</div>
       <div class="ppt-builder-toolbar">
         <button class="mini-btn" type="button" onclick="addPptTemplateExtra('text')">Add Text</button>
-        <button class="mini-btn" type="button" onclick="addPptTemplateExtra('shape')">Add Rectangle</button>
+        <button class="mini-btn" type="button" onclick="addPptTemplateShape('rect')">Rectangle</button>
+        <button class="mini-btn" type="button" onclick="addPptTemplateShape('roundRect')">Round Rect</button>
+        <button class="mini-btn" type="button" onclick="addPptTemplateShape('oval')">Oval</button>
+        <button class="mini-btn" type="button" onclick="addPptTemplateShape('triangle')">Triangle</button>
+        <button class="mini-btn" type="button" onclick="addPptTemplateShape('diamond')">Diamond</button>
+        <button class="mini-btn" type="button" onclick="addPptTemplateShape('line')">Line</button>
         <button class="mini-btn" type="button" onclick="triggerPptTemplateImageUpload('extra')">Add Image</button>
       </div>
       <div><label class="field-label">Quick Select Slot</label><select onchange="selectPptTemplateElement('slot',this.value)"><option value="">Select slot</option>${options}</select></div>
+      <div><label class="field-label">Select Any Element (for overlaps)</label><select onchange="selectPptTemplateElementByValue(this.value)"><option value="">Select element</option>${allOptions}</select></div>
     </div>
     ${selected ? buildPptTemplatePropertyMarkup(selected) : `<div class="ppt-builder-empty">Select an element from the preview to edit its properties.</div>`}
     <div class="ppt-prop-group">
@@ -1524,12 +1546,13 @@ function buildPptTemplatePropertyMarkup(selected){
       ` : ''}
       ${selected.type === 'shape' || selected.type === 'logo' || selected.type === 'staticImage' || selected.type === 'dynamicImage' ? `
       <div class="ppt-prop-grid">
+        ${selected.type === 'shape' ? `<div><label class="field-label">Shape</label><select onchange="updatePptTemplateElementProp('shape',this.value)"><option value="rect" ${String(selected.shape||'rect')==='rect'?'selected':''}>Rectangle</option><option value="roundRect" ${selected.shape==='roundRect'?'selected':''}>Rounded Rectangle</option><option value="oval" ${selected.shape==='oval'?'selected':''}>Oval</option><option value="triangle" ${selected.shape==='triangle'?'selected':''}>Triangle</option><option value="diamond" ${selected.shape==='diamond'?'selected':''}>Diamond</option><option value="line" ${selected.shape==='line'?'selected':''}>Line</option></select></div>` : ''}
         ${buildPptColorField('Fill / Background', selected.fill || '#FFFFFF', 'updatePptTemplateFillColor')}
         ${buildPptColorField('Border Color', selected.lineColor || '#CCCCCC', 'updatePptTemplateBorderColor')}
         <div><label class="field-label">Border Width</label><input type="number" step="0.1" value="${pptNum(selected.lineWidth,1)}" oninput="updatePptTemplateElementProp('lineWidth',this.value)"></div>
-        ${(selected.type === 'logo' || selected.type === 'staticImage' || selected.type === 'dynamicImage') ? `<div><label class="field-label">Image</label><button class="mini-btn dark" type="button" onclick="triggerPptTemplateImageUpload('${selected.type === 'logo' ? 'logo' : 'element'}')">${selected.type === 'logo' ? 'Upload Logo' : 'Upload Image'}</button></div>` : ''}
+        ${(selected.type === 'logo' || selected.type === 'staticImage' || selected.type === 'dynamicImage') ? `<div><label class="field-label">Image</label><button class="mini-btn dark" type="button" onclick="triggerPptTemplateImageUpload('element')">${selected.type === 'logo' ? 'Upload This Logo' : 'Upload Image'}</button>${selected.type === 'logo' ? `<button class="mini-btn" type="button" onclick="clearPptTemplateElementImage()" style="margin-top:6px">Use Global Logo</button>` : ''}</div>` : ''}
       </div>` : ''}
-      ${ensurePptTemplateBuilderState().selectedKind === 'extra' ? `<button class="mini-btn warn" type="button" onclick="deletePptTemplateSelectedElement()">Delete Selected</button>` : ''}
+      <button class="mini-btn warn" type="button" onclick="deletePptTemplateSelectedElement()">Delete Selected</button>
     </div>`;
 }
 function syncPptTemplateBuilderUI(){
@@ -1612,6 +1635,11 @@ function selectPptTemplateElement(kind, id){
   renderPptBuilderPreview();
   renderPptBuilderSidebar();
 }
+function selectPptTemplateElementByValue(value){
+  if(!value || value.indexOf(':') < 0) return;
+  const [kind,id] = value.split(':');
+  selectPptTemplateElement(kind,id);
+}
 function updatePptTemplateCompanyName(value){
   ensurePptTemplateBuilderState().template.companyName = value || 'Apexiz';
   renderPptBuilderPreview();
@@ -1646,6 +1674,27 @@ function addPptTemplateExtra(type){
     ? {id,kind:'extra',type:'shape',shape:'rect',x:1,y:1,w:2,h:0.6,fill:'#FFF3EE',lineColor:'#FF5500',lineWidth:1}
     : {id,kind:'extra',type:'text',text:'Static text',x:1,y:1,w:2.2,h:0.5,fontSize:16,fontFamily:'Segoe UI',fontWeight:'700',color:'#1A1A1A',align:'left'};
   builder.template.slides[builder.slideKey].extras.push(extra);
+  builder.selectedKind = 'extra';
+  builder.selectedId = id;
+  syncPptTemplateBuilderUI();
+}
+function addPptTemplateShape(shapeType){
+  const builder = ensurePptTemplateBuilderState();
+  const id = `extra_${Date.now()}`;
+  const isLine = shapeType === 'line';
+  builder.template.slides[builder.slideKey].extras.push({
+    id,
+    kind:'extra',
+    type:'shape',
+    shape:shapeType || 'rect',
+    x:1,
+    y:1,
+    w:2,
+    h:isLine ? 0.08 : 0.9,
+    fill:isLine ? '#FFFFFF' : '#FFF3EE',
+    lineColor:'#FF5500',
+    lineWidth:isLine ? 2 : 1
+  });
   builder.selectedKind = 'extra';
   builder.selectedId = id;
   syncPptTemplateBuilderUI();
@@ -1691,10 +1740,32 @@ function handlePptTemplateElementImageUpload(event){
 }
 function deletePptTemplateSelectedElement(){
   const builder = ensurePptTemplateBuilderState();
-  if(builder.selectedKind !== 'extra') return;
-  builder.template.slides[builder.slideKey].extras = builder.template.slides[builder.slideKey].extras.filter(item => item.id !== builder.selectedId);
-  builder.selectedKind = 'slot';
-  builder.selectedId = Object.keys(builder.template.slides[builder.slideKey].slots)[0];
+  const slide = builder.template.slides[builder.slideKey];
+  if(builder.selectedKind === 'extra'){
+    slide.extras = slide.extras.filter(item => item.id !== builder.selectedId);
+  }else if(builder.selectedKind === 'slot'){
+    if(!slide.slots[builder.selectedId]) return;
+    delete slide.slots[builder.selectedId];
+  }else{
+    return;
+  }
+  const slotKeys = Object.keys(slide.slots);
+  if(slotKeys.length){
+    builder.selectedKind = 'slot';
+    builder.selectedId = slotKeys[0];
+  }else if(slide.extras.length){
+    builder.selectedKind = 'extra';
+    builder.selectedId = slide.extras[0].id;
+  }else{
+    builder.selectedKind = 'slot';
+    builder.selectedId = '';
+  }
+  syncPptTemplateBuilderUI();
+}
+function clearPptTemplateElementImage(){
+  const selected = getPptTemplateSelectedElement();
+  if(!selected) return;
+  delete selected.imageData;
   syncPptTemplateBuilderUI();
 }
 function savePptTemplateBuilder(){
@@ -6381,13 +6452,18 @@ function buildCustomOverviewSummary(robotCols, projName, part, today){
 }
 function buildCustomOverviewFields(robotCols, projName, part, today){
   const counts = robotCols.map(col => col.welds.filter(w => w.weldNo!=='TSync' && w.weldNo!=='SYNC').length);
+  const robotCount = robotCols.length;
   return {
     overviewProjectValue: projName,
     overviewPartValue: part,
-    overviewRobot1Welds: String(counts[0] || 0),
-    overviewRobot2Welds: String(counts[1] || 0),
-    overviewRobot3Welds: String(counts[2] || 0),
-    overviewRobot4Welds: String(counts[3] || 0),
+    overviewRobot1Label: robotCount >= 1 ? 'ROBOT 1 WELDS' : '',
+    overviewRobot2Label: robotCount >= 2 ? 'ROBOT 2 WELDS' : '',
+    overviewRobot3Label: robotCount >= 3 ? 'ROBOT 3 WELDS' : '',
+    overviewRobot4Label: robotCount >= 4 ? 'ROBOT 4 WELDS' : '',
+    overviewRobot1Welds: robotCount >= 1 ? String(counts[0] || 0) : '',
+    overviewRobot2Welds: robotCount >= 2 ? String(counts[1] || 0) : '',
+    overviewRobot3Welds: robotCount >= 3 ? String(counts[2] || 0) : '',
+    overviewRobot4Welds: robotCount >= 4 ? String(counts[3] || 0) : '',
     overviewTotalWelds: String(counts.reduce((sum, v) => sum + v, 0)),
     overviewDateValue: today,
     overviewSummary: buildCustomOverviewSummary(robotCols, projName, part, today)
