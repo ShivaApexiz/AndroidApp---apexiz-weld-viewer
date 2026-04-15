@@ -1139,6 +1139,37 @@ const PPT_TEMPLATE_FONT_OPTIONS = [
   'Merriweather','Playfair Display','Oswald','PT Sans','Raleway','DM Sans',
   'Noto Sans','Noto Serif','Work Sans','Manrope','Mukta','Bebas Neue','Impact'
 ];
+const PPT_TEMPLATE_DYNAMIC_KEYS = [
+  {key:'projectName',label:'Project Name',kind:'text'},
+  {key:'partName',label:'Part Name',kind:'text'},
+  {key:'reportDate',label:'Report Date',kind:'text'},
+  {key:'companyName',label:'Company Name',kind:'text'},
+  {key:'overviewSubtitle',label:'Overview Subtitle',kind:'text'},
+  {key:'overviewProjectValue',label:'Overview Project Value',kind:'text'},
+  {key:'overviewPartValue',label:'Overview Part Value',kind:'text'},
+  {key:'overviewRobot1Label',label:'Overview Robot1 Label',kind:'text'},
+  {key:'overviewRobot1Welds',label:'Overview Robot1 Welds',kind:'text'},
+  {key:'overviewRobot2Label',label:'Overview Robot2 Label',kind:'text'},
+  {key:'overviewRobot2Welds',label:'Overview Robot2 Welds',kind:'text'},
+  {key:'overviewRobot3Label',label:'Overview Robot3 Label',kind:'text'},
+  {key:'overviewRobot3Welds',label:'Overview Robot3 Welds',kind:'text'},
+  {key:'overviewRobot4Label',label:'Overview Robot4 Label',kind:'text'},
+  {key:'overviewRobot4Welds',label:'Overview Robot4 Welds',kind:'text'},
+  {key:'overviewTotalWelds',label:'Overview Total Welds',kind:'text'},
+  {key:'overviewDateValue',label:'Overview Date',kind:'text'},
+  {key:'robotLabel',label:'Robot Label',kind:'text'},
+  {key:'weldHeader',label:'Weld Header',kind:'text'},
+  {key:'weldSubtitle',label:'Weld Subtitle',kind:'text'},
+  {key:'weldJobValue',label:'Weld Job Name',kind:'text'},
+  {key:'weldNoValue',label:'Weld Number',kind:'text'},
+  {key:'weldRobotValue',label:'Weld Robot',kind:'text'},
+  {key:'weldRobotPosValue',label:'Weld Robot Positioner',kind:'text'},
+  {key:'weldWorkPosValue',label:'Weld Workpiece Positioner',kind:'text'},
+  {key:'weldNotesValue',label:'Weld Notes',kind:'text'},
+  {key:'website',label:'Website',kind:'text'},
+  {key:'partImage',label:'Part Image',kind:'image'},
+  {key:'weldImage',label:'Weld Image',kind:'image'}
+];
 const PPT_TEMPLATE_DEMO = {
   projectName:'DEMO_PROJECT',
   partName:'PART-1',
@@ -1331,6 +1362,21 @@ function makeDefaultPptTemplate(){
     }
   };
 }
+function makeBlankPptTemplate(){
+  const blankSlide = () => ({backgroundColor:'#FFFFFF',slots:{},extras:[]});
+  return {
+    version:1,
+    companyName:'Apexiz',
+    logoData:'',
+    slides:{
+      title:blankSlide(),
+      overview:blankSlide(),
+      robot:blankSlide(),
+      weld:blankSlide(),
+      end:blankSlide()
+    }
+  };
+}
 function hydratePptTemplate(raw){
   const base = makeDefaultPptTemplate();
   if(!raw || typeof raw !== 'object') return base;
@@ -1368,6 +1414,8 @@ function ensurePptTemplateBuilderState(){
       selectedId:'projectName',
       drag:null,
       clipboard:null,
+      dynamicTextKey:'projectName',
+      dynamicImageKey:'partImage',
       pendingImageMode:''
     };
   }
@@ -1387,7 +1435,7 @@ function setActivePptTemplateBuilderTemplate(id){
   builder.template = deepClone(getResolvedPptTemplate(builder.currentTemplateId));
   builder.slideKey = 'title';
   builder.selectedKind = 'slot';
-  builder.selectedId = 'projectName';
+  builder.selectedId = Object.keys(builder.template.slides.title.slots)[0] || '';
   builder.drag = null;
   setLastPptTemplateId(builder.currentTemplateId);
 }
@@ -1474,6 +1522,10 @@ function renderPptBuilderSidebar(){
     .concat(Object.entries(slide.slots).map(([key, slot]) => `<option value="slot:${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>[Slot] ${slot.id}</option>`))
     .concat(slide.extras.map(item => `<option value="extra:${item.id}" ${builder.selectedKind==='extra'&&builder.selectedId===item.id?'selected':''}>[Extra] ${item.id}</option>`))
     .join('');
+  const dynamicTextOptions = PPT_TEMPLATE_DYNAMIC_KEYS.filter(item => item.kind === 'text')
+    .map(item => `<option value="${item.key}" ${builder.dynamicTextKey===item.key?'selected':''}>${item.label}</option>`).join('');
+  const dynamicImageOptions = PPT_TEMPLATE_DYNAMIC_KEYS.filter(item => item.kind === 'image')
+    .map(item => `<option value="${item.key}" ${builder.dynamicImageKey===item.key?'selected':''}>${item.label}</option>`).join('');
   const templateButtons = [`<button class="ppt-slide-btn ${builder.currentTemplateId==='apexiz'?'active':''}" type="button" onclick="choosePptBuilderTemplate('apexiz')">Apexiz Template</button>`]
     .concat(getPptTemplateRecords().map(item => `<button class="ppt-slide-btn ${builder.currentTemplateId===item.id?'active':''}" type="button" onclick="choosePptBuilderTemplate('${item.id}')">${item.name}</button>`))
     .join('');
@@ -1484,6 +1536,7 @@ function renderPptBuilderSidebar(){
       <div><label class="field-label">Template Name</label><input type="text" value="${builder.templateName || ''}" ${builder.currentTemplateId==='apexiz'?'readonly':''} oninput="updatePptTemplateName(this.value)"></div>
       <div class="ppt-builder-toolbar">
         <button class="mini-btn dark" type="button" onclick="createPptTemplateFromCurrent()">New Template From Current</button>
+        <button class="mini-btn" type="button" onclick="createBlankPptTemplateFromScratch()">New Blank Template</button>
         ${builder.currentTemplateId!=='apexiz' ? `<button class="mini-btn warn" type="button" onclick="deleteActivePptTemplate()">Delete Template</button>` : ''}
       </div>
     </div>
@@ -1507,6 +1560,18 @@ function renderPptBuilderSidebar(){
         <button class="mini-btn" type="button" onclick="addPptTemplateShape('diamond')">Diamond</button>
         <button class="mini-btn" type="button" onclick="addPptTemplateShape('line')">Line</button>
         <button class="mini-btn" type="button" onclick="triggerPptTemplateImageUpload('extra')">Add Image</button>
+      </div>
+      <div class="ppt-prop-grid">
+        <div>
+          <label class="field-label">Dynamic Text</label>
+          <select onchange="setPptTemplateDynamicTextKey(this.value)">${dynamicTextOptions}</select>
+          <button class="mini-btn" type="button" onclick="addPptTemplateDynamicElement('text')" style="margin-top:6px">Add Dynamic Text</button>
+        </div>
+        <div>
+          <label class="field-label">Dynamic Image</label>
+          <select onchange="setPptTemplateDynamicImageKey(this.value)">${dynamicImageOptions}</select>
+          <button class="mini-btn" type="button" onclick="addPptTemplateDynamicElement('image')" style="margin-top:6px">Add Dynamic Image</button>
+        </div>
       </div>
       <div><label class="field-label">Quick Select Slot</label><select onchange="selectPptTemplateElement('slot',this.value)"><option value="">Select slot</option>${options}</select></div>
       <div><label class="field-label">Select Any Element (for overlaps)</label><select onchange="selectPptTemplateElementByValue(this.value)"><option value="">Select element</option>${allOptions}</select></div>
@@ -1584,6 +1649,15 @@ function bindPptTemplateNumberWheel(){
       input.dispatchEvent(new Event('input', {bubbles:true}));
     }, {passive:false});
   });
+  if(host.dataset.wheelGuardBound !== '1'){
+    host.dataset.wheelGuardBound = '1';
+    host.addEventListener('wheel', e => {
+      const numInput = e.target && e.target.closest ? e.target.closest('input[type="number"]') : null;
+      if(!numInput) return;
+      e.preventDefault();
+      e.stopPropagation();
+    }, {passive:false, capture:true});
+  }
 }
 function renderPptTemplateBuilder(el){
   ensurePptTemplateBuilderState();
@@ -1625,7 +1699,7 @@ function setPptTemplateSlide(slideKey){
   const builder = ensurePptTemplateBuilderState();
   builder.slideKey = slideKey;
   builder.selectedKind = 'slot';
-  builder.selectedId = Object.keys(builder.template.slides[slideKey].slots)[0];
+  builder.selectedId = Object.keys(builder.template.slides[slideKey].slots)[0] || '';
   syncPptTemplateBuilderUI();
 }
 function selectPptTemplateElement(kind, id){
@@ -1731,8 +1805,7 @@ function handlePptTemplateElementImageUpload(event){
     }else{
       const selected = getPptTemplateSelectedElement();
       if(selected){
-        if(selected.type === 'logo') builder.template.logoData = data;
-        else selected.imageData = data;
+        selected.imageData = data;
       }
     }
     syncPptTemplateBuilderUI();
@@ -1768,6 +1841,38 @@ function clearPptTemplateElementImage(){
   delete selected.imageData;
   syncPptTemplateBuilderUI();
 }
+function setPptTemplateDynamicTextKey(value){
+  ensurePptTemplateBuilderState().dynamicTextKey = value || 'projectName';
+}
+function setPptTemplateDynamicImageKey(value){
+  ensurePptTemplateBuilderState().dynamicImageKey = value || 'partImage';
+}
+function addPptTemplateDynamicElement(kind){
+  const builder = ensurePptTemplateBuilderState();
+  const id = `extra_${Date.now()}`;
+  if(kind === 'image'){
+    builder.template.slides[builder.slideKey].extras.push({
+      id,
+      kind:'extra',
+      type:'dynamicImage',
+      dynamicKey:builder.dynamicImageKey || 'partImage',
+      x:1.1,y:1.1,w:2.6,h:1.6,fit:'contain',
+      lineColor:'#CCCCCC',lineWidth:1
+    });
+  }else{
+    builder.template.slides[builder.slideKey].extras.push({
+      id,
+      kind:'extra',
+      type:'text',
+      dynamicKey:builder.dynamicTextKey || 'projectName',
+      text:'',
+      x:1.1,y:1.1,w:2.8,h:0.5,fontSize:14,fontFamily:'Segoe UI',fontWeight:'700',color:'#1A1A1A',align:'left'
+    });
+  }
+  builder.selectedKind = 'extra';
+  builder.selectedId = id;
+  syncPptTemplateBuilderUI();
+}
 function savePptTemplateBuilder(){
   const builder = ensurePptTemplateBuilderState();
   if(builder.currentTemplateId === 'apexiz'){
@@ -1800,6 +1905,17 @@ function createPptTemplateFromCurrent(){
   const record = {id:`tpl_${Date.now()}`,name:name.trim(),template:deepClone(builder.template)};
   savePptTemplateStoreRecord(record);
   setActivePptTemplateBuilderTemplate(record.id);
+  syncPptTemplateBuilderUI();
+}
+function createBlankPptTemplateFromScratch(){
+  const builder = ensurePptTemplateBuilderState();
+  const name = prompt('Enter template name', 'Blank Template');
+  if(!name) return;
+  const record = {id:`tpl_${Date.now()}`,name:name.trim(),template:makeBlankPptTemplate()};
+  savePptTemplateStoreRecord(record);
+  setActivePptTemplateBuilderTemplate(record.id);
+  builder.dynamicTextKey = 'projectName';
+  builder.dynamicImageKey = 'partImage';
   syncPptTemplateBuilderUI();
 }
 function deleteActivePptTemplate(){
@@ -6390,10 +6506,16 @@ function choosePptTemplateForExport(){
 }
 function applyPptTemplateElement(sl, element, context, template){
   if(!element || element.previewOnly) return;
-  const rectShape = (window.PptxGenJS && PptxGenJS.shapes && PptxGenJS.shapes.RECTANGLE) ? PptxGenJS.shapes.RECTANGLE : 'rect';
-  const ovalShape = (window.PptxGenJS && PptxGenJS.shapes && PptxGenJS.shapes.OVAL) ? PptxGenJS.shapes.OVAL : 'ellipse';
+  const shapes = (window.PptxGenJS && PptxGenJS.shapes) ? PptxGenJS.shapes : {};
+  const rectShape = shapes.RECTANGLE || 'rect';
+  const ovalShape = shapes.OVAL || 'ellipse';
+  const roundRectShape = shapes.ROUNDED_RECTANGLE || rectShape;
+  const triangleShape = shapes.TRIANGLE || rectShape;
+  const diamondShape = shapes.DIAMOND || rectShape;
+  const lineShape = shapes.LINE || rectShape;
   const shapeKey = String(element.shape || 'rect').toLowerCase();
-  const shapeType = shapeKey === 'oval' ? ovalShape : rectShape;
+  const shapeMap = {oval:ovalShape,roundrect:roundRectShape,triangle:triangleShape,diamond:diamondShape,line:lineShape,rect:rectShape};
+  const shapeType = shapeMap[shapeKey] || rectShape;
   if(element.type === 'shape'){
     sl.addShape(shapeType,{
       x:pptNum(element.x,0),y:pptNum(element.y,0),w:pptNum(element.w,1),h:pptNum(element.h,1),
@@ -6419,7 +6541,7 @@ function applyPptTemplateElement(sl, element, context, template){
   }
   if(element.type === 'logo' || element.type === 'staticImage' || element.type === 'dynamicImage'){
     const data = element.type === 'logo'
-      ? (template.logoData || S.logob64 || '')
+      ? (element.imageData || template.logoData || S.logob64 || '')
       : (element.type === 'dynamicImage' ? (context[element.dynamicKey] || '') : (element.imageData || ''));
     if(data){
       sl.addImage({data,x:pptNum(element.x,0),y:pptNum(element.y,0),w:pptNum(element.w,1),h:pptNum(element.h,1),sizing:{type:element.fit || 'contain',w:pptNum(element.w,1),h:pptNum(element.h,1)}});
