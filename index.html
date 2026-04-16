@@ -1735,7 +1735,6 @@ function isPptTemplateTypingTarget(target){
 function selectAllPptTemplateElements(){
   const builder = ensurePptTemplateBuilderState();
   const tokens = getPptTemplateElements(builder.slideKey)
-    .filter(item => !item.locked)
     .map(item => makePptTemplateSelectionToken(item.kind || 'slot', item.id));
   if(!tokens.length) return;
   builder.selectionTokens = tokens;
@@ -1762,7 +1761,7 @@ function buildPptTemplatePreviewElement(item, context, builder, scale, interacti
   const slideH = getPptTemplateSlideHeight(builder.template);
   const commonStyle = `left:${pptScaleX(item.x)};top:${pptScaleY(item.y,slideH)};width:${pptScaleW(item.w)};height:${pptScaleH(item.h,slideH)};`;
   const selected = isPptTemplateElementSelected(item.kind, item.id) ? ' selected' : '';
-  const locked = item.locked ? ' locked' : '';
+  const locked = item.locked && !isInteractive ? ' locked' : '';
   const down = isInteractive ? `onmousedown="startPptTemplateDrag(event,'${item.kind}','${item.id}')" ontouchstart="startPptTemplateDrag(event,'${item.kind}','${item.id}')"` : '';
   const click = isInteractive ? `onclick="selectPptTemplateElement(event,'${item.kind}','${item.id}')"` : '';
   if(item.type === 'shape'){
@@ -1894,6 +1893,7 @@ function renderPptBuilderSidebar(){
       </div>
       <div id="pptTemplateStatus" class="builder-note"></div>
     </div>`;
+  bindPptTemplateNumberWheel();
 }
 function buildPptTemplatePropertyMarkup(selected){
   return `
@@ -2227,7 +2227,7 @@ function deletePptTemplateSelectedElement(){
   let changed = false;
   refs.forEach(ref => {
     const el = getPptTemplateElementByRef(ref.kind, ref.id);
-    if(!el || el.locked) return;
+    if(!el) return;
     if(ref.kind === 'extra'){
       const before = slide.extras.length;
       slide.extras = slide.extras.filter(item => item.id !== ref.id);
@@ -2499,7 +2499,7 @@ function startPptTemplateDrag(event, kind, id){
 function movePptTemplateDrag(event){
   const builder = ensurePptTemplateBuilderState();
   if(!builder.drag) return;
-  const selectedItems = getPptTemplateSelectedElements().filter(item => !item.element.locked);
+  const selectedItems = getPptTemplateSelectedElements();
   if(!selectedItems.length) return;
   const point = getPptPointer(event);
   if(event.cancelable) event.preventDefault();
@@ -2527,7 +2527,7 @@ function endPptTemplateDrag(){
 }
 function movePptTemplateSelection(dx, dy, commitHistory){
   const builder = ensurePptTemplateBuilderState();
-  const selectedItems = getPptTemplateSelectedElements().filter(item => !item.element.locked);
+  const selectedItems = getPptTemplateSelectedElements();
   if(!selectedItems.length) return;
   const slideH = getPptTemplateSlideHeight(builder.template);
   selectedItems.forEach(item => {
