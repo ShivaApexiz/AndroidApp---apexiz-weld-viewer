@@ -2060,13 +2060,29 @@ function setPptTemplateDynamicScopeMode(mode){
   builder.dynamicScopeMode = mode === 'slide' ? 'slide' : 'all';
   renderPptBuilderSidebar();
 }
+function adaptPptSlotToTemplateLayout(slot, sourceLayout, targetLayout){
+  const normalizedSource = sourceLayout || 'LAYOUT_16x10';
+  const normalizedTarget = targetLayout || 'LAYOUT_16x10';
+  if(normalizedSource === normalizedTarget) return slot;
+  const sourceH = normalizedSource === 'LAYOUT_WIDE' ? 5.625 : 6.25;
+  const targetH = normalizedTarget === 'LAYOUT_WIDE' ? 5.625 : 6.25;
+  const ratio = targetH / sourceH;
+  slot.y = +(pptNum(slot.y,0) * ratio).toFixed(4);
+  slot.h = +(pptNum(slot.h,0) * ratio).toFixed(4);
+  if(slot.type === 'text'){
+    // Keep vertical rhythm closer when moving between 16:10 and 16:9.
+    slot.fontSize = +(pptNum(slot.fontSize,12) * ratio).toFixed(2);
+  }
+  return slot;
+}
 function autoFillDynamicElementsForSlide(){
   const builder = ensurePptTemplateBuilderState();
   const slideKey = builder.slideKey;
   const targetSlide = builder.template.slides[slideKey];
   if(!targetSlide) return;
 
-  const apexizSlide = makeDefaultPptTemplate().slides[slideKey];
+  const apexizTemplate = makeDefaultPptTemplate();
+  const apexizSlide = apexizTemplate.slides[slideKey];
   if(!apexizSlide) return;
 
   const existingDynamicKeys = new Set(
@@ -2091,6 +2107,7 @@ function autoFillDynamicElementsForSlide(){
     if(slot.dynamicKey && existingDynamicKeys.has(slot.dynamicKey)) return;
     if(existingTextSignatures.has(signature)) return;
     const clone = deepClone(slot);
+    adaptPptSlotToTemplateLayout(clone, apexizTemplate.layout, builder.template.layout);
     const token = slot.dynamicKey || `text_${idx}`;
     clone.id = `auto_${token}_${now}_${idx}`;
     clone.kind = 'extra';
