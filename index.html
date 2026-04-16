@@ -2074,19 +2074,30 @@ function autoFillDynamicElementsForSlide(){
       .concat(Object.values(targetSlide.slots || {}).map(item => item && item.dynamicKey).filter(Boolean))
       .concat((targetSlide.extras || []).map(item => item && item.dynamicKey).filter(Boolean))
   );
+  const existingTextSignatures = new Set(
+    []
+      .concat(Object.values(targetSlide.slots || {}))
+      .concat(targetSlide.extras || [])
+      .filter(item => item && item.type === 'text')
+      .map(item => `${item.dynamicKey || ''}::${String(item.text || '').trim()}::${pptNum(item.x,0)}::${pptNum(item.y,0)}::${pptNum(item.w,0)}::${pptNum(item.h,0)}`)
+  );
 
   const now = Date.now();
   let added = 0;
   let lastId = '';
   Object.values(apexizSlide.slots || {}).forEach((slot, idx) => {
-    if(!slot || !slot.dynamicKey) return;
-    if(existingDynamicKeys.has(slot.dynamicKey)) return;
+    if(!slot || slot.type !== 'text') return;
+    const signature = `${slot.dynamicKey || ''}::${String(slot.text || '').trim()}::${pptNum(slot.x,0)}::${pptNum(slot.y,0)}::${pptNum(slot.w,0)}::${pptNum(slot.h,0)}`;
+    if(slot.dynamicKey && existingDynamicKeys.has(slot.dynamicKey)) return;
+    if(existingTextSignatures.has(signature)) return;
     const clone = deepClone(slot);
-    clone.id = `auto_${slot.dynamicKey}_${now}_${idx}`;
+    const token = slot.dynamicKey || `text_${idx}`;
+    clone.id = `auto_${token}_${now}_${idx}`;
     clone.kind = 'extra';
     delete clone.locked;
     targetSlide.extras.push(clone);
-    existingDynamicKeys.add(slot.dynamicKey);
+    if(slot.dynamicKey) existingDynamicKeys.add(slot.dynamicKey);
+    existingTextSignatures.add(signature);
     added += 1;
     lastId = clone.id;
   });
@@ -2096,9 +2107,9 @@ function autoFillDynamicElementsForSlide(){
     builder.selectedKind = 'extra';
     builder.selectedId = lastId;
     recordPptTemplateHistory();
-    if(status) status.innerText = `Auto Fill added ${added} dynamic element(s) for ${PPT_TEMPLATE_LABELS[slideKey]}.`;
+    if(status) status.innerText = `Auto Fill added ${added} Apexiz text element(s) for ${PPT_TEMPLATE_LABELS[slideKey]}.`;
   }else if(status){
-    status.innerText = `Auto Fill: all Apexiz dynamic elements are already present on ${PPT_TEMPLATE_LABELS[slideKey]}.`;
+    status.innerText = `Auto Fill: all Apexiz text elements are already present on ${PPT_TEMPLATE_LABELS[slideKey]}.`;
   }
   syncPptTemplateBuilderUI();
 }
@@ -2131,6 +2142,7 @@ function addPptTemplateDynamicElement(kind){
 }
 function savePptTemplateBuilder(){
   const builder = ensurePptTemplateBuilderState();
+  let savedName = '';
   if(builder.currentTemplateId === 'apexiz'){
     const prompted = prompt('Enter template name', (builder.templateName || '').trim() && builder.templateName !== 'Apexiz Template' ? builder.templateName : `Custom Template ${getPptTemplateRecords().length + 1}`);
     if(!prompted) return;
@@ -2139,11 +2151,16 @@ function savePptTemplateBuilder(){
     savePptTemplateStoreRecord(record);
     builder.currentTemplateId = record.id;
     builder.templateName = record.name;
+    savedName = record.name;
   }else{
-    savePptTemplateStoreRecord({id:builder.currentTemplateId,name:(builder.templateName || 'Custom Template').trim() || 'Custom Template',template:deepClone(builder.template)});
+    const finalName = (builder.templateName || 'Custom Template').trim() || 'Custom Template';
+    savePptTemplateStoreRecord({id:builder.currentTemplateId,name:finalName,template:deepClone(builder.template)});
+    builder.templateName = finalName;
+    savedName = finalName;
   }
   const status = document.getElementById('pptTemplateStatus');
   if(status) status.innerText = 'Template saved. Future PPT exports will use this custom template automatically.';
+  alert(`Template "${savedName || builder.templateName || 'Custom Template'}" saved successfully.`);
   syncPptTemplateBuilderUI();
 }
 function resetPptTemplateBuilder(){
