@@ -1548,6 +1548,7 @@ async function importPptxTemplateFromBuffer(buffer, sourceName, templateName){
   template.sourcePptName = sourceName || 'uploaded-template.pptx';
   let importedCount = 0;
   let unsupportedCount = 0;
+  let firstVisibleSlideKey = 'title';
   for(let slideIndex = 0; slideIndex < Math.min(PPT_TEMPLATE_SLIDES.length, orderedTargets.length); slideIndex += 1){
     const slideKey = PPT_TEMPLATE_SLIDES[slideIndex];
     const slidePath = orderedTargets[slideIndex];
@@ -1579,8 +1580,24 @@ async function importPptxTemplateFromBuffer(buffer, sourceName, templateName){
       slide.extras.push(pptxImportUnsupportedElement(node, sourceCx, sourceCy, targetH, slideKey, orderIndex));
       unsupportedCount += 1;
     }
+    if(slide.extras.length && firstVisibleSlideKey === 'title' && slideIndex > 0) firstVisibleSlideKey = slideKey;
   }
-  return {template, importedCount, unsupportedCount, sourceSlides:orderedTargets.length};
+  if(importedCount === 0 && unsupportedCount === 0){
+    template.slides.title.extras.push({
+      id:'imp_title_empty_notice',
+      kind:'extra',
+      type:'text',
+      x:1.1,y:1.1,w:7.8,h:1.2,
+      text:'Unsupported slide content',
+      fontSize:22,
+      fontFamily:'Segoe UI',
+      fontWeight:'700',
+      color:'#B8B8B8',
+      align:'center'
+    });
+    firstVisibleSlideKey = 'title';
+  }
+  return {template, importedCount, unsupportedCount, sourceSlides:orderedTargets.length, firstVisibleSlideKey};
 }
 function getPptTemplateSlideHeight(template){
   return template && template.layout === 'LAYOUT_WIDE' ? 5.625 : 6.25;
@@ -1849,7 +1866,8 @@ function ensurePptTemplateBuilderState(){
       pendingImageMode:'',
       selectionTokens:['slot:projectName'],
       canvasFocused:true,
-      pendingKeyboardMove:false
+      pendingKeyboardMove:false,
+      statusMessage:''
     };
     recordPptTemplateHistory(true);
   }
@@ -1863,6 +1881,12 @@ function recordPptTemplateHistory(force){
   builder.history.push(snap);
   if(builder.history.length > 120) builder.history.shift();
   builder.historyIndex = builder.history.length - 1;
+}
+function setPptTemplateStatus(message){
+  const builder = ensurePptTemplateBuilderState();
+  builder.statusMessage = String(message || '');
+  const status = document.getElementById('pptTemplateStatus');
+  if(status) status.innerText = builder.statusMessage;
 }
 function undoPptTemplateHistory(){
   const builder = ensurePptTemplateBuilderState();
@@ -2205,7 +2229,7 @@ function renderPptBuilderSidebar(){
         <button class="mini-btn dark" type="button" onclick="copyPptTemplateSelectedElement()" ${selected ? '' : 'disabled'}>Copy Selected</button>
         <button class="mini-btn" type="button" onclick="pastePptTemplateElement()" ${builder.clipboard ? '' : 'disabled'}>Paste</button>
       </div>
-      <div id="pptTemplateStatus" class="builder-note"></div>
+      <div id="pptTemplateStatus" class="builder-note">${builder.statusMessage || ''}</div>
     </div>`;
   bindPptTemplateNumberWheel();
 }
@@ -2492,17 +2516,16 @@ async function handlePptTemplatePptUpload(event){
   const file = event.target.files && event.target.files[0];
   if(!file) return;
   const sourceName = file.name || 'uploaded-template.pptx';
-  const status = document.getElementById('pptTemplateStatus');
   if(!/\.pptx$/i.test(sourceName)){
-    if(status) status.innerText = 'Only .pptx import is supported in the current editable importer. Legacy .ppt is not supported yet.';
+    setPptTemplateStatus('Only .pptx import is supported in the current editable importer. Legacy .ppt is not supported yet.');
     alert('Only .pptx import is supported for editable template import right now.');
     return;
   }
   try{
-    if(status) status.innerText = 'Importing PPTX slides into editable template objects...';
+    setPptTemplateStatus('Importing PPTX slides into editable template objects...');
     const buffer = file.arrayBuffer ? await file.arrayBuffer() : await new Promise(resolve => readFileAsArrayBuffer(file, resolve));
     const defaultName = sourceName.replace(/\.pptx$/i,'') || 'Imported PPT Template';
-    const {template, importedCount, unsupportedCount, sourceSlides} = await importPptxTemplateFromBuffer(buffer, sourceName, defaultName);
+    const {template, importedCount, unsupportedCount, sourceSlides, firstVisibleSlideKey} = await importPptxTemplateFromBuffer(buffer, sourceName, defaultName);
     const builder = ensurePptTemplateBuilderState();
     if(builder.pendingPptMode === 'newTemplate'){
       const promptedName = prompt('Enter template name', defaultName);
@@ -2516,12 +2539,18 @@ async function handlePptTemplatePptUpload(event){
       builder.currentTemplateId = builder.currentTemplateId || 'apexiz';
       recordPptTemplateHistory(true);
     }
-    if(status) status.innerText = importedCount > 0 || unsupportedCount > 0
+    builder.slideKey = firstVisibleSlideKey || 'title';
+    builder.selectedKind = 'extra';
+    builder.selectedId = (builder.template.slides[builder.slideKey].extras[0] || {}).id || '';
+    builder.selectionTokens = builder.selectedId ? [makePptTemplateSelectionToken('extra', builder.selectedId)] : [];
+    const importMessage = importedCount > 0 || unsupportedCount > 0
       ? `Imported ${importedCount} editable element(s) from ${Math.min(sourceSlides, PPT_TEMPLATE_SLIDES.length)} slide(s).${sourceSlides > PPT_TEMPLATE_SLIDES.length ? ` Only the first ${PPT_TEMPLATE_SLIDES.length} slides were mapped into the current builder.` : ''}${unsupportedCount ? ` ${unsupportedCount} unsupported element(s) were added as placeholders.` : ''}`
       : 'PPTX file loaded, but no supported visible slide elements were extracted. This usually means the source relies on unsupported grouped/chart/table/master-driven content in the current importer pass.';
     syncPptTemplateBuilderUI();
+    setPptTemplateStatus(importMessage);
+    alert(importMessage);
   }catch(err){
-    if(status) status.innerText = `PPTX import failed: ${err.message || err}`;
+    setPptTemplateStatus(`PPTX import failed: ${err.message || err}`);
     alert('PPTX import failed: ' + (err.message || err));
   }
 }
