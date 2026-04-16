@@ -240,6 +240,14 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .ppt-modal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
 .ppt-modal-slide{display:flex;flex-direction:column;gap:8px;min-width:0;}
 .ppt-modal-slide-title{font-size:12px;font-weight:700;color:var(--g4);letter-spacing:1.2px;text-transform:uppercase;}
+.update-tag{
+  position:fixed;right:10px;bottom:8px;z-index:2100;
+  padding:4px 8px;border-radius:999px;
+  background:rgba(26,26,26,0.88);color:#fff;
+  font-size:10px;font-weight:700;letter-spacing:0.8px;
+  border:1px solid rgba(255,255,255,0.28);
+  pointer-events:none;user-select:none;
+}
 
 @media (max-width:1180px){
   .ppt-builder-shell{grid-template-columns:1fr;}
@@ -650,6 +658,7 @@ const INVITE = {
   token: '', role: '', email: '', invitedBy: '', projectId: '', company: '',
   clear(){ this.token=''; this.role=''; this.email=''; this.invitedBy=''; this.projectId=''; this.company=''; }
 };
+const WEBSITE_UPDATE_TAG = 'WV-2026.04.16.02';
 
 /* """"""""""""""""""""""""""""""""""""""
    UTILS
@@ -671,6 +680,11 @@ function applyRuntimeChrome(){
   const mobileNav = document.getElementById('mobileBottomNav');
   if(mobileNav){
     mobileNav.style.display = nativeRuntime ? '' : 'none';
+  }
+  const updateTag = document.getElementById('websiteUpdateTag');
+  if(updateTag){
+    updateTag.innerText = WEBSITE_UPDATE_TAG;
+    updateTag.style.display = nativeRuntime ? 'none' : 'inline-flex';
   }
 }
 function loading(on,txt='Loading...'){ document.getElementById('loadingText').innerText=txt; document.getElementById('loadingOverlay').classList.toggle('show',on); }
@@ -1429,7 +1443,7 @@ function makeBlankPptTemplate(){
   return {
     version:1,
     templateType:'blank',
-    layout:'LAYOUT_WIDE',
+    layout:'LAYOUT_16x10',
     companyName:'Apexiz',
     logoData:'',
     sourcePptName:'',
@@ -7219,6 +7233,7 @@ window.addEventListener('load',async()=>{
   }
 });
 </script>
+<div id="websiteUpdateTag" class="update-tag" aria-hidden="true"></div>
 <script src="mobile-builder.js"></script>
 </body>
 </html>
