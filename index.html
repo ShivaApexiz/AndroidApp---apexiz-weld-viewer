@@ -1704,6 +1704,7 @@ function renderPptBuilderSidebar(){
       <div class="ppt-builder-toolbar">
         <button class="mini-btn ${builder.dynamicScopeMode==='all'?'primary':''}" type="button" onclick="setPptTemplateDynamicScopeMode('all')">ALL</button>
         <button class="mini-btn ${builder.dynamicScopeMode==='slide'?'primary':''}" type="button" onclick="setPptTemplateDynamicScopeMode('slide')">Slide</button>
+        <button class="mini-btn dark" type="button" onclick="autoFillDynamicElementsForSlide()">Auto Fill</button>
       </div>
       <div class="ppt-prop-grid">
         <div>
@@ -2058,6 +2059,48 @@ function setPptTemplateDynamicScopeMode(mode){
   const builder = ensurePptTemplateBuilderState();
   builder.dynamicScopeMode = mode === 'slide' ? 'slide' : 'all';
   renderPptBuilderSidebar();
+}
+function autoFillDynamicElementsForSlide(){
+  const builder = ensurePptTemplateBuilderState();
+  const slideKey = builder.slideKey;
+  const targetSlide = builder.template.slides[slideKey];
+  if(!targetSlide) return;
+
+  const apexizSlide = makeDefaultPptTemplate().slides[slideKey];
+  if(!apexizSlide) return;
+
+  const existingDynamicKeys = new Set(
+    []
+      .concat(Object.values(targetSlide.slots || {}).map(item => item && item.dynamicKey).filter(Boolean))
+      .concat((targetSlide.extras || []).map(item => item && item.dynamicKey).filter(Boolean))
+  );
+
+  const now = Date.now();
+  let added = 0;
+  let lastId = '';
+  Object.values(apexizSlide.slots || {}).forEach((slot, idx) => {
+    if(!slot || !slot.dynamicKey) return;
+    if(existingDynamicKeys.has(slot.dynamicKey)) return;
+    const clone = deepClone(slot);
+    clone.id = `auto_${slot.dynamicKey}_${now}_${idx}`;
+    clone.kind = 'extra';
+    delete clone.locked;
+    targetSlide.extras.push(clone);
+    existingDynamicKeys.add(slot.dynamicKey);
+    added += 1;
+    lastId = clone.id;
+  });
+
+  const status = document.getElementById('pptTemplateStatus');
+  if(added > 0){
+    builder.selectedKind = 'extra';
+    builder.selectedId = lastId;
+    recordPptTemplateHistory();
+    if(status) status.innerText = `Auto Fill added ${added} dynamic element(s) for ${PPT_TEMPLATE_LABELS[slideKey]}.`;
+  }else if(status){
+    status.innerText = `Auto Fill: all Apexiz dynamic elements are already present on ${PPT_TEMPLATE_LABELS[slideKey]}.`;
+  }
+  syncPptTemplateBuilderUI();
 }
 function addPptTemplateDynamicElement(kind){
   const builder = ensurePptTemplateBuilderState();
