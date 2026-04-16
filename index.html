@@ -659,6 +659,14 @@ const INVITE = {
   clear(){ this.token=''; this.role=''; this.email=''; this.invitedBy=''; this.projectId=''; this.company=''; }
 };
 const WEBSITE_UPDATE_TAG = 'WV-2026.04.16.02';
+function getWebsiteUpdateTag(){
+  const ts = new Date().toLocaleString('en-IN',{
+    year:'numeric',month:'2-digit',day:'2-digit',
+    hour:'2-digit',minute:'2-digit',second:'2-digit',
+    hour12:false
+  });
+  return `${WEBSITE_UPDATE_TAG} | ${ts}`;
+}
 
 /* """"""""""""""""""""""""""""""""""""""
    UTILS
@@ -683,7 +691,7 @@ function applyRuntimeChrome(){
   }
   const updateTag = document.getElementById('websiteUpdateTag');
   if(updateTag){
-    updateTag.innerText = WEBSITE_UPDATE_TAG;
+    updateTag.innerText = getWebsiteUpdateTag();
     updateTag.style.display = nativeRuntime ? 'none' : 'inline-flex';
   }
 }
@@ -1302,7 +1310,7 @@ function defaultSlideFooter(y){
   return {
     footerBox:{id:'footerBox',type:'shape',shape:'rect',x:0,y,w:10,h:0.5,fill:'#FFFFFF',lineColor:'#CCCCCC',lineWidth:1,locked:true},
     footerLogo:{id:'footerLogo',type:'logo',x:0.14,y:y+0.03,w:0.714,h:0.395,locked:true},
-    footerText:{id:'footerText',type:'text',x:0,y,w:10,h:0.5,text:'(c) 2026 {companyName}    CONFIDENTIAL    ALL RIGHTS RESERVED',fontSize:7.5,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'center',locked:true}
+    footerText:{id:'footerText',type:'text',x:0,y:y+0.12,w:10,h:0.5,text:'(c) 2026 {companyName}    CONFIDENTIAL    ALL RIGHTS RESERVED',fontSize:7.5,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'center',locked:true}
   };
 }
 function makeDefaultPptTemplate(){
