@@ -1192,9 +1192,9 @@ function pptCssColor(value, fallback='#FFFFFF'){
 }
 function pptColor(value, fallback='FFFFFF'){ return pptCssColor(value, `#${fallback}`).replace('#','').toUpperCase(); }
 function pptScaleX(x){ return `${pptNum(x,0) * 10}%`; }
-function pptScaleY(y){ return `${pptNum(y,0) / 6.25 * 100}%`; }
+function pptScaleY(y, slideH){ return `${pptNum(y,0) / (pptNum(slideH,6.25) || 6.25) * 100}%`; }
 function pptScaleW(w){ return `${pptNum(w,0) * 10}%`; }
-function pptScaleH(h){ return `${pptNum(h,0) / 6.25 * 100}%`; }
+function pptScaleH(h, slideH){ return `${pptNum(h,0) / (pptNum(slideH,6.25) || 6.25) * 100}%`; }
 function normalizePptTemplateColorValue(value, fallback='#FFFFFF'){
   const raw = String(value || '').trim();
   if(!raw) return pptCssColor(fallback);
@@ -1210,6 +1210,9 @@ function buildPptFontField(selected){
   const optionMarkup = Array.from(new Set([current, ...PPT_TEMPLATE_FONT_OPTIONS]))
     .map(font => `<option value="${font}" ${font===current?'selected':''}>${font}</option>`).join('');
   return `<div><label class="field-label">Font Family</label><select onchange="updatePptTemplateElementProp('fontFamily',this.value)">${optionMarkup}</select><input type="text" value="${current}" oninput="updatePptTemplateElementProp('fontFamily',this.value)" placeholder="Add custom font" style="margin-top:8px"></div>`;
+}
+function getPptTemplateSlideHeight(template){
+  return template && template.layout === 'LAYOUT_WIDE' ? 5.625 : 6.25;
 }
 function getPptTemplateStorage(){
   try{
@@ -1258,6 +1261,7 @@ function defaultSlideFooter(y){
 function makeDefaultPptTemplate(){
   return {
     version:1,
+    layout:'LAYOUT_16x10',
     companyName:'Apexiz',
     logoData:'',
     sourcePptName:'',
@@ -1364,26 +1368,50 @@ function makeDefaultPptTemplate(){
     }
   };
 }
+function makeBlankPptSlide(slideName){
+  return {
+    backgroundColor:'#FFFFFF',
+    slots:{
+      titlePlaceholder:{
+        id:'titlePlaceholder',
+        type:'text',
+        text:slideName,
+        x:0.6,y:0.36,w:8.2,h:0.42,
+        fontSize:20,fontFamily:'Segoe UI',fontWeight:'700',color:'#4D4D4D',align:'left'
+      },
+      footerSlideNumber:{
+        id:'footerSlideNumber',
+        type:'text',
+        dynamicKey:'slideNumber',
+        prefix:'Slide ',
+        x:8.85,y:5.28,w:0.95,h:0.22,
+        fontSize:9,fontFamily:'Segoe UI',fontWeight:'400',color:'#B8B8B8',align:'right'
+      }
+    },
+    extras:[]
+  };
+}
 function makeBlankPptTemplate(){
-  const blankSlide = () => ({backgroundColor:'#FFFFFF',slots:{},extras:[]});
   return {
     version:1,
+    layout:'LAYOUT_WIDE',
     companyName:'Apexiz',
     logoData:'',
     sourcePptName:'',
     sourcePptData:'',
     slides:{
-      title:blankSlide(),
-      overview:blankSlide(),
-      robot:blankSlide(),
-      weld:blankSlide(),
-      end:blankSlide()
+      title:makeBlankPptSlide('Title Slide'),
+      overview:makeBlankPptSlide('Overview Slide'),
+      robot:makeBlankPptSlide('Robot Slide'),
+      weld:makeBlankPptSlide('Weld Slide'),
+      end:makeBlankPptSlide('End Slide')
     }
   };
 }
 function hydratePptTemplate(raw){
   const base = makeDefaultPptTemplate();
   if(!raw || typeof raw !== 'object') return base;
+  base.layout = raw.layout || base.layout;
   base.companyName = raw.companyName || base.companyName;
   base.logoData = raw.logoData || '';
   base.sourcePptName = raw.sourcePptName || '';
@@ -1519,7 +1547,8 @@ function getPptTemplateElements(slideKey){
 function buildPptTemplatePreviewElement(item, context, builder, scale, interactive){
   const isInteractive = interactive !== false;
   const ratio = Number(scale || 1);
-  const commonStyle = `left:${pptScaleX(item.x)};top:${pptScaleY(item.y)};width:${pptScaleW(item.w)};height:${pptScaleH(item.h)};`;
+  const slideH = getPptTemplateSlideHeight(builder.template);
+  const commonStyle = `left:${pptScaleX(item.x)};top:${pptScaleY(item.y,slideH)};width:${pptScaleW(item.w)};height:${pptScaleH(item.h,slideH)};`;
   const selected = builder.selectedId === item.id && builder.selectedKind === item.kind ? ' selected' : '';
   const locked = item.locked ? ' locked' : '';
   const down = isInteractive ? `onmousedown="startPptTemplateDrag(event,'${item.kind}','${item.id}')" ontouchstart="startPptTemplateDrag(event,'${item.kind}','${item.id}')"` : '';
@@ -1548,6 +1577,7 @@ function renderPptBuilderPreview(){
   const context = getPptTemplateContext();
   const slide = builder.template.slides[builder.slideKey];
   const elements = getPptTemplateElements(builder.slideKey);
+  frame.style.aspectRatio = builder.template.layout === 'LAYOUT_WIDE' ? '16 / 9' : '16 / 10';
   const scale = Math.max(frame.clientWidth, 1) / 960;
   frame.innerHTML = `<div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}"><div class="ppt-preview-grid"></div>${elements.map(item => buildPptTemplatePreviewElement(item, context, builder, scale, true)).join('')}</div>`;
 }
@@ -2092,8 +2122,9 @@ function movePptTemplateDrag(event){
   if(!selected) return;
   const point = getPptPointer(event);
   if(event.cancelable) event.preventDefault();
+  const slideH = getPptTemplateSlideHeight(builder.template);
   const dx = ((point.x - builder.drag.startX) / builder.drag.rect.width) * 10;
-  const dy = ((point.y - builder.drag.startY) / builder.drag.rect.height) * 6.25;
+  const dy = ((point.y - builder.drag.startY) / builder.drag.rect.height) * slideH;
   selected.x = Math.max(0, +(pptNum(selected.x,0) + dx).toFixed(2));
   selected.y = Math.max(0, +(pptNum(selected.y,0) + dy).toFixed(2));
   builder.drag.changed = true;
@@ -2120,7 +2151,9 @@ function openPptTemplatePreview(){
   grid.innerHTML = PPT_TEMPLATE_SLIDES.map(key => {
     const slide = builder.template.slides[key];
     const elements = [...Object.values(slide.slots), ...slide.extras].filter(item => !item.previewOnly);
-    return `<div class="ppt-modal-slide"><div class="ppt-modal-slide-title">${PPT_TEMPLATE_LABELS[key]}</div><div class="ppt-preview-frame"><div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}">${elements.map(item => buildPptTemplatePreviewElement({...item,kind:item.kind || 'slot'}, context, {selectedId:'',selectedKind:'',template:builder.template}, 0.34, false)).join('')}</div></div></div>`;
+    const previewContext = {...context, slideNumber:String(PPT_TEMPLATE_SLIDES.indexOf(key)+1)};
+    const ratio = builder.template.layout === 'LAYOUT_WIDE' ? '16 / 9' : '16 / 10';
+    return `<div class="ppt-modal-slide"><div class="ppt-modal-slide-title">${PPT_TEMPLATE_LABELS[key]}</div><div class="ppt-preview-frame" style="aspect-ratio:${ratio}"><div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}">${elements.map(item => buildPptTemplatePreviewElement({...item,kind:item.kind || 'slot'}, previewContext, {selectedId:'',selectedKind:'',template:builder.template}, 0.34, false)).join('')}</div></div></div>`;
   }).join('');
   modal.classList.add('open');
 }
@@ -6738,7 +6771,7 @@ async function exportToPPTWithCustomTemplate(template){
   const btn=document.getElementById('exportBtn');
   btn.disabled=true;btn.innerText='Generating PPT...';
   const pptx=new PptxGenJS();
-  pptx.layout='LAYOUT_16x10';
+  pptx.layout=template.layout || 'LAYOUT_16x10';
   pptx.title=`${template.companyName || 'Apexiz'} - ${projName} - ${part} Weld Report`;
   const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   const robotCols=getPptRobotColumns(part);
@@ -6757,18 +6790,19 @@ async function exportToPPTWithCustomTemplate(template){
   const partImage = await imgB64(findImg(part));
   const baseContext = {projectName:projName,partName:part,reportDate:today,companyName:template.companyName || 'Apexiz',website:'www.apexiz.com'};
 
-  {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'title',template,baseContext);}
-  {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'overview',template,{...baseContext,overviewSubtitle:`${projName} - ${part}`,partImage,...buildCustomOverviewFields(robotCols,projName,part,today)});}
+  let slideNo = 1;
+  {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'title',template,{...baseContext,slideNumber:String(slideNo++)});}
+  {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'overview',template,{...baseContext,overviewSubtitle:`${projName} - ${part}`,partImage,...buildCustomOverviewFields(robotCols,projName,part,today),slideNumber:String(slideNo++)});}
   for(const [index,col] of robotCols.entries()){
     const robotLabel=col.label||`Robot ${index+1}`;
-    {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'robot',template,{...baseContext,robotLabel});}
+    {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'robot',template,{...baseContext,robotLabel,slideNumber:String(slideNo++)});}
     for(const w of col.welds.filter(row=>row.weldNo!=='TSync'&&row.weldNo!=='SYNC')){
       const sl=pptx.addSlide();
       const weldImage = await imgB64(w.imageId ? findImg(w.imageId) : null);
-      renderPptTemplateSlide(sl,'weld',template,{...baseContext,weldHeader:`Weld: ${w.weldNo}`,weldSubtitle:`ROBOT - ${robotLabel}`,weldImage,...buildCustomWeldFields(w,robotLabel)});
+      renderPptTemplateSlide(sl,'weld',template,{...baseContext,weldHeader:`Weld: ${w.weldNo}`,weldSubtitle:`ROBOT - ${robotLabel}`,weldImage,...buildCustomWeldFields(w,robotLabel),slideNumber:String(slideNo++)});
     }
   }
-  {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'end',template,baseContext);}
+  {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'end',template,{...baseContext,slideNumber:String(slideNo++)});}
   await pptx.writeFile({fileName:`Apexiz_${projName}_${part}_Weld_Report.pptx`});
   btn.disabled=false;btn.innerText='Download PPT Report';
 }
