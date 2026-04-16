@@ -660,7 +660,9 @@ const INVITE = {
 };
 const WEBSITE_UPDATE_TAG = 'WV-2026.04.16.02';
 function getWebsiteUpdateTag(){
-  const ts = new Date().toLocaleString('en-IN',{
+  const writtenAtRaw = document && document.lastModified ? document.lastModified : '';
+  const writtenAt = writtenAtRaw ? new Date(writtenAtRaw) : new Date();
+  const ts = writtenAt.toLocaleString('en-IN',{
     year:'numeric',month:'2-digit',day:'2-digit',
     hour:'2-digit',minute:'2-digit',second:'2-digit',
     hour12:false
@@ -1532,7 +1534,7 @@ function ensurePptTemplateBuilderState(){
       pendingPptMode:'newTemplate',
       pendingImageMode:'',
       selectionTokens:['slot:projectName'],
-      canvasFocused:false,
+      canvasFocused:true,
       pendingKeyboardMove:false
     };
     recordPptTemplateHistory(true);
@@ -1719,10 +1721,7 @@ function focusPptTemplateCanvas(){
 }
 function isPptTemplateCanvasFocused(){
   const builder = ensurePptTemplateBuilderState();
-  if(!builder.canvasFocused) return false;
-  const frame = document.getElementById('pptBuilderPreviewFrame');
-  if(!frame) return false;
-  return document.activeElement === frame || frame.contains(document.activeElement);
+  return !!builder.canvasFocused;
 }
 function isPptTemplateTypingTarget(target){
   if(!target) return false;
@@ -1940,6 +1939,12 @@ function syncPptTemplateBuilderUI(){
 function bindPptTemplateShortcuts(){
   if(S._pptShortcutBound) return;
   S._pptShortcutBound = true;
+  document.addEventListener('pointerdown', e => {
+    if(S.activePanel !== 'pptTemplate') return;
+    const builder = ensurePptTemplateBuilderState();
+    const inside = !!(e.target && e.target.closest && e.target.closest('#pptBuilderPreviewFrame'));
+    builder.canvasFocused = inside;
+  }, true);
   document.addEventListener('keydown', e => {
     if(S.activePanel !== 'pptTemplate') return;
     if(isPptTemplateTypingTarget(e.target)) return;
