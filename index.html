@@ -1248,6 +1248,13 @@ function pptCssColor(value, fallback='#FFFFFF'){
   return raw.startsWith('#') ? raw : `#${raw || String(fallback).replace('#','')}`;
 }
 function pptColor(value, fallback='FFFFFF'){ return pptCssColor(value, `#${fallback}`).replace('#','').toUpperCase(); }
+function pptOpacity(value, fallback=100){
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : fallback;
+}
+function pptTransparencyFromOpacity(value, fallback=100){
+  return Math.max(0, Math.min(100, 100 - pptOpacity(value, fallback)));
+}
 function pptScaleX(x){ return `${pptNum(x,0) * 10}%`; }
 function pptScaleY(y, slideH){ return `${pptNum(y,0) / (pptNum(slideH,6.25) || 6.25) * 100}%`; }
 function pptScaleW(w){ return `${pptNum(w,0) * 10}%`; }
@@ -1759,7 +1766,7 @@ function buildPptTemplatePreviewElement(item, context, builder, scale, interacti
   const isInteractive = interactive !== false;
   const ratio = Number(scale || 1);
   const slideH = getPptTemplateSlideHeight(builder.template);
-  const commonStyle = `left:${pptScaleX(item.x)};top:${pptScaleY(item.y,slideH)};width:${pptScaleW(item.w)};height:${pptScaleH(item.h,slideH)};`;
+  const commonStyle = `left:${pptScaleX(item.x)};top:${pptScaleY(item.y,slideH)};width:${pptScaleW(item.w)};height:${pptScaleH(item.h,slideH)};opacity:${(pptOpacity(item.opacity,100)/100).toFixed(2)};`;
   const selected = isPptTemplateElementSelected(item.kind, item.id) ? ' selected' : '';
   const locked = item.locked && !isInteractive ? ' locked' : '';
   const down = isInteractive ? `onmousedown="startPptTemplateDrag(event,'${item.kind}','${item.id}')" ontouchstart="startPptTemplateDrag(event,'${item.kind}','${item.id}')"` : '';
@@ -1904,6 +1911,7 @@ function buildPptTemplatePropertyMarkup(selected){
         <div><label class="field-label">Y</label><input type="number" step="0.01" value="${pptNum(selected.y,0)}" oninput="updatePptTemplateElementProp('y',this.value)"></div>
         <div><label class="field-label">Width</label><input type="number" step="0.01" value="${pptNum(selected.w,1)}" oninput="updatePptTemplateElementProp('w',this.value)"></div>
         <div><label class="field-label">Height</label><input type="number" step="0.01" value="${pptNum(selected.h,1)}" oninput="updatePptTemplateElementProp('h',this.value)"></div>
+        <div><label class="field-label">Opacity (%)</label><input type="number" min="0" max="100" step="1" value="${pptOpacity(selected.opacity,100)}" oninput="updatePptTemplateElementProp('opacity',this.value)"></div>
       </div>
       ${selected.type === 'text' ? `
       <div class="ppt-prop-grid">
@@ -2097,7 +2105,9 @@ function updatePptTemplateSlideColor(value){
 function updatePptTemplateElementProp(prop, value){
   const selected = getPptTemplateSelectedElement();
   if(!selected) return;
-  selected[prop] = ['x','y','w','h','fontSize','lineWidth'].includes(prop) ? pptNum(value, selected[prop] || 0) : value;
+  selected[prop] = ['x','y','w','h','fontSize','lineWidth'].includes(prop)
+    ? pptNum(value, selected[prop] || 0)
+    : (prop === 'opacity' ? pptOpacity(value, selected.opacity || 100) : value);
   recordPptTemplateHistory();
   renderPptBuilderPreview();
 }
@@ -7068,8 +7078,8 @@ function applyPptTemplateElement(sl, element, context, template){
   if(element.type === 'shape'){
     sl.addShape(shapeType,{
       x:pptNum(element.x,0),y:pptNum(element.y,0),w:pptNum(element.w,1),h:pptNum(element.h,1),
-      fill:{color:pptColor(element.fill,'FFFFFF')},
-      line:{color:pptColor(element.lineColor,'CCCCCC'),pt:pptNum(element.lineWidth,1)}
+      fill:{color:pptColor(element.fill,'FFFFFF'),transparency:pptTransparencyFromOpacity(element.opacity,100)},
+      line:{color:pptColor(element.lineColor,'CCCCCC'),pt:pptNum(element.lineWidth,1),transparency:pptTransparencyFromOpacity(element.opacity,100)}
     });
     return;
   }
@@ -7081,6 +7091,7 @@ function applyPptTemplateElement(sl, element, context, template){
       bold:String(element.fontWeight || '700') !== '400',
       italic:!!element.italic,
       color:pptColor(element.color,'000000'),
+      transparency:pptTransparencyFromOpacity(element.opacity,100),
       align:element.align || 'left',
       valign:'top',
       breakLine:true,
@@ -7093,16 +7104,16 @@ function applyPptTemplateElement(sl, element, context, template){
       ? (element.imageData || template.logoData || S.logob64 || '')
       : (element.type === 'dynamicImage' ? (context[element.dynamicKey] || '') : (element.imageData || ''));
     if(data){
-      sl.addImage({data,x:pptNum(element.x,0),y:pptNum(element.y,0),w:pptNum(element.w,1),h:pptNum(element.h,1),sizing:{type:element.fit || 'contain',w:pptNum(element.w,1),h:pptNum(element.h,1)}});
+      sl.addImage({data,x:pptNum(element.x,0),y:pptNum(element.y,0),w:pptNum(element.w,1),h:pptNum(element.h,1),transparency:pptTransparencyFromOpacity(element.opacity,100),sizing:{type:element.fit || 'contain',w:pptNum(element.w,1),h:pptNum(element.h,1)}});
     }else{
       sl.addShape(rectShape,{
         x:pptNum(element.x,0),y:pptNum(element.y,0),w:pptNum(element.w,1),h:pptNum(element.h,1),
-        fill:{color:'F5F5F5'},
-        line:{color:pptColor(element.lineColor,'CCCCCC'),pt:pptNum(element.lineWidth,1)}
+        fill:{color:'F5F5F5',transparency:pptTransparencyFromOpacity(element.opacity,100)},
+        line:{color:pptColor(element.lineColor,'CCCCCC'),pt:pptNum(element.lineWidth,1),transparency:pptTransparencyFromOpacity(element.opacity,100)}
       });
       sl.addText(element.type === 'logo' ? '[ Logo ]' : '[ Image ]',{
         x:pptNum(element.x,0),y:pptNum(element.y,0) + (pptNum(element.h,1) / 2) - 0.15,w:pptNum(element.w,1),h:0.3,
-        fontSize:10,fontFace:'Segoe UI',bold:true,color:'B8B8B8',align:'center'
+        fontSize:10,fontFace:'Segoe UI',bold:true,color:'B8B8B8',transparency:pptTransparencyFromOpacity(element.opacity,100),align:'center'
       });
     }
   }
