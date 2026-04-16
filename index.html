@@ -1275,6 +1275,309 @@ function buildPptFontField(selected){
     .map(font => `<option value="${font}" ${font===current?'selected':''}>${font}</option>`).join('');
   return `<div><label class="field-label">Font Family</label><select onchange="updatePptTemplateElementProp('fontFamily',this.value)">${optionMarkup}</select><input type="text" value="${current}" oninput="updatePptTemplateElementProp('fontFamily',this.value)" placeholder="Add custom font" style="margin-top:8px"></div>`;
 }
+function readFileAsArrayBuffer(file, callback){
+  const reader = new FileReader();
+  reader.onload = () => callback(reader.result);
+  reader.readAsArrayBuffer(file);
+}
+function pptxNodeChildren(node, localName){
+  return Array.from((node && node.childNodes) || []).filter(child => child && child.nodeType === 1 && (!localName || child.localName === localName));
+}
+function pptxNodeChild(node, localName){
+  return pptxNodeChildren(node, localName)[0] || null;
+}
+function pptxNodeDesc(node, localName){
+  return Array.from((node && node.getElementsByTagNameNS) ? node.getElementsByTagNameNS('*', localName) : []);
+}
+function pptxAttr(node, name, fallback=''){
+  if(!node) return fallback;
+  return node.getAttribute(name) || node.getAttribute(`r:${name}`) || node.getAttribute(`a:${name}`) || fallback;
+}
+function pptxText(node, localName='t'){
+  return pptxNodeDesc(node, localName).map(el => el.textContent || '').join('');
+}
+function pptxNormalizePath(basePath, target){
+  if(!target) return '';
+  const cleaned = String(target).replace(/\\/g,'/');
+  if(cleaned.startsWith('/')) return cleaned.replace(/^\//,'');
+  const baseParts = String(basePath || '').replace(/\\/g,'/').split('/').slice(0,-1);
+  cleaned.split('/').forEach(part => {
+    if(!part || part === '.') return;
+    if(part === '..') baseParts.pop();
+    else baseParts.push(part);
+  });
+  return baseParts.join('/');
+}
+function pptxMimeFromPath(path){
+  const ext = String(path || '').split('.').pop().toLowerCase();
+  if(ext === 'png') return 'image/png';
+  if(ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if(ext === 'gif') return 'image/gif';
+  if(ext === 'svg') return 'image/svg+xml';
+  if(ext === 'bmp') return 'image/bmp';
+  if(ext === 'webp') return 'image/webp';
+  return 'application/octet-stream';
+}
+function pptxShapeType(prst){
+  const key = String(prst || '').toLowerCase();
+  if(key.includes('round')) return 'roundRect';
+  if(key.includes('ellipse') || key.includes('oval')) return 'oval';
+  if(key.includes('triangle')) return 'triangle';
+  if(key.includes('diamond')) return 'diamond';
+  if(key.includes('line')) return 'line';
+  return 'rect';
+}
+function pptxThemeColorMap(themeDoc){
+  const colors = {};
+  const scheme = pptxNodeDesc(themeDoc, 'clrScheme')[0];
+  if(!scheme) return colors;
+  pptxNodeChildren(scheme).forEach(child => {
+    const srgb = pptxNodeDesc(child, 'srgbClr')[0];
+    const sys = pptxNodeDesc(child, 'sysClr')[0];
+    const hex = (srgb && pptxAttr(srgb,'val')) || (sys && (pptxAttr(sys,'lastClr') || pptxAttr(sys,'val'))) || '';
+    if(hex) colors[child.localName] = normalizePptTemplateColorValue(hex, '#FFFFFF');
+  });
+  return colors;
+}
+function pptxResolveColor(node, themeMap, fallback='#FFFFFF'){
+  if(!node) return normalizePptTemplateColorValue(fallback, fallback);
+  const srgb = pptxNodeDesc(node,'srgbClr')[0];
+  if(srgb && pptxAttr(srgb,'val')) return normalizePptTemplateColorValue(pptxAttr(srgb,'val'), fallback);
+  const scheme = pptxNodeDesc(node,'schemeClr')[0];
+  if(scheme){
+    const key = pptxAttr(scheme,'val');
+    if(key && themeMap[key]) return normalizePptTemplateColorValue(themeMap[key], fallback);
+  }
+  const sys = pptxNodeDesc(node,'sysClr')[0];
+  if(sys && (pptxAttr(sys,'lastClr') || pptxAttr(sys,'val'))) return normalizePptTemplateColorValue(pptxAttr(sys,'lastClr') || pptxAttr(sys,'val'), fallback);
+  return normalizePptTemplateColorValue(fallback, fallback);
+}
+function pptxExtractSolidFillColor(node, themeMap, fallback='#FFFFFF'){
+  return pptxResolveColor(pptxNodeDesc(node,'solidFill')[0], themeMap, fallback);
+}
+function pptxExtractOpacity(node, fallback=100){
+  const alphaNode = pptxNodeDesc(node,'alpha')[0];
+  if(!alphaNode) return fallback;
+  const raw = Number(pptxAttr(alphaNode,'val','100000'));
+  return Number.isFinite(raw) ? Math.max(0, Math.min(100, raw / 1000)) : fallback;
+}
+function pptxTextStyleFromShape(shapeNode, themeMap){
+  const paragraphs = pptxNodeDesc(shapeNode,'p');
+  const lines = [];
+  let styleSource = null;
+  let align = 'left';
+  paragraphs.forEach(p => {
+    const text = pptxText(p).trim();
+    if(text) lines.push(text);
+    if(!styleSource){
+      styleSource = pptxNodeDesc(p,'rPr')[0] || pptxNodeDesc(p,'defRPr')[0] || null;
+      const pPr = pptxNodeDesc(p,'pPr')[0];
+      const algn = pPr ? pptxAttr(pPr,'algn') : '';
+      if(algn === 'ctr') align = 'center';
+      else if(algn === 'r') align = 'right';
+    }
+  });
+  if(!lines.length) return null;
+  const latin = styleSource ? pptxNodeDesc(styleSource,'latin')[0] : null;
+  return {
+    text:lines.join('\n'),
+    fontSize:styleSource && pptxAttr(styleSource,'sz') ? +(Number(pptxAttr(styleSource,'sz')) / 100).toFixed(2) : 14,
+    fontFamily:(latin && pptxAttr(latin,'typeface')) || 'Segoe UI',
+    fontWeight:styleSource && (pptxAttr(styleSource,'b') === '1' || pptxAttr(styleSource,'b') === 'true') ? '700' : '400',
+    italic:!!(styleSource && (pptxAttr(styleSource,'i') === '1' || pptxAttr(styleSource,'i') === 'true')),
+    color:pptxResolveColor(styleSource, themeMap, '#1A1A1A'),
+    opacity:pptxExtractOpacity(styleSource, 100),
+    align
+  };
+}
+function pptxTransformToTemplate(node, sourceCx, sourceCy, targetH){
+  const xfrm = pptxNodeDesc(node,'xfrm')[0];
+  const off = xfrm ? pptxNodeDesc(xfrm,'off')[0] : null;
+  const ext = xfrm ? pptxNodeDesc(xfrm,'ext')[0] : null;
+  const x = Number(pptxAttr(off,'x','0')) || 0;
+  const y = Number(pptxAttr(off,'y','0')) || 0;
+  const cx = Number(pptxAttr(ext,'cx','0')) || 0;
+  const cy = Number(pptxAttr(ext,'cy','0')) || 0;
+  return {
+    x:+((x / Math.max(1, sourceCx)) * 10).toFixed(4),
+    y:+((y / Math.max(1, sourceCy)) * targetH).toFixed(4),
+    w:+((cx / Math.max(1, sourceCx)) * 10).toFixed(4),
+    h:+((cy / Math.max(1, sourceCy)) * targetH).toFixed(4)
+  };
+}
+function pptxParseRelationships(relsDoc, basePath){
+  const rels = {};
+  pptxNodeDesc(relsDoc, 'Relationship').forEach(rel => {
+    const id = pptxAttr(rel,'Id');
+    const target = pptxNormalizePath(basePath, pptxAttr(rel,'Target'));
+    if(id && target) rels[id] = {target, type:pptxAttr(rel,'Type')};
+  });
+  return rels;
+}
+async function pptxMediaToDataUrl(zip, path){
+  const file = zip.file(path);
+  if(!file) return '';
+  const base64 = await file.async('base64');
+  return `data:${pptxMimeFromPath(path)};base64,${base64}`;
+}
+function makeImportedPptTemplate(layout){
+  const template = makeBlankPptTemplate();
+  template.templateType = 'imported';
+  template.layout = layout || 'LAYOUT_16x10';
+  PPT_TEMPLATE_SLIDES.forEach(key => {
+    template.slides[key] = {backgroundColor:'#FFFFFF',slots:{},extras:[]};
+  });
+  return template;
+}
+async function pptxLoadXml(zip, path){
+  const file = zip.file(path);
+  if(!file) return null;
+  const text = await file.async('text');
+  return new DOMParser().parseFromString(text, 'application/xml');
+}
+function pptxBackgroundColor(slideDoc, themeMap){
+  const bgPr = pptxNodeDesc(slideDoc, 'bgPr')[0];
+  return bgPr ? pptxExtractSolidFillColor(bgPr, themeMap, '#FFFFFF') : '#FFFFFF';
+}
+function pptxImportShapeElements(shapeNode, sourceCx, sourceCy, targetH, themeMap, slideKey, orderIndex){
+  const geo = pptxNodeDesc(shapeNode,'prstGeom')[0];
+  const pos = pptxTransformToTemplate(shapeNode, sourceCx, sourceCy, targetH);
+  const spPr = pptxNodeDesc(shapeNode,'spPr')[0] || shapeNode;
+  const txBox = pptxAttr(shapeNode,'txBox') === '1';
+  const textStyle = pptxTextStyleFromShape(shapeNode, themeMap);
+  const fillColor = pptxExtractSolidFillColor(spPr, themeMap, txBox ? '#FFFFFF' : '#F3F3F3');
+  const lineNode = pptxNodeDesc(spPr,'ln')[0];
+  const lineColor = lineNode ? pptxExtractSolidFillColor(lineNode, themeMap, '#CCCCCC') : '#CCCCCC';
+  const lineWidth = lineNode && pptxAttr(lineNode,'w') ? +((Number(pptxAttr(lineNode,'w')) || 0) / 12700).toFixed(2) : 1;
+  const opacity = Math.min(pptxExtractOpacity(pptxNodeDesc(spPr,'solidFill')[0], 100), pptxExtractOpacity(lineNode, 100));
+  const items = [];
+  const hasVisualShape = !txBox || !!pptxNodeDesc(spPr,'solidFill')[0] || !!lineNode;
+  if(hasVisualShape){
+    items.push({
+      id:`imp_${slideKey}_shape_${orderIndex}`,
+      kind:'extra',
+      type:'shape',
+      shape:pptxShapeType(geo ? pptxAttr(geo,'prst') : 'rect'),
+      ...pos,
+      fill:fillColor,
+      lineColor,
+      lineWidth:lineWidth || 1,
+      opacity
+    });
+  }
+  if(textStyle){
+    items.push({
+      id:`imp_${slideKey}_text_${orderIndex}`,
+      kind:'extra',
+      type:'text',
+      ...pos,
+      text:textStyle.text,
+      fontSize:textStyle.fontSize,
+      fontFamily:textStyle.fontFamily,
+      fontWeight:textStyle.fontWeight,
+      italic:textStyle.italic,
+      color:textStyle.color,
+      opacity:textStyle.opacity,
+      align:textStyle.align
+    });
+  }
+  return items;
+}
+async function pptxImportPictureElement(picNode, relsMap, zip, sourceCx, sourceCy, targetH, slideKey, orderIndex){
+  const blip = pptxNodeDesc(picNode,'blip')[0];
+  const relId = blip ? (pptxAttr(blip,'embed') || pptxAttr(blip,'link')) : '';
+  const rel = relId ? relsMap[relId] : null;
+  const dataUrl = rel ? await pptxMediaToDataUrl(zip, rel.target) : '';
+  const pos = pptxTransformToTemplate(picNode, sourceCx, sourceCy, targetH);
+  const spPr = pptxNodeDesc(picNode,'spPr')[0] || picNode;
+  const lineNode = pptxNodeDesc(spPr,'ln')[0];
+  return {
+    id:`imp_${slideKey}_img_${orderIndex}`,
+    kind:'extra',
+    type:'staticImage',
+    imageData:dataUrl,
+    ...pos,
+    fit:'contain',
+    lineColor:lineNode ? pptxExtractSolidFillColor(lineNode, {}, '#CCCCCC') : '#CCCCCC',
+    lineWidth:lineNode && pptxAttr(lineNode,'w') ? +((Number(pptxAttr(lineNode,'w')) || 0) / 12700).toFixed(2) : 1,
+    opacity:pptxExtractOpacity(blip, 100)
+  };
+}
+function pptxImportUnsupportedElement(node, sourceCx, sourceCy, targetH, slideKey, orderIndex){
+  const pos = pptxTransformToTemplate(node, sourceCx, sourceCy, targetH);
+  return {
+    id:`imp_${slideKey}_unsupported_${orderIndex}`,
+    kind:'extra',
+    type:'text',
+    ...pos,
+    text:`[Unsupported ${node.localName || 'element'}]`,
+    fontSize:11,
+    fontFamily:'Segoe UI',
+    fontWeight:'700',
+    color:'#B8B8B8',
+    align:'center'
+  };
+}
+async function importPptxTemplateFromBuffer(buffer, sourceName, templateName){
+  if(!window.JSZip) throw new Error('JSZip is not available for PPTX import.');
+  const zip = await JSZip.loadAsync(buffer);
+  const presentationDoc = await pptxLoadXml(zip, 'ppt/presentation.xml');
+  if(!presentationDoc) throw new Error('Invalid PPTX: missing presentation.xml');
+  const presentationRelsDoc = await pptxLoadXml(zip, 'ppt/_rels/presentation.xml.rels');
+  const relsMap = presentationRelsDoc ? pptxParseRelationships(presentationRelsDoc, 'ppt/presentation.xml') : {};
+  const sldSize = pptxNodeDesc(presentationDoc,'sldSz')[0];
+  const sourceCx = Number(pptxAttr(sldSize,'cx','9144000')) || 9144000;
+  const sourceCy = Number(pptxAttr(sldSize,'cy','5715000')) || 5715000;
+  const sourceRatio = sourceCx / Math.max(1, sourceCy);
+  const layout = Math.abs(sourceRatio - (16/9)) < Math.abs(sourceRatio - (16/10)) ? 'LAYOUT_WIDE' : 'LAYOUT_16x10';
+  const targetH = layout === 'LAYOUT_WIDE' ? 5.625 : 6.25;
+  const themeDoc = await pptxLoadXml(zip, 'ppt/theme/theme1.xml');
+  const themeMap = pptxThemeColorMap(themeDoc);
+  const slideIds = pptxNodeDesc(presentationDoc, 'sldId');
+  const orderedTargets = slideIds.map(node => {
+    const relId = node.getAttribute('r:id') || pptxAttr(node,'id');
+    return relsMap[relId] ? relsMap[relId].target : '';
+  }).filter(Boolean);
+  if(!orderedTargets.length) throw new Error('No slides found in PPTX.');
+  const template = makeImportedPptTemplate(layout);
+  template.companyName = templateName || sourceName.replace(/\.(ppt|pptx)$/i,'') || 'Imported Template';
+  template.sourcePptName = sourceName || 'uploaded-template.pptx';
+  let importedCount = 0;
+  let unsupportedCount = 0;
+  for(let slideIndex = 0; slideIndex < Math.min(PPT_TEMPLATE_SLIDES.length, orderedTargets.length); slideIndex += 1){
+    const slideKey = PPT_TEMPLATE_SLIDES[slideIndex];
+    const slidePath = orderedTargets[slideIndex];
+    const slideDoc = await pptxLoadXml(zip, slidePath);
+    if(!slideDoc) continue;
+    const slideRelsDoc = await pptxLoadXml(zip, slidePath.replace(/([^/]+)$/,'_rels/$1.rels'));
+    const slideRels = slideRelsDoc ? pptxParseRelationships(slideRelsDoc, slidePath) : {};
+    const slide = template.slides[slideKey];
+    slide.backgroundColor = pptxBackgroundColor(slideDoc, themeMap);
+    slide.slots = {};
+    slide.extras = [];
+    const spTree = pptxNodeDesc(slideDoc,'spTree')[0];
+    const nodes = pptxNodeChildren(spTree);
+    for(let orderIndex = 0; orderIndex < nodes.length; orderIndex += 1){
+      const node = nodes[orderIndex];
+      if(!node || ['nvGrpSpPr','grpSpPr'].includes(node.localName)) continue;
+      if(node.localName === 'sp'){
+        const items = pptxImportShapeElements(node, sourceCx, sourceCy, targetH, themeMap, slideKey, orderIndex);
+        slide.extras.push(...items);
+        importedCount += items.length;
+        continue;
+      }
+      if(node.localName === 'pic'){
+        const item = await pptxImportPictureElement(node, slideRels, zip, sourceCx, sourceCy, targetH, slideKey, orderIndex);
+        slide.extras.push(item);
+        importedCount += 1;
+        continue;
+      }
+      slide.extras.push(pptxImportUnsupportedElement(node, sourceCx, sourceCy, targetH, slideKey, orderIndex));
+      unsupportedCount += 1;
+    }
+  }
+  return {template, importedCount, unsupportedCount, sourceSlides:orderedTargets.length};
+}
 function getPptTemplateSlideHeight(template){
   return template && template.layout === 'LAYOUT_WIDE' ? 5.625 : 6.25;
 }
@@ -2181,32 +2484,40 @@ function handlePptTemplateLogoUpload(event){
     syncPptTemplateBuilderUI();
   });
 }
-function handlePptTemplatePptUpload(event){
+async function handlePptTemplatePptUpload(event){
   const file = event.target.files && event.target.files[0];
   if(!file) return;
-  readFileAsDataUrl(file, data => {
+  const sourceName = file.name || 'uploaded-template.pptx';
+  const status = document.getElementById('pptTemplateStatus');
+  if(!/\.pptx$/i.test(sourceName)){
+    if(status) status.innerText = 'Only .pptx import is supported in the current editable importer. Legacy .ppt is not supported yet.';
+    alert('Only .pptx import is supported for editable template import right now.');
+    return;
+  }
+  try{
+    if(status) status.innerText = 'Importing PPTX slides into editable template objects...';
+    const buffer = file.arrayBuffer ? await file.arrayBuffer() : await new Promise(resolve => readFileAsArrayBuffer(file, resolve));
+    const defaultName = sourceName.replace(/\.pptx$/i,'') || 'Imported PPT Template';
+    const {template, importedCount, unsupportedCount, sourceSlides} = await importPptxTemplateFromBuffer(buffer, sourceName, defaultName);
     const builder = ensurePptTemplateBuilderState();
-    const sourceName = file.name || 'uploaded-template.pptx';
-    const sourceData = data || '';
     if(builder.pendingPptMode === 'newTemplate'){
-      const defaultName = sourceName.replace(/\.(ppt|pptx)$/i,'') || 'Imported PPT Template';
       const promptedName = prompt('Enter template name', defaultName);
       if(!promptedName) return;
-      const blank = makeBlankPptTemplate();
-      blank.sourcePptName = sourceName;
-      blank.sourcePptData = sourceData;
-      const record = {id:`tpl_${Date.now()}`,name:promptedName.trim(),template:blank};
+      const record = {id:`tpl_${Date.now()}`,name:promptedName.trim(),template};
       savePptTemplateStoreRecord(record);
       setActivePptTemplateBuilderTemplate(record.id);
     }else{
-      builder.template.sourcePptName = sourceName;
-      builder.template.sourcePptData = sourceData;
-      recordPptTemplateHistory();
+      builder.template = template;
+      builder.templateName = defaultName;
+      builder.currentTemplateId = builder.currentTemplateId || 'apexiz';
+      recordPptTemplateHistory(true);
     }
-    const status = document.getElementById('pptTemplateStatus');
-    if(status) status.innerText = 'PPT uploaded. Use Dynamic Text / Dynamic Image tools to map live data onto your custom layout.';
+    if(status) status.innerText = `Imported ${importedCount} editable element(s) from ${Math.min(sourceSlides, PPT_TEMPLATE_SLIDES.length)} slide(s).${sourceSlides > PPT_TEMPLATE_SLIDES.length ? ` Only the first ${PPT_TEMPLATE_SLIDES.length} slides were mapped into the current builder.` : ''}${unsupportedCount ? ` ${unsupportedCount} unsupported element(s) were added as placeholders.` : ''}`;
     syncPptTemplateBuilderUI();
-  });
+  }catch(err){
+    if(status) status.innerText = `PPTX import failed: ${err.message || err}`;
+    alert('PPTX import failed: ' + (err.message || err));
+  }
 }
 function handlePptTemplateElementImageUpload(event){
   const file = event.target.files && event.target.files[0];
