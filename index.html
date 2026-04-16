@@ -1291,7 +1291,11 @@ function pptxNodeDesc(node, localName){
 }
 function pptxAttr(node, name, fallback=''){
   if(!node) return fallback;
-  return node.getAttribute(name) || node.getAttribute(`r:${name}`) || node.getAttribute(`a:${name}`) || fallback;
+  const direct = node.getAttribute(name) || node.getAttribute(`r:${name}`) || node.getAttribute(`a:${name}`);
+  if(direct) return direct;
+  const attrs = Array.from(node.attributes || []);
+  const match = attrs.find(attr => attr && (attr.name === name || attr.name.endsWith(`:${name}`) || attr.localName === name));
+  return match ? match.value : fallback;
 }
 function pptxText(node, localName='t'){
   return pptxNodeDesc(node, localName).map(el => el.textContent || '').join('');
@@ -2512,7 +2516,9 @@ async function handlePptTemplatePptUpload(event){
       builder.currentTemplateId = builder.currentTemplateId || 'apexiz';
       recordPptTemplateHistory(true);
     }
-    if(status) status.innerText = `Imported ${importedCount} editable element(s) from ${Math.min(sourceSlides, PPT_TEMPLATE_SLIDES.length)} slide(s).${sourceSlides > PPT_TEMPLATE_SLIDES.length ? ` Only the first ${PPT_TEMPLATE_SLIDES.length} slides were mapped into the current builder.` : ''}${unsupportedCount ? ` ${unsupportedCount} unsupported element(s) were added as placeholders.` : ''}`;
+    if(status) status.innerText = importedCount > 0 || unsupportedCount > 0
+      ? `Imported ${importedCount} editable element(s) from ${Math.min(sourceSlides, PPT_TEMPLATE_SLIDES.length)} slide(s).${sourceSlides > PPT_TEMPLATE_SLIDES.length ? ` Only the first ${PPT_TEMPLATE_SLIDES.length} slides were mapped into the current builder.` : ''}${unsupportedCount ? ` ${unsupportedCount} unsupported element(s) were added as placeholders.` : ''}`
+      : 'PPTX file loaded, but no supported visible slide elements were extracted. This usually means the source relies on unsupported grouped/chart/table/master-driven content in the current importer pass.';
     syncPptTemplateBuilderUI();
   }catch(err){
     if(status) status.innerText = `PPTX import failed: ${err.message || err}`;
