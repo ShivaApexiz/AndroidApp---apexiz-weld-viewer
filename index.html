@@ -1530,7 +1530,10 @@ function ensurePptTemplateBuilderState(){
       dynamicTextKey:'projectName',
       dynamicImageKey:'partImage',
       pendingPptMode:'newTemplate',
-      pendingImageMode:''
+      pendingImageMode:'',
+      selectionTokens:['slot:projectName'],
+      canvasFocused:false,
+      pendingKeyboardMove:false
     };
     recordPptTemplateHistory(true);
   }
@@ -1561,6 +1564,7 @@ function redoPptTemplateHistory(){
 }
 function getPptTemplateSelectedElement(){
   const builder = ensurePptTemplateBuilderState();
+  normalizePptTemplateSelection();
   if(builder.selectedKind === 'extra'){
     return builder.template.slides[builder.slideKey].extras.find(item => item.id === builder.selectedId) || null;
   }
@@ -1629,15 +1633,135 @@ function getPptTemplateElements(slideKey){
     ...builder.template.slides[slideKey].extras.map(item => ({...item, kind:'extra'}))
   ];
 }
+function makePptTemplateSelectionToken(kind,id){
+  return `${kind}:${id}`;
+}
+function parsePptTemplateSelectionToken(token){
+  if(!token || token.indexOf(':') < 0) return null;
+  const i = token.indexOf(':');
+  return {kind:token.slice(0,i), id:token.slice(i+1)};
+}
+function getPptTemplateElementByRef(kind,id){
+  const builder = ensurePptTemplateBuilderState();
+  const slide = builder.template.slides[builder.slideKey];
+  if(!slide) return null;
+  if(kind === 'extra') return slide.extras.find(item => item.id === id) || null;
+  return slide.slots[id] || null;
+}
+function normalizePptTemplateSelection(){
+  const builder = ensurePptTemplateBuilderState();
+  const valid = [];
+  (builder.selectionTokens || []).forEach(token => {
+    const parsed = parsePptTemplateSelectionToken(token);
+    if(!parsed) return;
+    if(getPptTemplateElementByRef(parsed.kind, parsed.id)) valid.push(token);
+  });
+  const activeToken = makePptTemplateSelectionToken(builder.selectedKind || 'slot', builder.selectedId || '');
+  const hasActive = parsePptTemplateSelectionToken(activeToken) && getPptTemplateElementByRef(builder.selectedKind, builder.selectedId);
+  if(hasActive && !valid.includes(activeToken)) valid.push(activeToken);
+  if(!hasActive && valid.length){
+    const parsed = parsePptTemplateSelectionToken(valid[valid.length - 1]);
+    builder.selectedKind = parsed.kind;
+    builder.selectedId = parsed.id;
+  }
+  if(!valid.length && hasActive) valid.push(activeToken);
+  builder.selectionTokens = valid;
+}
+function isPptTemplateElementSelected(kind,id){
+  const builder = ensurePptTemplateBuilderState();
+  normalizePptTemplateSelection();
+  return builder.selectionTokens.includes(makePptTemplateSelectionToken(kind,id));
+}
+function setPptTemplateSelection(kind, id, options){
+  const builder = ensurePptTemplateBuilderState();
+  const opts = options || {};
+  const token = makePptTemplateSelectionToken(kind,id);
+  const exists = isPptTemplateElementSelected(kind,id);
+  if(opts.toggle){
+    if(exists){
+      builder.selectionTokens = builder.selectionTokens.filter(item => item !== token);
+      if(builder.selectionTokens.length === 0){
+        builder.selectionTokens = [token];
+      }else{
+        const next = parsePptTemplateSelectionToken(builder.selectionTokens[builder.selectionTokens.length - 1]);
+        if(next){ builder.selectedKind = next.kind; builder.selectedId = next.id; }
+      }
+    }else{
+      builder.selectionTokens.push(token);
+      builder.selectedKind = kind;
+      builder.selectedId = id;
+    }
+  }else if(opts.additive){
+    if(!exists) builder.selectionTokens.push(token);
+    builder.selectedKind = kind;
+    builder.selectedId = id;
+  }else{
+    builder.selectionTokens = [token];
+    builder.selectedKind = kind;
+    builder.selectedId = id;
+  }
+  normalizePptTemplateSelection();
+}
+function getPptTemplateSelectedRefs(){
+  const builder = ensurePptTemplateBuilderState();
+  normalizePptTemplateSelection();
+  return (builder.selectionTokens || []).map(parsePptTemplateSelectionToken).filter(Boolean);
+}
+function getPptTemplateSelectedElements(){
+  return getPptTemplateSelectedRefs()
+    .map(ref => ({...ref, element:getPptTemplateElementByRef(ref.kind, ref.id)}))
+    .filter(item => item.element);
+}
+function focusPptTemplateCanvas(){
+  const frame = document.getElementById('pptBuilderPreviewFrame');
+  if(!frame) return;
+  frame.focus({preventScroll:true});
+}
+function isPptTemplateCanvasFocused(){
+  const builder = ensurePptTemplateBuilderState();
+  if(!builder.canvasFocused) return false;
+  const frame = document.getElementById('pptBuilderPreviewFrame');
+  if(!frame) return false;
+  return document.activeElement === frame || frame.contains(document.activeElement);
+}
+function isPptTemplateTypingTarget(target){
+  if(!target) return false;
+  const tag = String(target.tagName || '').toLowerCase();
+  return target.isContentEditable || ['input','textarea','select'].includes(tag);
+}
+function selectAllPptTemplateElements(){
+  const builder = ensurePptTemplateBuilderState();
+  const tokens = getPptTemplateElements(builder.slideKey)
+    .filter(item => !item.locked)
+    .map(item => makePptTemplateSelectionToken(item.kind || 'slot', item.id));
+  if(!tokens.length) return;
+  builder.selectionTokens = tokens;
+  const last = parsePptTemplateSelectionToken(tokens[tokens.length - 1]);
+  if(last){ builder.selectedKind = last.kind; builder.selectedId = last.id; }
+  syncPptTemplateBuilderUI();
+}
+function cyclePptTemplateSelection(direction){
+  const builder = ensurePptTemplateBuilderState();
+  const all = getPptTemplateElements(builder.slideKey);
+  if(!all.length) return;
+  const currentToken = makePptTemplateSelectionToken(builder.selectedKind, builder.selectedId);
+  let idx = all.findIndex(item => makePptTemplateSelectionToken(item.kind, item.id) === currentToken);
+  if(idx < 0) idx = 0;
+  const step = direction < 0 ? -1 : 1;
+  idx = (idx + step + all.length) % all.length;
+  const next = all[idx];
+  setPptTemplateSelection(next.kind, next.id);
+  syncPptTemplateBuilderUI();
+}
 function buildPptTemplatePreviewElement(item, context, builder, scale, interactive){
   const isInteractive = interactive !== false;
   const ratio = Number(scale || 1);
   const slideH = getPptTemplateSlideHeight(builder.template);
   const commonStyle = `left:${pptScaleX(item.x)};top:${pptScaleY(item.y,slideH)};width:${pptScaleW(item.w)};height:${pptScaleH(item.h,slideH)};`;
-  const selected = builder.selectedId === item.id && builder.selectedKind === item.kind ? ' selected' : '';
+  const selected = isPptTemplateElementSelected(item.kind, item.id) ? ' selected' : '';
   const locked = item.locked ? ' locked' : '';
   const down = isInteractive ? `onmousedown="startPptTemplateDrag(event,'${item.kind}','${item.id}')" ontouchstart="startPptTemplateDrag(event,'${item.kind}','${item.id}')"` : '';
-  const click = isInteractive ? `onclick="selectPptTemplateElement('${item.kind}','${item.id}')"` : '';
+  const click = isInteractive ? `onclick="selectPptTemplateElement(event,'${item.kind}','${item.id}')"` : '';
   if(item.type === 'shape'){
     const shapeKey = String(item.shape || 'rect');
     const radius = shapeKey === 'oval' ? '999px' : (shapeKey === 'roundRect' ? '14px' : '0px');
@@ -1665,6 +1789,13 @@ function renderPptBuilderPreview(){
   frame.style.aspectRatio = builder.template.layout === 'LAYOUT_WIDE' ? '16 / 9' : '16 / 10';
   const scale = Math.max(frame.clientWidth, 1) / 960;
   frame.innerHTML = `<div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}"><div class="ppt-preview-grid"></div>${elements.map(item => buildPptTemplatePreviewElement(item, context, builder, scale, true)).join('')}</div>`;
+  frame.setAttribute('tabindex','0');
+  if(frame.dataset.focusBound !== '1'){
+    frame.dataset.focusBound = '1';
+    frame.addEventListener('focus', () => { ensurePptTemplateBuilderState().canvasFocused = true; });
+    frame.addEventListener('blur', () => { ensurePptTemplateBuilderState().canvasFocused = false; });
+    frame.addEventListener('pointerdown', () => { ensurePptTemplateBuilderState().canvasFocused = true; focusPptTemplateCanvas(); });
+  }
 }
 function renderPptBuilderSidebar(){
   const builder = ensurePptTemplateBuilderState();
@@ -1743,7 +1874,7 @@ function renderPptBuilderSidebar(){
     </div>
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Quick Select Slot</div>
-      <div><select onchange="selectPptTemplateElement('slot',this.value)"><option value="">Select slot</option>${options}</select></div>
+      <div><select onchange="selectPptTemplateElement(null,'slot',this.value)"><option value="">Select slot</option>${options}</select></div>
     </div>
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Select Any Element (for overlaps)</div>
@@ -1811,14 +1942,40 @@ function bindPptTemplateShortcuts(){
   S._pptShortcutBound = true;
   document.addEventListener('keydown', e => {
     if(S.activePanel !== 'pptTemplate') return;
+    if(isPptTemplateTypingTarget(e.target)) return;
+    if(!isPptTemplateCanvasFocused()) return;
     const cmd = e.ctrlKey || e.metaKey;
-    if(!cmd) return;
     const k = String(e.key || '').toLowerCase();
-    if(k === 'c'){ e.preventDefault(); copyPptTemplateSelectedElement(); return; }
-    if(k === 'x'){ e.preventDefault(); copyPptTemplateSelectedElement(); deletePptTemplateSelectedElement(); return; }
-    if(k === 'p' || k === 'v'){ e.preventDefault(); pastePptTemplateElement(); return; }
-    if(k === 'z'){ e.preventDefault(); undoPptTemplateHistory(); return; }
-    if(k === 'y'){ e.preventDefault(); redoPptTemplateHistory(); return; }
+    if(cmd){
+      if(k === 'c'){ e.preventDefault(); copyPptTemplateSelectedElement(); return; }
+      if(k === 'x'){ e.preventDefault(); copyPptTemplateSelectedElement(); deletePptTemplateSelectedElement(); return; }
+      if(k === 'v'){ e.preventDefault(); pastePptTemplateElement(); return; }
+      if(k === 'z'){ e.preventDefault(); undoPptTemplateHistory(); return; }
+      if(k === 'y'){ e.preventDefault(); redoPptTemplateHistory(); return; }
+      if(k === 'a'){ e.preventDefault(); selectAllPptTemplateElements(); return; }
+      if(k === 'd'){ e.preventDefault(); duplicatePptTemplateSelection(); return; }
+      if(k === 'p'){ e.preventDefault(); return; }
+      return;
+    }
+    if(e.shiftKey && k === 'arrowleft'){ e.preventDefault(); movePptTemplateSelection(-0.1,0,false); return; }
+    if(e.shiftKey && k === 'arrowright'){ e.preventDefault(); movePptTemplateSelection(0.1,0,false); return; }
+    if(e.shiftKey && k === 'arrowup'){ e.preventDefault(); movePptTemplateSelection(0,-0.1,false); return; }
+    if(e.shiftKey && k === 'arrowdown'){ e.preventDefault(); movePptTemplateSelection(0,0.1,false); return; }
+    if(k === 'delete' || k === 'backspace'){ e.preventDefault(); deletePptTemplateSelectedElement(); return; }
+    if(k === 'arrowleft'){ e.preventDefault(); movePptTemplateSelection(-0.02,0,false); return; }
+    if(k === 'arrowright'){ e.preventDefault(); movePptTemplateSelection(0.02,0,false); return; }
+    if(k === 'arrowup'){ e.preventDefault(); movePptTemplateSelection(0,-0.02,false); return; }
+    if(k === 'arrowdown'){ e.preventDefault(); movePptTemplateSelection(0,0.02,false); return; }
+    if(k === 'tab'){ e.preventDefault(); cyclePptTemplateSelection(e.shiftKey ? -1 : 1); return; }
+  });
+  document.addEventListener('keyup', e => {
+    if(S.activePanel !== 'pptTemplate') return;
+    const builder = ensurePptTemplateBuilderState();
+    if(!builder.pendingKeyboardMove) return;
+    const k = String(e.key || '').toLowerCase();
+    if(!['arrowleft','arrowright','arrowup','arrowdown'].includes(k)) return;
+    builder.pendingKeyboardMove = false;
+    recordPptTemplateHistory();
   });
 }
 function bindPptTemplateNumberWheel(){
@@ -1889,19 +2046,21 @@ function setPptTemplateSlide(slideKey){
   builder.slideKey = slideKey;
   builder.selectedKind = 'slot';
   builder.selectedId = Object.keys(builder.template.slides[slideKey].slots)[0] || '';
+  builder.selectionTokens = [makePptTemplateSelectionToken(builder.selectedKind, builder.selectedId)];
   syncPptTemplateBuilderUI();
 }
-function selectPptTemplateElement(kind, id){
+function selectPptTemplateElement(event, kind, id){
   const builder = ensurePptTemplateBuilderState();
-  builder.selectedKind = kind;
-  builder.selectedId = id;
+  const toggle = !!(event && (event.ctrlKey || event.metaKey));
+  const additive = !!(event && event.shiftKey);
+  setPptTemplateSelection(kind, id, toggle ? {toggle:true} : (additive ? {additive:true} : null));
   renderPptBuilderPreview();
   renderPptBuilderSidebar();
 }
 function selectPptTemplateElementByValue(value){
   if(!value || value.indexOf(':') < 0) return;
   const [kind,id] = value.split(':');
-  selectPptTemplateElement(kind,id);
+  selectPptTemplateElement(null,kind,id);
 }
 function updatePptTemplateCompanyName(value){
   ensurePptTemplateBuilderState().template.companyName = value || 'Apexiz';
@@ -1943,6 +2102,7 @@ function addPptTemplateExtra(type){
   recordPptTemplateHistory();
   builder.selectedKind = 'extra';
   builder.selectedId = id;
+  builder.selectionTokens = [makePptTemplateSelectionToken('extra', id)];
   syncPptTemplateBuilderUI();
 }
 function addPptTemplateShape(shapeType){
@@ -1965,6 +2125,7 @@ function addPptTemplateShape(shapeType){
   recordPptTemplateHistory();
   builder.selectedKind = 'extra';
   builder.selectedId = id;
+  builder.selectionTokens = [makePptTemplateSelectionToken('extra', id)];
   syncPptTemplateBuilderUI();
 }
 function triggerPptTemplateImageUpload(mode){
@@ -2029,6 +2190,7 @@ function handlePptTemplateElementImageUpload(event){
       builder.template.slides[builder.slideKey].extras.push({id,kind:'extra',type:'staticImage',imageData:data,x:1.2,y:1.2,w:2.2,h:1.2,lineColor:'#CCCCCC',lineWidth:1});
       builder.selectedKind = 'extra';
       builder.selectedId = id;
+      builder.selectionTokens = [makePptTemplateSelectionToken('extra', id)];
     }else{
       const selected = getPptTemplateSelectedElement();
       if(selected){
@@ -2042,25 +2204,38 @@ function handlePptTemplateElementImageUpload(event){
 function deletePptTemplateSelectedElement(){
   const builder = ensurePptTemplateBuilderState();
   const slide = builder.template.slides[builder.slideKey];
-  if(builder.selectedKind === 'extra'){
-    slide.extras = slide.extras.filter(item => item.id !== builder.selectedId);
-  }else if(builder.selectedKind === 'slot'){
-    if(!slide.slots[builder.selectedId]) return;
-    delete slide.slots[builder.selectedId];
-  }else{
-    return;
-  }
+  const refs = getPptTemplateSelectedRefs();
+  if(!refs.length) return;
+  let changed = false;
+  refs.forEach(ref => {
+    const el = getPptTemplateElementByRef(ref.kind, ref.id);
+    if(!el || el.locked) return;
+    if(ref.kind === 'extra'){
+      const before = slide.extras.length;
+      slide.extras = slide.extras.filter(item => item.id !== ref.id);
+      if(slide.extras.length !== before) changed = true;
+      return;
+    }
+    if(ref.kind === 'slot' && slide.slots[ref.id]){
+      delete slide.slots[ref.id];
+      changed = true;
+    }
+  });
+  if(!changed) return;
   recordPptTemplateHistory();
   const slotKeys = Object.keys(slide.slots);
   if(slotKeys.length){
     builder.selectedKind = 'slot';
     builder.selectedId = slotKeys[0];
+    builder.selectionTokens = [makePptTemplateSelectionToken('slot', slotKeys[0])];
   }else if(slide.extras.length){
     builder.selectedKind = 'extra';
     builder.selectedId = slide.extras[0].id;
+    builder.selectionTokens = [makePptTemplateSelectionToken('extra', slide.extras[0].id)];
   }else{
     builder.selectedKind = 'slot';
     builder.selectedId = '';
+    builder.selectionTokens = [];
   }
   syncPptTemplateBuilderUI();
 }
@@ -2145,6 +2320,7 @@ function autoFillDynamicElementsForSlide(){
   if(added > 0){
     builder.selectedKind = 'extra';
     builder.selectedId = lastId;
+    builder.selectionTokens = [makePptTemplateSelectionToken('extra', lastId)];
     recordPptTemplateHistory();
     if(status) status.innerText = `Auto Fill added ${added} Apexiz text element(s) for ${PPT_TEMPLATE_LABELS[slideKey]}.`;
   }else if(status){
@@ -2177,6 +2353,7 @@ function addPptTemplateDynamicElement(kind){
   recordPptTemplateHistory();
   builder.selectedKind = 'extra';
   builder.selectedId = id;
+  builder.selectionTokens = [makePptTemplateSelectionToken('extra', id)];
   syncPptTemplateBuilderUI();
 }
 function savePptTemplateBuilder(){
@@ -2248,28 +2425,40 @@ function clonePptTemplateElementForClipboard(source){
 }
 function copyPptTemplateSelectedElement(){
   const builder = ensurePptTemplateBuilderState();
-  const selected = getPptTemplateSelectedElement();
-  if(!selected) return;
-  builder.clipboard = clonePptTemplateElementForClipboard(selected);
+  const selectedItems = getPptTemplateSelectedElements();
+  if(!selectedItems.length) return;
+  builder.clipboard = {
+    items:selectedItems.map(item => clonePptTemplateElementForClipboard(item.element))
+  };
   const status = document.getElementById('pptTemplateStatus');
-  if(status) status.innerText = `${selected.id} copied.`;
+  if(status) status.innerText = `${selectedItems.length} element(s) copied.`;
   renderPptBuilderSidebar();
 }
 function pastePptTemplateElement(){
   const builder = ensurePptTemplateBuilderState();
-  if(!builder.clipboard) return;
-  const pasted = deepClone(builder.clipboard);
-  pasted.id = `extra_${Date.now()}`;
-  pasted.kind = 'extra';
-  pasted.x = +(pptNum(pasted.x, 1) + 0.15).toFixed(2);
-  pasted.y = +(pptNum(pasted.y, 1) + 0.15).toFixed(2);
-  builder.template.slides[builder.slideKey].extras.push(pasted);
+  if(!builder.clipboard || !Array.isArray(builder.clipboard.items) || !builder.clipboard.items.length) return;
+  const pastedTokens = [];
+  builder.clipboard.items.forEach((item, idx) => {
+    const pasted = deepClone(item);
+    pasted.id = `extra_${Date.now()}_${idx}`;
+    pasted.kind = 'extra';
+    pasted.x = +(pptNum(pasted.x, 1) + 0.15).toFixed(2);
+    pasted.y = +(pptNum(pasted.y, 1) + 0.15).toFixed(2);
+    builder.template.slides[builder.slideKey].extras.push(pasted);
+    pastedTokens.push(makePptTemplateSelectionToken('extra', pasted.id));
+  });
   recordPptTemplateHistory();
-  builder.selectedKind = 'extra';
-  builder.selectedId = pasted.id;
+  const active = parsePptTemplateSelectionToken(pastedTokens[pastedTokens.length - 1]);
+  builder.selectedKind = active ? active.kind : 'extra';
+  builder.selectedId = active ? active.id : '';
+  builder.selectionTokens = pastedTokens;
   const status = document.getElementById('pptTemplateStatus');
   if(status) status.innerText = 'Element pasted onto the current slide.';
   syncPptTemplateBuilderUI();
+}
+function duplicatePptTemplateSelection(){
+  copyPptTemplateSelectedElement();
+  pastePptTemplateElement();
 }
 function getPptPointer(event){
   const point = event.touches && event.touches[0] ? event.touches[0] : (event.changedTouches && event.changedTouches[0] ? event.changedTouches[0] : event);
@@ -2281,7 +2470,8 @@ function startPptTemplateDrag(event, kind, id){
   if(!frame) return;
   const point = getPptPointer(event);
   builder.drag = {kind,id,startX:point.x,startY:point.y,rect:frame.getBoundingClientRect()};
-  selectPptTemplateElement(kind,id);
+  selectPptTemplateElement(event,kind,id);
+  focusPptTemplateCanvas();
   if(event.cancelable) event.preventDefault();
   document.addEventListener('mousemove', movePptTemplateDrag);
   document.addEventListener('touchmove', movePptTemplateDrag, {passive:false});
@@ -2291,15 +2481,17 @@ function startPptTemplateDrag(event, kind, id){
 function movePptTemplateDrag(event){
   const builder = ensurePptTemplateBuilderState();
   if(!builder.drag) return;
-  const selected = getPptTemplateSelectedElement();
-  if(!selected) return;
+  const selectedItems = getPptTemplateSelectedElements().filter(item => !item.element.locked);
+  if(!selectedItems.length) return;
   const point = getPptPointer(event);
   if(event.cancelable) event.preventDefault();
   const slideH = getPptTemplateSlideHeight(builder.template);
   const dx = ((point.x - builder.drag.startX) / builder.drag.rect.width) * 10;
   const dy = ((point.y - builder.drag.startY) / builder.drag.rect.height) * slideH;
-  selected.x = Math.max(0, +(pptNum(selected.x,0) + dx).toFixed(2));
-  selected.y = Math.max(0, +(pptNum(selected.y,0) + dy).toFixed(2));
+  selectedItems.forEach(item => {
+    item.element.x = Math.max(0, +(pptNum(item.element.x,0) + dx).toFixed(2));
+    item.element.y = Math.max(0, +(pptNum(item.element.y,0) + dy).toFixed(2));
+  });
   builder.drag.changed = true;
   builder.drag.startX = point.x;
   builder.drag.startY = point.y;
@@ -2314,6 +2506,24 @@ function endPptTemplateDrag(){
   document.removeEventListener('touchmove', movePptTemplateDrag);
   document.removeEventListener('mouseup', endPptTemplateDrag);
   document.removeEventListener('touchend', endPptTemplateDrag);
+}
+function movePptTemplateSelection(dx, dy, commitHistory){
+  const builder = ensurePptTemplateBuilderState();
+  const selectedItems = getPptTemplateSelectedElements().filter(item => !item.element.locked);
+  if(!selectedItems.length) return;
+  const slideH = getPptTemplateSlideHeight(builder.template);
+  selectedItems.forEach(item => {
+    item.element.x = Math.max(0, +(pptNum(item.element.x,0) + dx).toFixed(2));
+    item.element.y = Math.max(0, Math.min(slideH, +(pptNum(item.element.y,0) + dy).toFixed(2)));
+  });
+  if(commitHistory === false){
+    builder.pendingKeyboardMove = true;
+  }else{
+    builder.pendingKeyboardMove = false;
+    recordPptTemplateHistory();
+  }
+  renderPptBuilderPreview();
+  renderPptBuilderSidebar();
 }
 function openPptTemplatePreview(){
   const grid = document.getElementById('pptTemplatePreviewGrid');
