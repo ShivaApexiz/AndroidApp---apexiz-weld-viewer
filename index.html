@@ -1166,10 +1166,43 @@ const PPT_TEMPLATE_DYNAMIC_KEYS = [
   {key:'weldRobotPosValue',label:'Weld Robot Positioner',kind:'text'},
   {key:'weldWorkPosValue',label:'Weld Workpiece Positioner',kind:'text'},
   {key:'weldNotesValue',label:'Weld Notes',kind:'text'},
-  {key:'website',label:'Website',kind:'text'},
   {key:'partImage',label:'Part Image',kind:'image'},
   {key:'weldImage',label:'Weld Image',kind:'image'}
 ];
+const PPT_TEMPLATE_DYNAMIC_BY_SLIDE = {
+  title:{
+    text:['projectName','partName','reportDate','companyName'],
+    image:[]
+  },
+  overview:{
+    text:[
+      'projectName','partName','reportDate','companyName','overviewSubtitle',
+      'overviewProjectValue','overviewPartValue',
+      'overviewRobot1Label','overviewRobot1Welds',
+      'overviewRobot2Label','overviewRobot2Welds',
+      'overviewRobot3Label','overviewRobot3Welds',
+      'overviewRobot4Label','overviewRobot4Welds',
+      'overviewTotalWelds','overviewDateValue'
+    ],
+    image:['partImage']
+  },
+  robot:{
+    text:['projectName','partName','reportDate','companyName','robotLabel'],
+    image:[]
+  },
+  weld:{
+    text:[
+      'projectName','partName','reportDate','companyName',
+      'weldHeader','weldSubtitle','weldJobValue','weldNoValue','weldRobotValue',
+      'weldRobotPosValue','weldWorkPosValue','weldNotesValue'
+    ],
+    image:['weldImage']
+  },
+  end:{
+    text:['projectName','partName','reportDate','companyName'],
+    image:[]
+  }
+};
 const PPT_TEMPLATE_DEMO = {
   projectName:'DEMO_PROJECT',
   partName:'PART-1',
@@ -1471,6 +1504,7 @@ function ensurePptTemplateBuilderState(){
       clipboard:null,
       history:[],
       historyIndex:-1,
+      dynamicScopeMode:'all',
       dynamicTextKey:'projectName',
       dynamicImageKey:'partImage',
       pendingPptMode:'newTemplate',
@@ -1509,6 +1543,14 @@ function getPptTemplateSelectedElement(){
     return builder.template.slides[builder.slideKey].extras.find(item => item.id === builder.selectedId) || null;
   }
   return builder.template.slides[builder.slideKey].slots[builder.selectedId] || null;
+}
+function getPptTemplateDynamicOptions(kind){
+  const builder = ensurePptTemplateBuilderState();
+  const all = PPT_TEMPLATE_DYNAMIC_KEYS.filter(item => item.kind === kind);
+  if((builder.dynamicScopeMode || 'all') !== 'slide') return all;
+  const slideMap = PPT_TEMPLATE_DYNAMIC_BY_SLIDE[builder.slideKey] || {};
+  const allow = slideMap[kind] || [];
+  return all.filter(item => allow.includes(item.key));
 }
 function setActivePptTemplateBuilderTemplate(id){
   const builder = ensurePptTemplateBuilderState();
@@ -1613,10 +1655,12 @@ function renderPptBuilderSidebar(){
     .concat(Object.entries(slide.slots).map(([key, slot]) => `<option value="slot:${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>[Slot] ${slot.id}</option>`))
     .concat(slide.extras.map(item => `<option value="extra:${item.id}" ${builder.selectedKind==='extra'&&builder.selectedId===item.id?'selected':''}>[Extra] ${item.id}</option>`))
     .join('');
-  const dynamicTextOptions = PPT_TEMPLATE_DYNAMIC_KEYS.filter(item => item.kind === 'text')
-    .map(item => `<option value="${item.key}" ${builder.dynamicTextKey===item.key?'selected':''}>${item.label}</option>`).join('');
-  const dynamicImageOptions = PPT_TEMPLATE_DYNAMIC_KEYS.filter(item => item.kind === 'image')
-    .map(item => `<option value="${item.key}" ${builder.dynamicImageKey===item.key?'selected':''}>${item.label}</option>`).join('');
+  const dynTextList = getPptTemplateDynamicOptions('text');
+  const dynImageList = getPptTemplateDynamicOptions('image');
+  if(!dynTextList.some(item => item.key === builder.dynamicTextKey)) builder.dynamicTextKey = (dynTextList[0] || {}).key || 'projectName';
+  if(!dynImageList.some(item => item.key === builder.dynamicImageKey)) builder.dynamicImageKey = (dynImageList[0] || {}).key || 'partImage';
+  const dynamicTextOptions = dynTextList.map(item => `<option value="${item.key}" ${builder.dynamicTextKey===item.key?'selected':''}>${item.label}</option>`).join('');
+  const dynamicImageOptions = dynImageList.map(item => `<option value="${item.key}" ${builder.dynamicImageKey===item.key?'selected':''}>${item.label}</option>`).join('');
   const templateButtons = [`<button class="ppt-slide-btn ${builder.currentTemplateId==='apexiz'?'active':''}" type="button" onclick="choosePptBuilderTemplate('apexiz')">Apexiz Template</button>`]
     .concat(getPptTemplateRecords().map(item => `<button class="ppt-slide-btn ${builder.currentTemplateId===item.id?'active':''}" type="button" onclick="choosePptBuilderTemplate('${item.id}')">${item.name}</button>`))
     .join('');
@@ -1657,6 +1701,10 @@ function renderPptBuilderSidebar(){
     </div>
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Dynamic Elements</div>
+      <div class="ppt-builder-toolbar">
+        <button class="mini-btn ${builder.dynamicScopeMode==='all'?'primary':''}" type="button" onclick="setPptTemplateDynamicScopeMode('all')">ALL</button>
+        <button class="mini-btn ${builder.dynamicScopeMode==='slide'?'primary':''}" type="button" onclick="setPptTemplateDynamicScopeMode('slide')">Slide</button>
+      </div>
       <div class="ppt-prop-grid">
         <div>
           <label class="field-label">Dynamic Text</label>
@@ -2005,6 +2053,11 @@ function setPptTemplateDynamicTextKey(value){
 }
 function setPptTemplateDynamicImageKey(value){
   ensurePptTemplateBuilderState().dynamicImageKey = value || 'partImage';
+}
+function setPptTemplateDynamicScopeMode(mode){
+  const builder = ensurePptTemplateBuilderState();
+  builder.dynamicScopeMode = mode === 'slide' ? 'slide' : 'all';
+  renderPptBuilderSidebar();
 }
 function addPptTemplateDynamicElement(kind){
   const builder = ensurePptTemplateBuilderState();
