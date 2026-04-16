@@ -1261,6 +1261,7 @@ function defaultSlideFooter(y){
 function makeDefaultPptTemplate(){
   return {
     version:1,
+    templateType:'default',
     layout:'LAYOUT_16x10',
     companyName:'Apexiz',
     logoData:'',
@@ -1394,6 +1395,7 @@ function makeBlankPptSlide(slideName){
 function makeBlankPptTemplate(){
   return {
     version:1,
+    templateType:'blank',
     layout:'LAYOUT_WIDE',
     companyName:'Apexiz',
     logoData:'',
@@ -1409,8 +1411,17 @@ function makeBlankPptTemplate(){
   };
 }
 function hydratePptTemplate(raw){
-  const base = makeDefaultPptTemplate();
+  const legacyBlank =
+    raw &&
+    raw.layout === 'LAYOUT_WIDE' &&
+    raw.slides &&
+    raw.slides.title &&
+    raw.slides.title.slots &&
+    raw.slides.title.slots.titlePlaceholder;
+  const useBlankBase = raw && (raw.templateType === 'blank' || legacyBlank);
+  const base = useBlankBase ? makeBlankPptTemplate() : makeDefaultPptTemplate();
   if(!raw || typeof raw !== 'object') return base;
+  base.templateType = raw.templateType || base.templateType;
   base.layout = raw.layout || base.layout;
   base.companyName = raw.companyName || base.companyName;
   base.logoData = raw.logoData || '';
@@ -1419,10 +1430,20 @@ function hydratePptTemplate(raw){
   PPT_TEMPLATE_SLIDES.forEach(slideKey => {
     const sourceSlide = raw.slides && raw.slides[slideKey] ? raw.slides[slideKey] : {};
     base.slides[slideKey].backgroundColor = sourceSlide.backgroundColor || base.slides[slideKey].backgroundColor;
-    Object.keys(base.slides[slideKey].slots).forEach(slotKey => {
-      const sourceSlot = sourceSlide.slots && sourceSlide.slots[slotKey] ? sourceSlide.slots[slotKey] : {};
-      base.slides[slideKey].slots[slotKey] = {...base.slides[slideKey].slots[slotKey], ...sourceSlot};
-    });
+    if(sourceSlide && Object.prototype.hasOwnProperty.call(sourceSlide,'slots')){
+      const baseSlots = base.slides[slideKey].slots || {};
+      const sourceSlots = sourceSlide.slots && typeof sourceSlide.slots === 'object' ? sourceSlide.slots : {};
+      const mergedSlots = {};
+      Object.keys(sourceSlots).forEach(slotKey => {
+        mergedSlots[slotKey] = {...(baseSlots[slotKey] || {}), ...sourceSlots[slotKey]};
+      });
+      base.slides[slideKey].slots = mergedSlots;
+    }else{
+      Object.keys(base.slides[slideKey].slots).forEach(slotKey => {
+        const sourceSlot = sourceSlide.slots && sourceSlide.slots[slotKey] ? sourceSlide.slots[slotKey] : {};
+        base.slides[slideKey].slots[slotKey] = {...base.slides[slideKey].slots[slotKey], ...sourceSlot};
+      });
+    }
     base.slides[slideKey].extras = Array.isArray(sourceSlide.extras) ? sourceSlide.extras.map(item => ({...item})) : [];
   });
   return base;
