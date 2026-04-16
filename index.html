@@ -1721,7 +1721,11 @@ function focusPptTemplateCanvas(){
 }
 function isPptTemplateCanvasFocused(){
   const builder = ensurePptTemplateBuilderState();
-  return !!builder.canvasFocused;
+  if(builder.canvasFocused) return true;
+  const frame = document.getElementById('pptBuilderPreviewFrame');
+  if(!frame) return false;
+  const active = document.activeElement;
+  return !!(active && (active === frame || frame.contains(active)));
 }
 function isPptTemplateTypingTarget(target){
   if(!target) return false;
@@ -1942,7 +1946,8 @@ function bindPptTemplateShortcuts(){
   document.addEventListener('pointerdown', e => {
     if(S.activePanel !== 'pptTemplate') return;
     const builder = ensurePptTemplateBuilderState();
-    const inside = !!(e.target && e.target.closest && e.target.closest('#pptBuilderPreviewFrame'));
+    const rawTarget = e.target && e.target.nodeType === 3 ? e.target.parentElement : e.target;
+    const inside = !!(rawTarget && rawTarget.closest && rawTarget.closest('#pptBuilderPreviewFrame'));
     builder.canvasFocused = inside;
   }, true);
   document.addEventListener('keydown', e => {
@@ -2055,10 +2060,18 @@ function setPptTemplateSlide(slideKey){
   syncPptTemplateBuilderUI();
 }
 function selectPptTemplateElement(event, kind, id){
+  // Backward compatibility: allow old signature selectPptTemplateElement(kind, id)
+  if(typeof event === 'string'){
+    id = kind;
+    kind = event;
+    event = null;
+  }
+  if(!kind || !id) return;
   const builder = ensurePptTemplateBuilderState();
   const toggle = !!(event && (event.ctrlKey || event.metaKey));
   const additive = !!(event && event.shiftKey);
   setPptTemplateSelection(kind, id, toggle ? {toggle:true} : (additive ? {additive:true} : null));
+  builder.canvasFocused = true;
   renderPptBuilderPreview();
   renderPptBuilderSidebar();
 }
