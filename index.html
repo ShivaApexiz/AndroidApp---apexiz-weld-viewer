@@ -669,8 +669,8 @@ const S = {
   projectTemplateAssignments: new Map(),
   projectTemplatePayloads: new Map(),
   myProjectsSortMode: 'created_desc',
-  myProjectsFilters: {q:'',customers:'all',pending:'all',template:'all',company:''},
-  allProjectsFilters: {q:'',customers:'all',template:'all',owner:'',company:''},
+  myProjectsFilters: {q:'',customers:'all',pending:'all',template:'all',company:'all',engineer:'all',customer:'all'},
+  allProjectsFilters: {q:'',customers:'all',template:'all',owner:'',company:'all',engineer:'all',customer:'all'},
   createMode: 'builder',
   mobileDraft: null,
   pendingUploads: [],
@@ -1170,9 +1170,11 @@ async function renderMyProjects(el){
   const augmented = projects.map((p, idx) => {
     const approvedReqs = (p.access_requests || []).filter(r => r.status === 'approved');
     const pendingReqs = (p.access_requests || []).filter(r => r.status === 'pending');
-    const customerNames = approvedReqs.map(r => String(r.profiles?.name || '').trim()).filter(Boolean);
-    const customerCompanies = approvedReqs.map(r => String(r.profiles?.company_name || '').trim()).filter(Boolean);
+    const customerNames = [...new Set(approvedReqs.map(r => String(r.profiles?.name || '').trim()).filter(Boolean))];
+    const customerCompanies = [...new Set(approvedReqs.map(r => String(r.profiles?.company_name || '').trim()).filter(Boolean))];
     const ownerCompany = String(ownerMap.get(p.owner_id)?.company_name || '').trim();
+    const companyNames = [...new Set([...customerCompanies, ownerCompany].filter(Boolean))];
+    const ownerName = String(ownerMap.get(p.owner_id)?.name || '').trim();
     const templateId = assignedTemplateIds[idx] || 'apexiz';
     return {
       ...p,
@@ -1182,16 +1184,43 @@ async function renderMyProjects(el){
       _pendingCount: pendingReqs.length,
       _partCount: (p.parts || []).length,
       _customerKey: customerNames.join(', ') || '~',
-      _companyKey: customerCompanies.join(', ') || ownerCompany || '~'
+      _companyKey: companyNames.join(', ') || '~',
+      _customerNames: customerNames,
+      _companyNames: companyNames,
+      _ownerName: ownerName
     };
   });
-  const myFilters = normalizeMyProjectsFilters(S.myProjectsFilters);
+  const companyOptions = [...new Set(augmented.flatMap(p => p._companyNames || []))].sort((a,b)=>a.localeCompare(b));
+  const customerOptions = [...new Set(augmented.flatMap(p => p._customerNames || []))].sort((a,b)=>a.localeCompare(b));
+  const engineerOptions = [...new Set(augmented.map(p => String(p._ownerName || '').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const myFiltersRaw = normalizeMyProjectsFilters(S.myProjectsFilters);
+  const myFilters = {
+    ...myFiltersRaw,
+    company: myFiltersRaw.company === 'all' || companyOptions.includes(myFiltersRaw.company) ? myFiltersRaw.company : 'all',
+    customer: myFiltersRaw.customer === 'all' || customerOptions.includes(myFiltersRaw.customer) ? myFiltersRaw.customer : 'all',
+    engineer: myFiltersRaw.engineer === 'all' || engineerOptions.includes(myFiltersRaw.engineer) ? myFiltersRaw.engineer : 'all'
+  };
+  if(JSON.stringify(myFiltersRaw) !== JSON.stringify(myFilters)){
+    S.myProjectsFilters = normalizeMyProjectsFilters(myFilters);
+  }
   const filteredProjects = applyProjectFilters(augmented, myFilters, 'my');
   const sortedProjects = sortMyProjectsList(filteredProjects, S.myProjectsSortMode);
   const sortMode = normalizeProjectSortMode(S.myProjectsSortMode);
+  const showEngineerFilter = role === 'company_admin' || role === 'admin';
+  const showCustomerFilter = role === 'engineer' || role === 'company_admin' || role === 'admin';
+  const showCompanyFilter = role === 'engineer' || role === 'company_admin' || role === 'admin';
   const tplOptions = [`<option value="all" ${myFilters.template==='all'?'selected':''}>All Templates</option>`,
     `<option value="apexiz" ${myFilters.template==='apexiz'?'selected':''}>Apexiz Template</option>`]
     .concat(getPptTemplateRecords().map(item => `<option value="${item.id}" ${myFilters.template===item.id?'selected':''}>${item.name}</option>`))
+    .join('');
+  const companyFilterOptions = [`<option value="all" ${myFilters.company==='all'?'selected':''}>Company: All</option>`]
+    .concat(companyOptions.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${myFilters.company===name?'selected':''}>${name}</option>`))
+    .join('');
+  const customerFilterOptions = [`<option value="all" ${myFilters.customer==='all'?'selected':''}>Customer: All</option>`]
+    .concat(customerOptions.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${myFilters.customer===name?'selected':''}>${name}</option>`))
+    .join('');
+  const engineerFilterOptions = [`<option value="all" ${myFilters.engineer==='all'?'selected':''}>Engineer: All</option>`]
+    .concat(engineerOptions.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${myFilters.engineer===name?'selected':''}>${name}</option>`))
     .join('');
   el.innerHTML=`
     <div class="flex-row"><div class="panel-title">${role==='company_admin'?'Company Projects':'My Projects'}</div>
@@ -1229,7 +1258,9 @@ async function renderMyProjects(el){
         <option value="no" ${myFilters.pending==='no'?'selected':''}>No Pending</option>
       </select>
       <select class="field-select" style="width:210px" onchange="setMyProjectsFilter('template',this.value)">${tplOptions}</select>
-      <input class="field-input" style="width:190px" placeholder="Company contains..." value="${myFilters.company.replace(/"/g,'&quot;')}" oninput="setMyProjectsFilter('company',this.value)">
+      ${showCompanyFilter?`<select class="field-select" style="width:190px" onchange="setMyProjectsFilter('company',this.value)">${companyFilterOptions}</select>`:''}
+      ${showEngineerFilter?`<select class="field-select" style="width:190px" onchange="setMyProjectsFilter('engineer',this.value)">${engineerFilterOptions}</select>`:''}
+      ${showCustomerFilter?`<select class="field-select" style="width:190px" onchange="setMyProjectsFilter('customer',this.value)">${customerFilterOptions}</select>`:''}
       <button class="mini-btn" type="button" onclick="resetMyProjectsFilters()">Reset Filters</button>
     </div>
     <table class="data-table"><thead><tr><th>Project</th><th>Parts</th><th>Customers</th><th>Pending</th><th>Actions</th></tr></thead>
@@ -3543,8 +3574,10 @@ async function renderAllProjects(el){
   const augmented = projects.map((p, idx) => {
     const approvedReqs = (p.access_requests || []).filter(r => r.status === 'approved');
     const owner = ownerMap.get(p.owner_id) || {};
-    const customerNames = approvedReqs.map(r => String(r.profiles?.name || '').trim()).filter(Boolean);
-    const customerCompanies = approvedReqs.map(r => String(r.profiles?.company_name || '').trim()).filter(Boolean);
+    const customerNames = [...new Set(approvedReqs.map(r => String(r.profiles?.name || '').trim()).filter(Boolean))];
+    const customerCompanies = [...new Set(approvedReqs.map(r => String(r.profiles?.company_name || '').trim()).filter(Boolean))];
+    const ownerCompany = String(owner.company_name || '').trim();
+    const companyNames = [...new Set([...customerCompanies, ownerCompany].filter(Boolean))];
     const templateId = assignedTemplateIds[idx] || 'apexiz';
     return {
       ...p,
@@ -3553,16 +3586,39 @@ async function renderAllProjects(el){
       _approvedCount: approvedReqs.length,
       _partCount: (p.parts || []).length,
       _ownerName: String(owner.name || ''),
-      _ownerCompany: String(owner.company_name || ''),
+      _ownerCompany: ownerCompany,
       _customerKey: customerNames.join(', ') || '~',
-      _companyKey: customerCompanies.join(', ') || String(owner.company_name || '') || '~'
+      _companyKey: companyNames.join(', ') || '~',
+      _customerNames: customerNames,
+      _companyNames: companyNames
     };
   });
-  const allFilters = normalizeAllProjectsFilters(S.allProjectsFilters);
+  const companyOptions = [...new Set(augmented.flatMap(p => p._companyNames || []))].sort((a,b)=>a.localeCompare(b));
+  const customerOptions = [...new Set(augmented.flatMap(p => p._customerNames || []))].sort((a,b)=>a.localeCompare(b));
+  const engineerOptions = [...new Set(augmented.map(p => String(p._ownerName || '').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const allFiltersRaw = normalizeAllProjectsFilters(S.allProjectsFilters);
+  const allFilters = {
+    ...allFiltersRaw,
+    company: allFiltersRaw.company === 'all' || companyOptions.includes(allFiltersRaw.company) ? allFiltersRaw.company : 'all',
+    customer: allFiltersRaw.customer === 'all' || customerOptions.includes(allFiltersRaw.customer) ? allFiltersRaw.customer : 'all',
+    engineer: allFiltersRaw.engineer === 'all' || engineerOptions.includes(allFiltersRaw.engineer) ? allFiltersRaw.engineer : 'all'
+  };
+  if(JSON.stringify(allFiltersRaw) !== JSON.stringify(allFilters)){
+    S.allProjectsFilters = normalizeAllProjectsFilters(allFilters);
+  }
   const filtered = applyProjectFilters(augmented, allFilters, 'all');
   const tplOptions = [`<option value="all" ${allFilters.template==='all'?'selected':''}>All Templates</option>`,
     `<option value="apexiz" ${allFilters.template==='apexiz'?'selected':''}>Apexiz Template</option>`]
     .concat(getPptTemplateRecords().map(item => `<option value="${item.id}" ${allFilters.template===item.id?'selected':''}>${item.name}</option>`))
+    .join('');
+  const companyFilterOptions = [`<option value="all" ${allFilters.company==='all'?'selected':''}>Company: All</option>`]
+    .concat(companyOptions.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${allFilters.company===name?'selected':''}>${name}</option>`))
+    .join('');
+  const customerFilterOptions = [`<option value="all" ${allFilters.customer==='all'?'selected':''}>Customer: All</option>`]
+    .concat(customerOptions.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${allFilters.customer===name?'selected':''}>${name}</option>`))
+    .join('');
+  const engineerFilterOptions = [`<option value="all" ${allFilters.engineer==='all'?'selected':''}>Engineer: All</option>`]
+    .concat(engineerOptions.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${allFilters.engineer===name?'selected':''}>${name}</option>`))
     .join('');
   el.innerHTML=`<div class="panel-title">All Projects</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 12px 0">
@@ -3574,8 +3630,9 @@ async function renderAllProjects(el){
         <option value="no" ${allFilters.customers==='no'?'selected':''}>No Customers</option>
       </select>
       <select class="field-select" style="width:210px" onchange="setAllProjectsFilter('template',this.value)">${tplOptions}</select>
-      <input class="field-input" style="width:170px" placeholder="Owner contains..." value="${allFilters.owner.replace(/"/g,'&quot;')}" oninput="setAllProjectsFilter('owner',this.value)">
-      <input class="field-input" style="width:170px" placeholder="Company contains..." value="${allFilters.company.replace(/"/g,'&quot;')}" oninput="setAllProjectsFilter('company',this.value)">
+      <select class="field-select" style="width:190px" onchange="setAllProjectsFilter('company',this.value)">${companyFilterOptions}</select>
+      <select class="field-select" style="width:190px" onchange="setAllProjectsFilter('engineer',this.value)">${engineerFilterOptions}</select>
+      <select class="field-select" style="width:190px" onchange="setAllProjectsFilter('customer',this.value)">${customerFilterOptions}</select>
       <button class="mini-btn" type="button" onclick="resetAllProjectsFilters()">Reset Filters</button>
     </div>
     <table class="data-table"><thead><tr><th>Project</th><th>Owner</th><th>Parts</th><th>Customers</th><th>Actions</th></tr></thead>
@@ -3834,7 +3891,9 @@ function normalizeMyProjectsFilters(filters){
     customers: ['all','yes','no'].includes(f.customers) ? f.customers : 'all',
     pending: ['all','yes','no'].includes(f.pending) ? f.pending : 'all',
     template: String(f.template || 'all'),
-    company: String(f.company || '').trim()
+    company: String(f.company || 'all'),
+    engineer: String(f.engineer || 'all'),
+    customer: String(f.customer || 'all')
   };
 }
 function normalizeAllProjectsFilters(filters){
@@ -3844,7 +3903,9 @@ function normalizeAllProjectsFilters(filters){
     customers: ['all','yes','no'].includes(f.customers) ? f.customers : 'all',
     template: String(f.template || 'all'),
     owner: String(f.owner || '').trim(),
-    company: String(f.company || '').trim()
+    company: String(f.company || 'all'),
+    engineer: String(f.engineer || 'all'),
+    customer: String(f.customer || 'all')
   };
 }
 function applyProjectFilters(projects, filters, mode){
@@ -3862,7 +3923,9 @@ function applyProjectFilters(projects, filters, mode){
       if(f.pending === 'yes' && !(p._pendingCount > 0)) return false;
       if(f.pending === 'no' && (p._pendingCount > 0)) return false;
       if(f.template !== 'all' && String(p.assignedTemplateId || 'apexiz') !== f.template) return false;
-      if(f.company && !companyKey.includes(f.company.toLowerCase())) return false;
+      if(f.company !== 'all' && !(p._companyNames || []).includes(f.company)) return false;
+      if(f.engineer !== 'all' && String(p._ownerName || '') !== f.engineer) return false;
+      if(f.customer !== 'all' && !(p._customerNames || []).includes(f.customer)) return false;
       return true;
     });
   }
@@ -3878,7 +3941,9 @@ function applyProjectFilters(projects, filters, mode){
     if(f.customers === 'no' && (p._approvedCount > 0)) return false;
     if(f.template !== 'all' && String(p.assignedTemplateId || 'apexiz') !== f.template) return false;
     if(f.owner && !ownerName.includes(f.owner.toLowerCase())) return false;
-    if(f.company && !companyKey.includes(f.company.toLowerCase())) return false;
+    if(f.company !== 'all' && !(p._companyNames || []).includes(f.company)) return false;
+    if(f.engineer !== 'all' && ownerName !== String(f.engineer || '').toLowerCase()) return false;
+    if(f.customer !== 'all' && !(p._customerNames || []).includes(f.customer)) return false;
     return true;
   });
 }
