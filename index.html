@@ -5223,7 +5223,7 @@ function renderCreateProject(el){
           <video id="cameraVideo" autoplay playsinline></video>
           <div class="camera-crop-guide"><span id="cameraGuideLabel" class="camera-guide-label"></span></div>
           <div class="camera-actions-overlay">
-            <button class="action-btn" type="button" onclick="captureCameraFrame()">Capture Photo</button>
+            <button class="action-btn" id="cameraCaptureBtn" type="button" onclick="captureCameraFrame()" disabled>Capture Photo</button>
             <button class="action-btn sec" type="button" onclick="closeCameraCapture()">Cancel</button>
           </div>
         </div>
@@ -6464,12 +6464,17 @@ function openImageSourcePicker(target){
   if(titleEl) titleEl.textContent = normalizedTarget === 'part' ? 'Select Image Source - Part Image' : 'Select Image Source - Weld Image';
   renderImagePreview('imageSourcePreview', normalizedTarget === 'part' ? projectWizardState.partImageDataUrl : projectWizardState.baseImageDataUrl);
   const overlay = document.getElementById('imageSourceOverlay');
+  const card = overlay ? overlay.querySelector('.source-picker-card') : null;
   if(overlay){
     overlay.style.display = 'flex';
     overlay.style.alignItems = 'center';
     overlay.style.justifyContent = 'center';
     overlay.style.padding = '16px';
     overlay.classList.add('open');
+  }
+  if(card){
+    card.style.background = '#ffffff';
+    card.style.opacity = '1';
   }
 }
 
@@ -6521,9 +6526,19 @@ async function openCameraCapture(target='weld'){
     const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false});
     builderCameraStream = stream;
     const video = document.getElementById('cameraVideo');
+    const captureBtn = document.getElementById('cameraCaptureBtn');
     const guideLabel = document.getElementById('cameraGuideLabel');
     const config = getCaptureTargetConfig(target);
+    if(captureBtn) captureBtn.disabled = true;
     video.srcObject = stream;
+    video.onloadedmetadata = () => {
+      console.log('[camera] loadedmetadata', { width: video.videoWidth, height: video.videoHeight, readyState: video.readyState });
+      if(captureBtn && video.videoWidth > 0 && video.videoHeight > 0) captureBtn.disabled = false;
+    };
+    video.oncanplay = () => {
+      console.log('[camera] canplay', { width: video.videoWidth, height: video.videoHeight, readyState: video.readyState });
+      if(captureBtn && video.videoWidth > 0 && video.videoHeight > 0) captureBtn.disabled = false;
+    };
     const frameWrap = document.querySelector('#cameraOverlay .camera-frame-wrap');
     if(frameWrap) frameWrap.style.setProperty('--capture-aspect', String(config.aspect));
     if(guideLabel) guideLabel.textContent = config.label;
@@ -6532,6 +6547,10 @@ async function openCameraCapture(target='weld'){
       overlay.style.display = 'flex';
       overlay.classList.add('open');
     }
+    if(typeof video.play === 'function'){
+      try{ await video.play(); }catch(_err){}
+    }
+    if(captureBtn && video.videoWidth > 0 && video.videoHeight > 0) captureBtn.disabled = false;
   }catch(err){
     console.warn(err);
     openImagePickerInput(target, 'camera');
@@ -6544,7 +6563,13 @@ function closeCameraCapture(){
     builderCameraStream = null;
   }
   const video = document.getElementById('cameraVideo');
-  if(video) video.srcObject = null;
+  const captureBtn = document.getElementById('cameraCaptureBtn');
+  if(video){
+    video.onloadedmetadata = null;
+    video.oncanplay = null;
+    video.srcObject = null;
+  }
+  if(captureBtn) captureBtn.disabled = true;
   const overlay = document.getElementById('cameraOverlay');
   if(overlay){
     overlay.style.display = 'none';
@@ -6577,60 +6602,6 @@ function clampCropRect(rect, sourceWidth, sourceHeight){
   const width = Math.max(1, Math.min(sourceWidth - x, rect.width));
   const height = Math.max(1, Math.min(sourceHeight - y, rect.height));
   return { x, y, width, height };
-}
-
-async function snapshotVideoFrame(video){
-  if(!video || !video.videoWidth || !video.videoHeight) return null;
-  try{
-    const track = builderCameraStream && typeof builderCameraStream.getVideoTracks === 'function'
-      ? builderCameraStream.getVideoTracks()[0]
-      : null;
-    if(track && typeof ImageCapture === 'function'){
-      const capture = new ImageCapture(track);
-      if(typeof capture.takePhoto === 'function'){
-        const blob = await capture.takePhoto();
-        if(blob){
-          if(typeof createImageBitmap === 'function'){
-            const photoBitmap = await createImageBitmap(blob);
-            if(photoBitmap && photoBitmap.width && photoBitmap.height) return photoBitmap;
-          }
-          const photoImg = await new Promise(resolve => {
-            const img = new Image();
-            const url = URL.createObjectURL(blob);
-            img.onload = () => {
-              URL.revokeObjectURL(url);
-              resolve(img);
-            };
-            img.onerror = () => {
-              URL.revokeObjectURL(url);
-              resolve(null);
-            };
-            img.src = url;
-          });
-          if(photoImg && photoImg.width && photoImg.height) return photoImg;
-        }
-      }
-      const bitmap = await capture.grabFrame();
-      if(bitmap && bitmap.width && bitmap.height) return bitmap;
-    }
-  }catch(err){
-    console.warn('ImageCapture still capture failed:', err);
-  }
-  try{
-    if(typeof createImageBitmap === 'function'){
-      const bitmap = await createImageBitmap(video);
-      if(bitmap && bitmap.width && bitmap.height) return bitmap;
-    }
-  }catch(err){
-    console.warn('createImageBitmap(video) failed:', err);
-  }
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  if(!ctx) return null;
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  return canvas;
 }
 
 function cropMediaSourceToGuide(source, guideElement, displayElement, outWidth, outHeight){
@@ -6666,17 +6637,37 @@ function cropMediaSourceToGuide(source, guideElement, displayElement, outWidth, 
   return canvas.toDataURL('image/png');
 }
 
-async function captureCameraFrame(){
+function captureCameraFrame(){
   const video = document.getElementById('cameraVideo');
   const guide = document.querySelector('#cameraOverlay .camera-crop-guide');
-  if(!video || !video.videoWidth || !guide || video.readyState < 2) return;
-  const config = getCaptureTargetConfig(builderCameraTarget);
-  const frozenFrame = await snapshotVideoFrame(video);
-  if(!frozenFrame) return;
-  const fileLikeDataUrl = cropMediaSourceToGuide(frozenFrame, guide, video, config.width, config.height);
-  if(frozenFrame && typeof frozenFrame.close === 'function'){
-    try{ frozenFrame.close(); }catch(_err){}
+  const metadataReady = !!(video && video.videoWidth > 0 && video.videoHeight > 0);
+  console.log('[camera] capture requested', {
+    metadataReady,
+    readyState: video ? video.readyState : -1,
+    videoWidth: video ? video.videoWidth : 0,
+    videoHeight: video ? video.videoHeight : 0
+  });
+  if(!video || !guide || !metadataReady){
+    console.warn('[camera] capture blocked: metadata not ready');
+    return;
   }
+  const config = getCaptureTargetConfig(builderCameraTarget);
+  const frameCanvas = document.createElement('canvas');
+  frameCanvas.width = video.videoWidth;
+  frameCanvas.height = video.videoHeight;
+  const frameCtx = frameCanvas.getContext('2d');
+  if(!frameCtx){
+    console.warn('[camera] capture blocked: canvas context not available');
+    return;
+  }
+  console.log('[camera] capture dimensions', {
+    videoWidth: video.videoWidth,
+    videoHeight: video.videoHeight,
+    canvasWidth: frameCanvas.width,
+    canvasHeight: frameCanvas.height
+  });
+  frameCtx.drawImage(video, 0, 0, frameCanvas.width, frameCanvas.height);
+  const fileLikeDataUrl = cropMediaSourceToGuide(frameCanvas, guide, video, config.width, config.height);
   if(!fileLikeDataUrl) return;
   closeCameraCapture();
   if(builderCameraTarget === 'part'){
