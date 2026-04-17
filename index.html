@@ -4952,6 +4952,7 @@ window.addEventListener('online', () => {
 /* Enhanced mobile project creation override */
 let builderCameraStream = null;
 let builderCameraTarget = 'weld';
+let builderImageSourceTarget = 'weld';
 let pendingProjectWizardState = null;
 let sourceUploadState = { csv: new Map(), images: new Map() };
 
@@ -5232,7 +5233,7 @@ function renderCreateProject(el){
     <div id="imageSourceOverlay" class="builder-overlay" style="display:none">
       <div class="builder-overlay-card source-picker-card">
         <div class="builder-overlay-head">
-          <strong>Select Image Source</strong>
+          <strong id="imageSourceTitle">Select Image Source</strong>
           <button class="tbl-btn revoke" type="button" onclick="closeImageSourcePicker()">Close</button>
         </div>
         <div class="capture-actions">
@@ -5498,6 +5499,12 @@ function initProjectBuilderBindings(){
   updateToolSelectionState();
   renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
   renderImagePreview('weldPreview', projectWizardState.baseImageDataUrl);
+  const imageSourceOverlay = document.getElementById('imageSourceOverlay');
+  if(imageSourceOverlay){
+    imageSourceOverlay.addEventListener('click', ev => {
+      if(ev.target === imageSourceOverlay) closeImageSourcePicker();
+    });
+  }
   if(sourceProjName) sourceProjName.value = projectWizardState.projectName || '';
   if(sourceFolderInput) sourceFolderInput.addEventListener('change', ev => processSourceSelectedFiles(ev.target.files, 'Source folder ready'));
   resetAnnotationHistory();
@@ -6391,13 +6398,24 @@ function cropImageDataUrlToAspect(dataUrl, aspectRatio, outWidth, outHeight){
 }
 
 function openImageSourcePicker(target){
-  builderImageSourceTarget = target;
-  renderImagePreview('imageSourcePreview', target === 'part' ? projectWizardState.partImageDataUrl : projectWizardState.baseImageDataUrl);
-  document.getElementById('imageSourceOverlay').style.display = 'flex';
+  const normalizedTarget = target === 'part' ? 'part' : 'weld';
+  builderImageSourceTarget = normalizedTarget;
+  const titleEl = document.getElementById('imageSourceTitle');
+  if(titleEl) titleEl.textContent = normalizedTarget === 'part' ? 'Select Image Source - Part Image' : 'Select Image Source - Weld Image';
+  renderImagePreview('imageSourcePreview', normalizedTarget === 'part' ? projectWizardState.partImageDataUrl : projectWizardState.baseImageDataUrl);
+  const overlay = document.getElementById('imageSourceOverlay');
+  if(overlay){
+    overlay.style.display = 'flex';
+    overlay.classList.add('open');
+  }
 }
 
 function closeImageSourcePicker(){
-  document.getElementById('imageSourceOverlay').style.display = 'none';
+  const overlay = document.getElementById('imageSourceOverlay');
+  if(overlay){
+    overlay.style.display = 'none';
+    overlay.classList.remove('open');
+  }
 }
 
 function chooseImageSource(mode){
