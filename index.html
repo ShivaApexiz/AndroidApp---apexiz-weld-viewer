@@ -2906,11 +2906,13 @@ function autoFillDynamicElementsForSlide(){
   let added = 0;
   let addedText = 0;
   let addedImage = 0;
-  let addedShape = 0;
-  let addedLogo = 0;
+  let addedStaticText = 0;
   let lastId = '';
   Object.values(apexizSlide.slots || {}).forEach((slot, idx) => {
     if(!slot) return;
+    const isDynamic = !!slot.dynamicKey;
+    const isStaticText = slot.type === 'text' && !slot.dynamicKey;
+    if(!isDynamic && !isStaticText) return;
     const signature = makeSignature(slot);
     if(existingSignatures.has(signature)) return;
     const clone = deepClone(slot);
@@ -2923,9 +2925,8 @@ function autoFillDynamicElementsForSlide(){
     existingSignatures.add(signature);
     added += 1;
     if(slot.type === 'text') addedText += 1;
+    if(isStaticText) addedStaticText += 1;
     else if(slot.type === 'dynamicImage' || slot.type === 'staticImage') addedImage += 1;
-    else if(slot.type === 'shape') addedShape += 1;
-    else if(slot.type === 'logo') addedLogo += 1;
     lastId = clone.id;
   });
 
@@ -2935,9 +2936,9 @@ function autoFillDynamicElementsForSlide(){
     builder.selectedId = lastId;
     builder.selectionTokens = [makePptTemplateSelectionToken('extra', lastId)];
     recordPptTemplateHistory();
-    if(status) status.innerText = `Auto Fill added ${added} Apexiz element(s) for ${PPT_TEMPLATE_LABELS[slideKey]} (Text: ${addedText}, Images: ${addedImage}, Shapes: ${addedShape}, Logos: ${addedLogo}).`;
+    if(status) status.innerText = `Auto Fill added ${added} Apexiz element(s) for ${PPT_TEMPLATE_LABELS[slideKey]} (Dynamic + Static Text). Text: ${addedText}, Dynamic Images: ${addedImage}, Static Text: ${addedStaticText}.`;
   }else if(status){
-    status.innerText = `Auto Fill: all Apexiz elements are already present on ${PPT_TEMPLATE_LABELS[slideKey]}.`;
+    status.innerText = `Auto Fill: all dynamic elements and static text are already present on ${PPT_TEMPLATE_LABELS[slideKey]}.`;
   }
   syncPptTemplateBuilderUI();
 }
