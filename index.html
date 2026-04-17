@@ -669,6 +669,8 @@ const S = {
   projectTemplateAssignments: new Map(),
   projectTemplatePayloads: new Map(),
   myProjectsSortMode: 'created_desc',
+  myProjectsFilters: {q:'',customers:'all',pending:'all',template:'all',company:''},
+  allProjectsFilters: {q:'',customers:'all',template:'all',owner:'',company:''},
   createMode: 'builder',
   mobileDraft: null,
   pendingUploads: [],
@@ -1183,8 +1185,14 @@ async function renderMyProjects(el){
       _companyKey: customerCompanies.join(', ') || ownerCompany || '~'
     };
   });
-  const sortedProjects = sortMyProjectsList(augmented, S.myProjectsSortMode);
+  const myFilters = normalizeMyProjectsFilters(S.myProjectsFilters);
+  const filteredProjects = applyProjectFilters(augmented, myFilters, 'my');
+  const sortedProjects = sortMyProjectsList(filteredProjects, S.myProjectsSortMode);
   const sortMode = normalizeProjectSortMode(S.myProjectsSortMode);
+  const tplOptions = [`<option value="all" ${myFilters.template==='all'?'selected':''}>All Templates</option>`,
+    `<option value="apexiz" ${myFilters.template==='apexiz'?'selected':''}>Apexiz Template</option>`]
+    .concat(getPptTemplateRecords().map(item => `<option value="${item.id}" ${myFilters.template===item.id?'selected':''}>${item.name}</option>`))
+    .join('');
   el.innerHTML=`
     <div class="flex-row"><div class="panel-title">${role==='company_admin'?'Company Projects':'My Projects'}</div>
     <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
@@ -1192,7 +1200,7 @@ async function renderMyProjects(el){
       ${role==='engineer'?`<button class="action-btn" onclick="showPanel('create')">+ New Project</button>`:''}
     </div></div>
     ${projects.length===0?'<div class="empty-state"><div class="empty-state-text">No projects yet.</div></div>':`
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 12px 0">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 8px 0">
       <label class="field-label" style="margin:0">Sort Projects</label>
       <select class="field-select" style="width:260px" onchange="setMyProjectsSortMode(this.value)">
         <option value="created_desc" ${sortMode==='created_desc'?'selected':''}>Newest First</option>
@@ -1206,6 +1214,23 @@ async function renderMyProjects(el){
         <option value="parts_desc" ${sortMode==='parts_desc'?'selected':''}>Most Parts</option>
         <option value="template_asc" ${sortMode==='template_asc'?'selected':''}>PPT Template Name (A-Z)</option>
       </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px 0">
+      <label class="field-label" style="margin:0">Filters</label>
+      <input class="field-input" style="width:220px" placeholder="Search project/customer/company" value="${myFilters.q.replace(/"/g,'&quot;')}" oninput="setMyProjectsFilter('q',this.value)">
+      <select class="field-select" style="width:170px" onchange="setMyProjectsFilter('customers',this.value)">
+        <option value="all" ${myFilters.customers==='all'?'selected':''}>Customers: All</option>
+        <option value="yes" ${myFilters.customers==='yes'?'selected':''}>Has Customers</option>
+        <option value="no" ${myFilters.customers==='no'?'selected':''}>No Customers</option>
+      </select>
+      <select class="field-select" style="width:170px" onchange="setMyProjectsFilter('pending',this.value)">
+        <option value="all" ${myFilters.pending==='all'?'selected':''}>Pending: All</option>
+        <option value="yes" ${myFilters.pending==='yes'?'selected':''}>Has Pending</option>
+        <option value="no" ${myFilters.pending==='no'?'selected':''}>No Pending</option>
+      </select>
+      <select class="field-select" style="width:210px" onchange="setMyProjectsFilter('template',this.value)">${tplOptions}</select>
+      <input class="field-input" style="width:190px" placeholder="Company contains..." value="${myFilters.company.replace(/"/g,'&quot;')}" oninput="setMyProjectsFilter('company',this.value)">
+      <button class="mini-btn" type="button" onclick="resetMyProjectsFilters()">Reset Filters</button>
     </div>
     <table class="data-table"><thead><tr><th>Project</th><th>Parts</th><th>Customers</th><th>Pending</th><th>Actions</th></tr></thead>
     <tbody>${sortedProjects.map(p=>projRow(p)).join('')}</tbody></table>`}`;
@@ -3507,13 +3532,58 @@ async function renderUsers(el){
 }
 
 async function renderAllProjects(el){
-  const {data:projects=[]}=await sb.from('projects').select('id,name,created_at,parts,owner_id,access_requests(id,status)').order('created_at',{ascending:false});
+  const {data:projects=[]}=await sb.from('projects').select('id,name,created_at,parts,owner_id,access_requests(id,status,user_id,profiles(name,company_name))').order('created_at',{ascending:false});
+  const ownerIds = [...new Set(projects.map(p => p.owner_id).filter(Boolean))];
+  const ownerMap = new Map();
+  if(ownerIds.length){
+    const {data:owners=[]} = await sb.from('profiles').select('id,name,company_name').in('id', ownerIds);
+    owners.forEach(o => ownerMap.set(o.id, o));
+  }
+  const assignedTemplateIds = await Promise.all(projects.map(p => getAssignedPptTemplateForProject(p.id).catch(() => 'apexiz')));
+  const augmented = projects.map((p, idx) => {
+    const approvedReqs = (p.access_requests || []).filter(r => r.status === 'approved');
+    const owner = ownerMap.get(p.owner_id) || {};
+    const customerNames = approvedReqs.map(r => String(r.profiles?.name || '').trim()).filter(Boolean);
+    const customerCompanies = approvedReqs.map(r => String(r.profiles?.company_name || '').trim()).filter(Boolean);
+    const templateId = assignedTemplateIds[idx] || 'apexiz';
+    return {
+      ...p,
+      assignedTemplateId: templateId,
+      _templateLabel: getPptTemplateDisplayName(templateId),
+      _approvedCount: approvedReqs.length,
+      _partCount: (p.parts || []).length,
+      _ownerName: String(owner.name || ''),
+      _ownerCompany: String(owner.company_name || ''),
+      _customerKey: customerNames.join(', ') || '~',
+      _companyKey: customerCompanies.join(', ') || String(owner.company_name || '') || '~'
+    };
+  });
+  const allFilters = normalizeAllProjectsFilters(S.allProjectsFilters);
+  const filtered = applyProjectFilters(augmented, allFilters, 'all');
+  const tplOptions = [`<option value="all" ${allFilters.template==='all'?'selected':''}>All Templates</option>`,
+    `<option value="apexiz" ${allFilters.template==='apexiz'?'selected':''}>Apexiz Template</option>`]
+    .concat(getPptTemplateRecords().map(item => `<option value="${item.id}" ${allFilters.template===item.id?'selected':''}>${item.name}</option>`))
+    .join('');
   el.innerHTML=`<div class="panel-title">All Projects</div>
-    <table class="data-table"><thead><tr><th>Project</th><th>Parts</th><th>Customers</th><th>Actions</th></tr></thead>
-    <tbody>${projects.map(p=>`<tr>
-      <td><strong>${p.name}</strong></td>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 12px 0">
+      <label class="field-label" style="margin:0">Filters</label>
+      <input class="field-input" style="width:230px" placeholder="Search project/owner/customer" value="${allFilters.q.replace(/"/g,'&quot;')}" oninput="setAllProjectsFilter('q',this.value)">
+      <select class="field-select" style="width:170px" onchange="setAllProjectsFilter('customers',this.value)">
+        <option value="all" ${allFilters.customers==='all'?'selected':''}>Customers: All</option>
+        <option value="yes" ${allFilters.customers==='yes'?'selected':''}>Has Customers</option>
+        <option value="no" ${allFilters.customers==='no'?'selected':''}>No Customers</option>
+      </select>
+      <select class="field-select" style="width:210px" onchange="setAllProjectsFilter('template',this.value)">${tplOptions}</select>
+      <input class="field-input" style="width:170px" placeholder="Owner contains..." value="${allFilters.owner.replace(/"/g,'&quot;')}" oninput="setAllProjectsFilter('owner',this.value)">
+      <input class="field-input" style="width:170px" placeholder="Company contains..." value="${allFilters.company.replace(/"/g,'&quot;')}" oninput="setAllProjectsFilter('company',this.value)">
+      <button class="mini-btn" type="button" onclick="resetAllProjectsFilters()">Reset Filters</button>
+    </div>
+    <table class="data-table"><thead><tr><th>Project</th><th>Owner</th><th>Parts</th><th>Customers</th><th>Actions</th></tr></thead>
+    <tbody>${filtered.map(p=>`<tr>
+      <td><strong>${p.name}</strong><div style="font-size:10px;color:var(--g3);margin-top:3px">PPT: ${p._templateLabel}</div></td>
+      <td>${p._ownerName || '-'}<div style="font-size:10px;color:var(--g3)">${p._ownerCompany || ''}</div></td>
       <td>${(p.parts||[]).length}</td>
-      <td>${(p.access_requests||[]).filter(r=>r.status==='approved').length}</td>
+      <td>${p._approvedCount || 0}</td>
       <td>
         <button class="tbl-btn view" onclick="openViewer('${p.id}')">View</button>
         <button class="tbl-btn copy" onclick="copyExistingProject('${p.id}')">Copy</button>
@@ -3756,6 +3826,81 @@ function sortMyProjectsList(projects, mode){
     return 0;
   });
   return list;
+}
+function normalizeMyProjectsFilters(filters){
+  const f = filters || {};
+  return {
+    q: String(f.q || '').trim(),
+    customers: ['all','yes','no'].includes(f.customers) ? f.customers : 'all',
+    pending: ['all','yes','no'].includes(f.pending) ? f.pending : 'all',
+    template: String(f.template || 'all'),
+    company: String(f.company || '').trim()
+  };
+}
+function normalizeAllProjectsFilters(filters){
+  const f = filters || {};
+  return {
+    q: String(f.q || '').trim(),
+    customers: ['all','yes','no'].includes(f.customers) ? f.customers : 'all',
+    template: String(f.template || 'all'),
+    owner: String(f.owner || '').trim(),
+    company: String(f.company || '').trim()
+  };
+}
+function applyProjectFilters(projects, filters, mode){
+  const list = [...(projects || [])];
+  if(mode === 'my'){
+    const f = normalizeMyProjectsFilters(filters);
+    return list.filter(p => {
+      const q = f.q.toLowerCase();
+      const projectName = String(p.name || '').toLowerCase();
+      const customerKey = String(p._customerKey || '').toLowerCase();
+      const companyKey = String(p._companyKey || '').toLowerCase();
+      if(q && !projectName.includes(q) && !customerKey.includes(q) && !companyKey.includes(q)) return false;
+      if(f.customers === 'yes' && !(p._approvedCount > 0)) return false;
+      if(f.customers === 'no' && (p._approvedCount > 0)) return false;
+      if(f.pending === 'yes' && !(p._pendingCount > 0)) return false;
+      if(f.pending === 'no' && (p._pendingCount > 0)) return false;
+      if(f.template !== 'all' && String(p.assignedTemplateId || 'apexiz') !== f.template) return false;
+      if(f.company && !companyKey.includes(f.company.toLowerCase())) return false;
+      return true;
+    });
+  }
+  const f = normalizeAllProjectsFilters(filters);
+  return list.filter(p => {
+    const q = f.q.toLowerCase();
+    const projectName = String(p.name || '').toLowerCase();
+    const ownerName = String(p._ownerName || '').toLowerCase();
+    const customerKey = String(p._customerKey || '').toLowerCase();
+    const companyKey = String(p._companyKey || '').toLowerCase();
+    if(q && !projectName.includes(q) && !ownerName.includes(q) && !customerKey.includes(q) && !companyKey.includes(q)) return false;
+    if(f.customers === 'yes' && !(p._approvedCount > 0)) return false;
+    if(f.customers === 'no' && (p._approvedCount > 0)) return false;
+    if(f.template !== 'all' && String(p.assignedTemplateId || 'apexiz') !== f.template) return false;
+    if(f.owner && !ownerName.includes(f.owner.toLowerCase())) return false;
+    if(f.company && !companyKey.includes(f.company.toLowerCase())) return false;
+    return true;
+  });
+}
+function setMyProjectsFilter(key, value){
+  const next = {...normalizeMyProjectsFilters(S.myProjectsFilters)};
+  if(Object.prototype.hasOwnProperty.call(next, key)) next[key] = value;
+  S.myProjectsFilters = normalizeMyProjectsFilters(next);
+  showPanel('projects');
+}
+function resetMyProjectsFilters(){
+  S.myProjectsFilters = normalizeMyProjectsFilters({});
+  showPanel('projects');
+}
+function setAllProjectsFilter(key, value){
+  const next = {...normalizeAllProjectsFilters(S.allProjectsFilters)};
+  if(Object.prototype.hasOwnProperty.call(next, key)) next[key] = value;
+  S.allProjectsFilters = normalizeAllProjectsFilters(next);
+  showPanel('allprojects');
+}
+function resetAllProjectsFilters(){
+  S.allProjectsFilters = normalizeAllProjectsFilters({});
+  showPanel('allprojects');
 }
 async function assignProjectPptTemplate(projectId, projectName, currentTemplateId){
   const records = getPptTemplateRecords();
