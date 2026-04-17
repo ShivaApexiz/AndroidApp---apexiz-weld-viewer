@@ -246,6 +246,12 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .ppt-modal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
 .ppt-modal-slide{display:flex;flex-direction:column;gap:8px;min-width:0;}
 .ppt-modal-slide-title{font-size:12px;font-weight:700;color:var(--g4);letter-spacing:1.2px;text-transform:uppercase;}
+.ppt-builder-shell button.pressed-confirm,
+#pptTemplatePreviewModal button.pressed-confirm{
+  background:var(--orange)!important;
+  color:var(--white)!important;
+  box-shadow:0 0 0 2px rgba(255,85,0,0.22);
+}
 .update-tag{
   position:fixed;right:10px;bottom:8px;z-index:2100;
   padding:4px 8px;border-radius:999px;
@@ -2464,6 +2470,26 @@ function syncPptTemplateBuilderUI(){
   renderPptBuilderSidebar();
   bindPptTemplateNumberWheel();
   bindPptTemplateShortcuts();
+  bindPptTemplatePressFeedback();
+}
+function bindPptTemplatePressFeedback(){
+  if(S._pptPressFeedbackBound) return;
+  S._pptPressFeedbackBound = true;
+  document.addEventListener('click', e => {
+    if(S.activePanel !== 'pptTemplate') return;
+    const target = e.target && e.target.nodeType === 3 ? e.target.parentElement : e.target;
+    const btn = target && target.closest ? target.closest('button') : null;
+    if(!btn || btn.disabled) return;
+    const inBuilder = !!(btn.closest && (btn.closest('.ppt-builder-shell') || btn.closest('#pptTemplatePreviewModal')));
+    if(!inBuilder) return;
+    btn.classList.remove('pressed-confirm');
+    if(btn._pptPressTimer) clearTimeout(btn._pptPressTimer);
+    btn.classList.add('pressed-confirm');
+    btn._pptPressTimer = setTimeout(() => {
+      btn.classList.remove('pressed-confirm');
+      btn._pptPressTimer = null;
+    }, 260);
+  }, true);
 }
 function bindPptTemplateShortcuts(){
   if(S._pptShortcutBound) return;
