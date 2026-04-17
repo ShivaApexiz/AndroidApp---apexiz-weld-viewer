@@ -1655,6 +1655,11 @@ function makeDefaultPptTemplate(){
     templateType:'default',
     layout:'LAYOUT_16x10',
     companyName:'Apexiz',
+    cellConfig:{
+      robotCount:4,
+      robotPositionerEnabled:true,
+      workpiecePositionerEnabled:true
+    },
     logoData:'',
     sourcePptName:'',
     sourcePptData:'',
@@ -1790,6 +1795,11 @@ function makeBlankPptTemplate(){
     templateType:'blank',
     layout:'LAYOUT_16x10',
     companyName:'Apexiz',
+    cellConfig:{
+      robotCount:4,
+      robotPositionerEnabled:true,
+      workpiecePositionerEnabled:true
+    },
     logoData:'',
     sourcePptName:'',
     sourcePptData:'',
@@ -1817,6 +1827,12 @@ function hydratePptTemplate(raw){
   base.templateType = raw.templateType || base.templateType;
   base.layout = raw.layout || base.layout;
   base.companyName = raw.companyName || base.companyName;
+  const cfg = raw.cellConfig || {};
+  base.cellConfig = {
+    robotCount: Math.max(1, Math.min(8, Number(cfg.robotCount || base.cellConfig?.robotCount || 4))),
+    robotPositionerEnabled: cfg.robotPositionerEnabled !== false,
+    workpiecePositionerEnabled: cfg.workpiecePositionerEnabled !== false
+  };
   base.logoData = raw.logoData || '';
   base.sourcePptName = raw.sourcePptName || '';
   base.sourcePptData = raw.sourcePptData || '';
@@ -1921,11 +1937,56 @@ function getPptTemplateSelectedElement(){
 }
 function getPptTemplateDynamicOptions(kind){
   const builder = ensurePptTemplateBuilderState();
-  const all = PPT_TEMPLATE_DYNAMIC_KEYS.filter(item => item.kind === kind);
+  const cfg = builder.template.cellConfig || {robotCount:4,robotPositionerEnabled:true,workpiecePositionerEnabled:true};
+  const all = PPT_TEMPLATE_DYNAMIC_KEYS
+    .filter(item => item.kind === kind)
+    .filter(item => {
+      const key = String(item.key || '');
+      const robotMatch = key.match(/^overviewRobot(\d+)(Label|Welds)$/);
+      if(robotMatch){
+        const idx = Number(robotMatch[1] || '0');
+        return idx > 0 && idx <= Math.max(1, Math.min(8, Number(cfg.robotCount || 4)));
+      }
+      if(key === 'weldRobotPosValue') return cfg.robotPositionerEnabled !== false;
+      if(key === 'weldWorkPosValue') return cfg.workpiecePositionerEnabled !== false;
+      return true;
+    });
   if((builder.dynamicScopeMode || 'all') !== 'slide') return all;
   const slideMap = PPT_TEMPLATE_DYNAMIC_BY_SLIDE[builder.slideKey] || {};
   const allow = slideMap[kind] || [];
   return all.filter(item => allow.includes(item.key));
+}
+function isPptTemplateElementAllowedForCellConfig(element, slideKey, template){
+  if(!element) return false;
+  const cfg = (template && template.cellConfig) || {robotCount:4,robotPositionerEnabled:true,workpiecePositionerEnabled:true};
+  const robotCount = Math.max(1, Math.min(8, Number(cfg.robotCount || 4)));
+  const dynamicKey = String(element.dynamicKey || '');
+  const elementId = String(element.id || '');
+  const robotMatch = dynamicKey.match(/^overviewRobot(\d+)(Label|Welds)$/) || elementId.match(/^ovRobot(\d+)(Label|Value)$/);
+  if(robotMatch){
+    const idx = Number(robotMatch[1] || '0');
+    if(!(idx > 0 && idx <= robotCount)) return false;
+  }
+  if(slideKey === 'overview'){
+    const divMatch = elementId.match(/^ovDivider(\d+)$/);
+    if(divMatch){
+      const divIndex = Number(divMatch[1] || '0');
+      if(divIndex >= 3 && divIndex <= 5){
+        // Divider 3 -> Robot2 section, Divider 4 -> Robot3, Divider 5 -> Robot4
+        const robotForDivider = divIndex - 1;
+        if(robotForDivider > robotCount) return false;
+      }
+    }
+  }
+  if(slideKey === 'weld'){
+    if(dynamicKey === 'weldRobotPosValue' || elementId === 'weldRobotPosLabel' || elementId === 'weldRobotPosValue' || elementId === 'weldDiv4'){
+      if(cfg.robotPositionerEnabled === false) return false;
+    }
+    if(dynamicKey === 'weldWorkPosValue' || elementId === 'weldWorkPosLabel' || elementId === 'weldWorkPosValue' || elementId === 'weldDiv5'){
+      if(cfg.workpiecePositionerEnabled === false) return false;
+    }
+  }
+  return true;
 }
 function setActivePptTemplateBuilderTemplate(id){
   const builder = ensurePptTemplateBuilderState();
@@ -1977,10 +2038,11 @@ function resolvePptTemplateText(element, context){
 }
 function getPptTemplateElements(slideKey){
   const builder = ensurePptTemplateBuilderState();
+  const template = builder.template;
   return [
     ...Object.values(builder.template.slides[slideKey].slots).map(item => ({...item, kind:'slot'})),
     ...builder.template.slides[slideKey].extras.map(item => ({...item, kind:'extra'}))
-  ];
+  ].filter(item => isPptTemplateElementAllowedForCellConfig(item, slideKey, template));
 }
 function makePptTemplateSelectionToken(kind,id){
   return `${kind}:${id}`;
@@ -2118,7 +2180,10 @@ function buildPptTemplatePreviewElement(item, context, builder, scale, interacti
     const radius = shapeKey === 'oval' ? '999px' : (shapeKey === 'roundRect' ? '14px' : '0px');
     const extraClass = ['roundRect','triangle','diamond','line'].includes(shapeKey) ? ` ${shapeKey}` : '';
     const fillCss = item.noFill ? 'transparent' : pptCssColor(item.fill,'#FFFFFF');
-    return `<div class="ppt-preview-el ppt-preview-shape${extraClass}${selected}${locked}" ${refAttrs} ${click} ${down} style="${commonStyle}background:${fillCss};border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px;border-radius:${radius}"></div>`;
+    const polygonOutline = (shapeKey === 'triangle' || shapeKey === 'diamond')
+      ? `border-width:0;box-shadow:inset 0 0 0 ${Math.max(1, Math.round(pptNum(item.lineWidth,1)))}px ${pptCssColor(item.lineColor,'#CCCCCC')};`
+      : `border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px;`;
+    return `<div class="ppt-preview-el ppt-preview-shape${extraClass}${selected}${locked}" ${refAttrs} ${click} ${down} style="${commonStyle}background:${fillCss};${polygonOutline}border-radius:${radius}"></div>`;
   }
   if(item.type === 'logo' || item.type === 'staticImage' || item.type === 'dynamicImage'){
     const src = item.type === 'logo' ? (item.imageData || builder.template.logoData || 'Logo.png') : (item.imageData || '');
@@ -2167,10 +2232,13 @@ function renderPptBuilderSidebar(){
   const selected = getPptTemplateSelectedElement();
   const selectedCount = getPptTemplateSelectedElements().length;
   const slide = builder.template.slides[builder.slideKey];
-  const options = Object.entries(slide.slots).map(([key, slot]) => `<option value="${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>${slot.id}</option>`).join('');
+  const cellCfg = builder.template.cellConfig || {robotCount:4,robotPositionerEnabled:true,workpiecePositionerEnabled:true};
+  const visibleSlots = Object.entries(slide.slots).filter(([,slot]) => isPptTemplateElementAllowedForCellConfig(slot, builder.slideKey, builder.template));
+  const visibleExtras = (slide.extras || []).filter(item => isPptTemplateElementAllowedForCellConfig(item, builder.slideKey, builder.template));
+  const options = visibleSlots.map(([key, slot]) => `<option value="${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>${slot.id}</option>`).join('');
   const allOptions = []
-    .concat(Object.entries(slide.slots).map(([key, slot]) => `<option value="slot:${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>[Slot] ${slot.id}</option>`))
-    .concat(slide.extras.map(item => `<option value="extra:${item.id}" ${builder.selectedKind==='extra'&&builder.selectedId===item.id?'selected':''}>[Extra] ${item.id}</option>`))
+    .concat(visibleSlots.map(([key, slot]) => `<option value="slot:${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>[Slot] ${slot.id}</option>`))
+    .concat(visibleExtras.map(item => `<option value="extra:${item.id}" ${builder.selectedKind==='extra'&&builder.selectedId===item.id?'selected':''}>[Extra] ${item.id}</option>`))
     .join('');
   const dynTextList = getPptTemplateDynamicOptions('text');
   const dynImageList = getPptTemplateDynamicOptions('image');
@@ -2204,6 +2272,30 @@ function renderPptBuilderSidebar(){
         <button class="mini-btn dark" type="button" onclick="triggerPptTemplateImageUpload('logo')">Upload Logo</button>
         <button class="mini-btn" type="button" onclick="openPptTemplatePreview()">Preview PPT</button>
       </div>
+    </div>
+    <div class="ppt-prop-group">
+      <div class="ppt-prop-title">Cell Configuration</div>
+      <div class="ppt-prop-grid">
+        <div>
+          <label class="field-label">No. of Robots</label>
+          <input type="number" min="1" max="8" step="1" value="${Math.max(1, Math.min(8, Number(cellCfg.robotCount || 4)))}" oninput="updatePptTemplateCellConfig('robotCount',this.value)">
+        </div>
+        <div>
+          <label class="field-label">Robot Positioner</label>
+          <select onchange="updatePptTemplateCellConfig('robotPositionerEnabled',this.value==='Y')">
+            <option value="Y" ${cellCfg.robotPositionerEnabled !== false ? 'selected' : ''}>Y</option>
+            <option value="N" ${cellCfg.robotPositionerEnabled === false ? 'selected' : ''}>N</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Workpiece Positioner</label>
+          <select onchange="updatePptTemplateCellConfig('workpiecePositionerEnabled',this.value==='Y')">
+            <option value="Y" ${cellCfg.workpiecePositionerEnabled !== false ? 'selected' : ''}>Y</option>
+            <option value="N" ${cellCfg.workpiecePositionerEnabled === false ? 'selected' : ''}>N</option>
+          </select>
+        </div>
+      </div>
+      <div class="builder-note">Used to customize Apexiz dynamic options and slide visibility rules for overview/weld positioner blocks.</div>
     </div>
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Add Elements</div>
@@ -2462,6 +2554,20 @@ function updatePptTemplateCompanyName(value){
   ensurePptTemplateBuilderState().template.companyName = value || 'Apexiz';
   recordPptTemplateHistory();
   renderPptBuilderPreview();
+}
+function updatePptTemplateCellConfig(key, value){
+  const builder = ensurePptTemplateBuilderState();
+  const cfg = builder.template.cellConfig || {robotCount:4,robotPositionerEnabled:true,workpiecePositionerEnabled:true};
+  if(key === 'robotCount'){
+    cfg.robotCount = Math.max(1, Math.min(8, Number(value || 4)));
+  }else if(key === 'robotPositionerEnabled'){
+    cfg.robotPositionerEnabled = !!value;
+  }else if(key === 'workpiecePositionerEnabled'){
+    cfg.workpiecePositionerEnabled = !!value;
+  }
+  builder.template.cellConfig = cfg;
+  recordPptTemplateHistory();
+  syncPptTemplateBuilderUI();
 }
 function updatePptTemplateName(value){ ensurePptTemplateBuilderState().templateName = value || 'Custom Template'; }
 function updatePptTemplateSlideProp(prop, value){
@@ -2917,6 +3023,7 @@ function autoFillDynamicElementsForSlide(){
   let lastId = '';
   Object.values(apexizSlide.slots || {}).forEach((slot, idx) => {
     if(!slot) return;
+    if(!isPptTemplateElementAllowedForCellConfig(slot, slideKey, builder.template)) return;
     const isDynamic = !!slot.dynamicKey;
     const isStaticText = slot.type === 'text' && !slot.dynamicKey;
     if(!isDynamic && !isStaticText) return;
@@ -7762,8 +7869,12 @@ function renderPptTemplateSlide(sl, slideKey, template, context){
       sizing:{type:'contain',w:10,h:slideH}
     });
   }
-  Object.values(slide.slots).forEach(item => applyPptTemplateElement(sl, item, context, template));
-  slide.extras.forEach(item => applyPptTemplateElement(sl, item, context, template));
+  Object.values(slide.slots)
+    .filter(item => isPptTemplateElementAllowedForCellConfig(item, slideKey, template))
+    .forEach(item => applyPptTemplateElement(sl, item, context, template));
+  slide.extras
+    .filter(item => isPptTemplateElementAllowedForCellConfig(item, slideKey, template))
+    .forEach(item => applyPptTemplateElement(sl, item, context, template));
 }
 function buildCustomOverviewSummary(robotCols, projName, part, today){
   const rows = [`PROJECT\n${projName}` , `PART VARIANT\n${part}`];
