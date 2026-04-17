@@ -919,10 +919,10 @@ function routeUser(profile){
     document.getElementById('cadminNav').style.display  = profile.role==='company_admin'  ? 'block' : 'none';
 
     // Nav visibility per role
-    document.getElementById('nav-create').style.display         = profile.role==='engineer'                             ? 'flex' : 'none';
+    document.getElementById('nav-create').style.display         = (profile.role==='engineer'||profile.role==='company_admin'||profile.role==='admin') ? 'flex' : 'none';
     document.getElementById('nav-enrolCustomer').style.display  = profile.role==='engineer'                             ? 'flex' : 'none';
     document.getElementById('nav-mycustomers').style.display    = profile.role==='engineer'                             ? 'flex' : 'none';
-    document.getElementById('nav-projects').style.display       = (profile.role==='engineer'||profile.role==='company_admin') ? 'flex' : 'none';
+    document.getElementById('nav-projects').style.display       = (profile.role==='engineer'||profile.role==='company_admin'||profile.role==='admin') ? 'flex' : 'none';
 
     showPage('dashPage');
     showPanel('overview');
@@ -1226,7 +1226,7 @@ async function renderMyProjects(el){
     <div class="flex-row"><div class="panel-title">${role==='company_admin'?'Company Projects':'My Projects'}</div>
     <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
       <button class="action-btn" onclick="showPanel('pptTemplate')" style="background:var(--black)">PPT Template Builder</button>
-      ${role==='engineer'?`<button class="action-btn" onclick="showPanel('create')">+ New Project</button>`:''}
+      ${(role==='engineer'||role==='company_admin'||role==='admin')?`<button class="action-btn" onclick="showPanel('create')">+ New Project</button>`:''}
     </div></div>
     ${projects.length===0?'<div class="empty-state"><div class="empty-state-text">No projects yet.</div></div>':`
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 8px 0">
@@ -6398,14 +6398,34 @@ function mountBuilderOverlaysToBody(){
 }
 
 function openImagePickerInput(target='weld', mode='gallery'){
-  const input = document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput');
-  if(!input) return;
-  if(mode === 'camera'){
-    input.setAttribute('capture','environment');
-  }else{
-    input.removeAttribute('capture');
+  const existingInput = document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput');
+  if(mode !== 'camera'){
+    if(!existingInput) return;
+    existingInput.removeAttribute('capture');
+    existingInput.click();
+    return;
   }
-  input.click();
+  const tempInput = document.createElement('input');
+  tempInput.type = 'file';
+  tempInput.accept = 'image/*';
+  tempInput.setAttribute('capture','environment');
+  tempInput.style.position = 'fixed';
+  tempInput.style.left = '-9999px';
+  tempInput.style.top = '-9999px';
+  tempInput.style.opacity = '0';
+  tempInput.style.pointerEvents = 'none';
+  tempInput.addEventListener('change', async ev => {
+    const file = ev.target.files && ev.target.files[0];
+    tempInput.remove();
+    if(!file) return;
+    if(target === 'part'){
+      await loadPartImageFile(file);
+    }else{
+      await loadWeldImageFile(file);
+    }
+  }, {once:true});
+  document.body.appendChild(tempInput);
+  tempInput.click();
 }
 
 function cropImageDataUrlToAspect(dataUrl, aspectRatio, outWidth, outHeight){
