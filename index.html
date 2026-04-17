@@ -2469,23 +2469,37 @@ function updatePptTemplateSlideColor(value){
 function updatePptTemplateElementProp(prop, value){
   const selectedItems = getPptTemplateSelectedElements();
   if(!selectedItems.length) return;
-  const numericProps = new Set(['x','y','w','h','fontSize','lineWidth']);
-  const genericProps = new Set(['x','y','w','h','opacity']);
+  const numericProps = new Set(['x','y','w','h','fontSize','lineWidth','opacity']);
+  const genericProps = new Set(['x','y','w','h','fontSize','lineWidth','opacity']);
+  const active = getPptTemplateSelectedElement();
+  const supportsDelta = numericProps.has(prop) && selectedItems.length > 1 && active && typeof active[prop] !== 'undefined';
+  const baseCurrent = supportsDelta ? Number(active[prop] || 0) : 0;
+  const baseNext = supportsDelta
+    ? (prop === 'opacity' ? Number(pptOpacity(value, active.opacity || 100)) : Number(pptNum(value, active[prop] || 0)))
+    : 0;
+  const delta = supportsDelta ? (baseNext - baseCurrent) : 0;
   let changed = false;
   selectedItems.forEach(item => {
     const el = item.element;
     if(!el) return;
     if(!genericProps.has(prop) && !Object.prototype.hasOwnProperty.call(el, prop)) return;
-    const nextValue = numericProps.has(prop)
-      ? pptNum(value, el[prop] || 0)
-      : (prop === 'opacity' ? pptOpacity(value, el.opacity || 100) : value);
+    let nextValue;
+    if(supportsDelta && typeof el[prop] !== 'undefined'){
+      const current = Number(el[prop] || 0);
+      const deltaApplied = current + delta;
+      nextValue = prop === 'opacity' ? pptOpacity(deltaApplied, el.opacity || 100) : pptNum(deltaApplied, el[prop] || 0);
+    }else if(numericProps.has(prop)){
+      nextValue = prop === 'opacity' ? pptOpacity(value, el.opacity || 100) : pptNum(value, el[prop] || 0);
+    }else{
+      nextValue = value;
+    }
     if(el[prop] === nextValue) return;
     el[prop] = nextValue;
     changed = true;
   });
   if(!changed) return;
   recordPptTemplateHistory();
-  syncPptTemplateBuilderUI();
+  renderPptBuilderPreview();
 }
 function setPptTemplateInteractionMode(mode){
   const builder = ensurePptTemplateBuilderState();
@@ -2882,25 +2896,43 @@ function autoFillDynamicElementsForSlide(){
       .filter(item => item && item.type === 'text')
       .map(item => `${item.dynamicKey || ''}::${String(item.text || '').trim()}::${pptNum(item.x,0)}::${pptNum(item.y,0)}::${pptNum(item.w,0)}::${pptNum(item.h,0)}`)
   );
+  const existingImageSignatures = new Set(
+    []
+      .concat(Object.values(targetSlide.slots || {}))
+      .concat(targetSlide.extras || [])
+      .filter(item => item && item.type === 'dynamicImage')
+      .map(item => `${item.dynamicKey || ''}::${pptNum(item.x,0)}::${pptNum(item.y,0)}::${pptNum(item.w,0)}::${pptNum(item.h,0)}`)
+  );
 
   const now = Date.now();
   let added = 0;
+  let addedText = 0;
+  let addedImage = 0;
   let lastId = '';
   Object.values(apexizSlide.slots || {}).forEach((slot, idx) => {
-    if(!slot || slot.type !== 'text') return;
-    const signature = `${slot.dynamicKey || ''}::${String(slot.text || '').trim()}::${pptNum(slot.x,0)}::${pptNum(slot.y,0)}::${pptNum(slot.w,0)}::${pptNum(slot.h,0)}`;
+    if(!slot || !slot.dynamicKey) return;
     if(slot.dynamicKey && existingDynamicKeys.has(slot.dynamicKey)) return;
-    if(existingTextSignatures.has(signature)) return;
+    const isText = slot.type === 'text';
+    const isImage = slot.type === 'dynamicImage';
+    if(!isText && !isImage) return;
+    const signature = isText
+      ? `${slot.dynamicKey || ''}::${String(slot.text || '').trim()}::${pptNum(slot.x,0)}::${pptNum(slot.y,0)}::${pptNum(slot.w,0)}::${pptNum(slot.h,0)}`
+      : `${slot.dynamicKey || ''}::${pptNum(slot.x,0)}::${pptNum(slot.y,0)}::${pptNum(slot.w,0)}::${pptNum(slot.h,0)}`;
+    if(isText && existingTextSignatures.has(signature)) return;
+    if(isImage && existingImageSignatures.has(signature)) return;
     const clone = deepClone(slot);
     adaptPptSlotToTemplateLayout(clone, apexizTemplate.layout, builder.template.layout);
-    const token = slot.dynamicKey || `text_${idx}`;
+    const token = slot.dynamicKey || `${slot.type}_${idx}`;
     clone.id = `auto_${token}_${now}_${idx}`;
     clone.kind = 'extra';
     delete clone.locked;
     targetSlide.extras.push(clone);
-    if(slot.dynamicKey) existingDynamicKeys.add(slot.dynamicKey);
-    existingTextSignatures.add(signature);
+    existingDynamicKeys.add(slot.dynamicKey);
+    if(isText) existingTextSignatures.add(signature);
+    if(isImage) existingImageSignatures.add(signature);
     added += 1;
+    if(isText) addedText += 1;
+    if(isImage) addedImage += 1;
     lastId = clone.id;
   });
 
@@ -2910,9 +2942,9 @@ function autoFillDynamicElementsForSlide(){
     builder.selectedId = lastId;
     builder.selectionTokens = [makePptTemplateSelectionToken('extra', lastId)];
     recordPptTemplateHistory();
-    if(status) status.innerText = `Auto Fill added ${added} Apexiz text element(s) for ${PPT_TEMPLATE_LABELS[slideKey]}.`;
+    if(status) status.innerText = `Auto Fill added ${added} Apexiz dynamic element(s) for ${PPT_TEMPLATE_LABELS[slideKey]} (Text: ${addedText}, Images: ${addedImage}).`;
   }else if(status){
-    status.innerText = `Auto Fill: all Apexiz text elements are already present on ${PPT_TEMPLATE_LABELS[slideKey]}.`;
+    status.innerText = `Auto Fill: all Apexiz dynamic text/image elements are already present on ${PPT_TEMPLATE_LABELS[slideKey]}.`;
   }
   syncPptTemplateBuilderUI();
 }
