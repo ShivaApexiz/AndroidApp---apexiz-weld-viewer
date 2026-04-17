@@ -5231,7 +5231,7 @@ function renderCreateProject(el){
     </div>
 
     <div id="imageSourceOverlay" class="builder-overlay" style="display:none">
-      <div class="builder-overlay-card source-picker-card">
+      <div class="builder-overlay-card source-picker-card" style="background:#ffffff !important;opacity:1">
         <div class="builder-overlay-head">
           <strong id="imageSourceTitle">Select Image Source</strong>
           <button class="tbl-btn revoke" type="button" onclick="closeImageSourcePicker()">Close</button>
@@ -6587,11 +6587,34 @@ async function snapshotVideoFrame(video){
       : null;
     if(track && typeof ImageCapture === 'function'){
       const capture = new ImageCapture(track);
+      if(typeof capture.takePhoto === 'function'){
+        const blob = await capture.takePhoto();
+        if(blob){
+          if(typeof createImageBitmap === 'function'){
+            const photoBitmap = await createImageBitmap(blob);
+            if(photoBitmap && photoBitmap.width && photoBitmap.height) return photoBitmap;
+          }
+          const photoImg = await new Promise(resolve => {
+            const img = new Image();
+            const url = URL.createObjectURL(blob);
+            img.onload = () => {
+              URL.revokeObjectURL(url);
+              resolve(img);
+            };
+            img.onerror = () => {
+              URL.revokeObjectURL(url);
+              resolve(null);
+            };
+            img.src = url;
+          });
+          if(photoImg && photoImg.width && photoImg.height) return photoImg;
+        }
+      }
       const bitmap = await capture.grabFrame();
       if(bitmap && bitmap.width && bitmap.height) return bitmap;
     }
   }catch(err){
-    console.warn('ImageCapture.grabFrame failed:', err);
+    console.warn('ImageCapture still capture failed:', err);
   }
   try{
     if(typeof createImageBitmap === 'function'){
