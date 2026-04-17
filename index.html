@@ -5497,12 +5497,19 @@ function initProjectBuilderBindings(){
   overlayStampFont.value = projectWizardState.stampFont;
   updateStampButtons();
   updateToolSelectionState();
+  mountBuilderOverlaysToBody();
   renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
   renderImagePreview('weldPreview', projectWizardState.baseImageDataUrl);
   const imageSourceOverlay = document.getElementById('imageSourceOverlay');
   if(imageSourceOverlay){
     imageSourceOverlay.addEventListener('click', ev => {
       if(ev.target === imageSourceOverlay) closeImageSourcePicker();
+    });
+  }
+  const annotationOverlay = document.getElementById('annotationOverlay');
+  if(annotationOverlay){
+    annotationOverlay.addEventListener('click', ev => {
+      if(ev.target === annotationOverlay) closeAnnotationFullscreen();
     });
   }
   if(sourceProjName) sourceProjName.value = projectWizardState.projectName || '';
@@ -6369,6 +6376,24 @@ function renderImagePreview(targetId, dataUrl){
   el.innerHTML = `<img src="${dataUrl}" alt="Preview">`;
 }
 
+function mountBuilderOverlaysToBody(){
+  const overlayIds = ['cameraOverlay','imageSourceOverlay','annotationOverlay'];
+  overlayIds.forEach(id => {
+    const overlay = document.getElementById(id);
+    if(!overlay) return;
+    if(overlay.parentElement !== document.body){
+      document.body.appendChild(overlay);
+    }
+    overlay.style.position = 'fixed';
+    overlay.style.left = '0';
+    overlay.style.top = '0';
+    overlay.style.right = '0';
+    overlay.style.bottom = '0';
+    overlay.style.inset = '0';
+    overlay.style.zIndex = '2600';
+  });
+}
+
 function cropImageDataUrlToAspect(dataUrl, aspectRatio, outWidth, outHeight){
   return new Promise(resolve => {
     const img = new Image();
@@ -6398,6 +6423,7 @@ function cropImageDataUrlToAspect(dataUrl, aspectRatio, outWidth, outHeight){
 }
 
 function openImageSourcePicker(target){
+  mountBuilderOverlaysToBody();
   const normalizedTarget = target === 'part' ? 'part' : 'weld';
   builderImageSourceTarget = normalizedTarget;
   const titleEl = document.getElementById('imageSourceTitle');
@@ -6429,16 +6455,26 @@ function chooseImageSource(mode){
 }
 
 function openAnnotationFullscreen(){
-  document.getElementById('annotationOverlay').style.display = 'flex';
+  mountBuilderOverlaysToBody();
+  const overlay = document.getElementById('annotationOverlay');
+  if(overlay){
+    overlay.style.display = 'flex';
+    overlay.classList.add('open');
+  }
   redrawBuilderCanvases();
 }
 
 function closeAnnotationFullscreen(){
-  document.getElementById('annotationOverlay').style.display = 'none';
+  const overlay = document.getElementById('annotationOverlay');
+  if(overlay){
+    overlay.style.display = 'none';
+    overlay.classList.remove('open');
+  }
   redrawBuilderCanvases();
 }
 
 async function openCameraCapture(target='weld'){
+  mountBuilderOverlaysToBody();
   builderCameraTarget = target;
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
     document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput').click();
@@ -6454,7 +6490,11 @@ async function openCameraCapture(target='weld'){
     const frameWrap = document.querySelector('#cameraOverlay .camera-frame-wrap');
     if(frameWrap) frameWrap.style.setProperty('--capture-aspect', String(config.aspect));
     if(guideLabel) guideLabel.textContent = config.label;
-    document.getElementById('cameraOverlay').style.display = 'flex';
+    const overlay = document.getElementById('cameraOverlay');
+    if(overlay){
+      overlay.style.display = 'flex';
+      overlay.classList.add('open');
+    }
   }catch(err){
     console.warn(err);
     document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput').click();
@@ -6468,7 +6508,11 @@ function closeCameraCapture(){
   }
   const video = document.getElementById('cameraVideo');
   if(video) video.srcObject = null;
-  document.getElementById('cameraOverlay').style.display = 'none';
+  const overlay = document.getElementById('cameraOverlay');
+  if(overlay){
+    overlay.style.display = 'none';
+    overlay.classList.remove('open');
+  }
 }
 
 function getCaptureTargetConfig(target){
