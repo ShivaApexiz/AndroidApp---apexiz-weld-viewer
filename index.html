@@ -1837,9 +1837,9 @@ function hydratePptTemplate(raw){
   base.cellConfig = {
     robotCount: Math.max(1, Math.min(8, Number(cfg.robotCount || base.cellConfig?.robotCount || 4))),
     robotPositionerEnabled: cfg.robotPositionerEnabled !== false,
-    robotPositionerAxes: Math.max(1, Math.min(6, Number(cfg.robotPositionerAxes || base.cellConfig?.robotPositionerAxes || 3))),
+    robotPositionerAxes: Math.max(1, Math.min(3, Number(cfg.robotPositionerAxes || base.cellConfig?.robotPositionerAxes || 3))),
     workpiecePositionerEnabled: cfg.workpiecePositionerEnabled !== false,
-    workpiecePositionerAxes: Math.max(1, Math.min(6, Number(cfg.workpiecePositionerAxes || base.cellConfig?.workpiecePositionerAxes || 3))),
+    workpiecePositionerAxes: Math.max(1, Math.min(3, Number(cfg.workpiecePositionerAxes || base.cellConfig?.workpiecePositionerAxes || 3))),
     fixed: !!cfg.fixed
   };
   base.logoData = raw.logoData || '';
@@ -2003,14 +2003,14 @@ function normalizePptCellConfig(input){
   return {
     robotCount: Math.max(1, Math.min(8, Number(cfg.robotCount || 4))),
     robotPositionerEnabled: cfg.robotPositionerEnabled !== false,
-    robotPositionerAxes: Math.max(1, Math.min(6, Number(cfg.robotPositionerAxes || 3))),
+    robotPositionerAxes: Math.max(1, Math.min(3, Number(cfg.robotPositionerAxes || 3))),
     workpiecePositionerEnabled: cfg.workpiecePositionerEnabled !== false,
-    workpiecePositionerAxes: Math.max(1, Math.min(6, Number(cfg.workpiecePositionerAxes || 3))),
+    workpiecePositionerAxes: Math.max(1, Math.min(3, Number(cfg.workpiecePositionerAxes || 3))),
     fixed: !!cfg.fixed
   };
 }
 function buildDemoAxisValues(prefix, unit, count, startValue){
-  const axisCount = Math.max(1, Math.min(6, Number(count || 3)));
+  const axisCount = Math.max(1, Math.min(3, Number(count || 3)));
   const out = [];
   for(let i=1;i<=axisCount;i+=1){
     out.push(`Axis ${i}: ${Number(startValue || 10) * i} ${unit}`);
@@ -2285,18 +2285,6 @@ function renderPptBuilderSidebar(){
     .join('');
   host.innerHTML = `
     <div class="ppt-prop-group">
-      <div class="ppt-prop-title">Templates</div>
-      <div class="ppt-builder-list">${templateButtons}</div>
-      <div><label class="field-label">Template Name</label><input type="text" value="${builder.templateName || ''}" ${builder.currentTemplateId==='apexiz'?'readonly':''} oninput="updatePptTemplateName(this.value)"></div>
-      <div class="ppt-builder-toolbar">
-        <button class="mini-btn dark" type="button" onclick="createPptTemplateFromCurrent()">New Template From Current</button>
-        <button class="mini-btn" type="button" onclick="createBlankPptTemplateFromScratch()">New Blank Template</button>
-        <button class="mini-btn dark" type="button" onclick="triggerPptTemplatePptUpload('newTemplate')">Upload Base PPT Template</button>
-        <button class="mini-btn dark" type="button" onclick="triggerPptTemplatePdfUpload()">Upload PDF Background</button>
-        ${builder.currentTemplateId!=='apexiz' ? `<button class="mini-btn warn" type="button" onclick="deleteActivePptTemplate()">Delete Template</button>` : ''}
-      </div>
-    </div>
-    <div class="ppt-prop-group">
       <div class="ppt-prop-title">Cell Configuration</div>
       <div class="ppt-prop-grid">
         <div>
@@ -2311,8 +2299,12 @@ function renderPptBuilderSidebar(){
           </select>
         </div>
         <div>
-          <label class="field-label">Robot Positioner Axes</label>
-          <input type="number" min="1" max="6" step="1" value="${Math.max(1, Math.min(6, Number(cellDraft.robotPositionerAxes || 3)))}" ${cellDraft.robotPositionerEnabled === false ? 'disabled' : ''} oninput="updatePptTemplateCellConfig('robotPositionerAxes',this.value)">
+          <label class="field-label">Robot Positioner Axis</label>
+          <select ${cellDraft.robotPositionerEnabled === false ? 'disabled' : ''} onchange="updatePptTemplateCellConfig('robotPositionerAxes',this.value)">
+            <option value="1" ${Number(cellDraft.robotPositionerAxes || 3)===1?'selected':''}>1-Axis</option>
+            <option value="2" ${Number(cellDraft.robotPositionerAxes || 3)===2?'selected':''}>2-Axis</option>
+            <option value="3" ${Number(cellDraft.robotPositionerAxes || 3)===3?'selected':''}>3-Axis</option>
+          </select>
         </div>
         <div>
           <label class="field-label">Workpiece Positioner</label>
@@ -2322,14 +2314,30 @@ function renderPptBuilderSidebar(){
           </select>
         </div>
         <div>
-          <label class="field-label">Workpiece Positioner Axes</label>
-          <input type="number" min="1" max="6" step="1" value="${Math.max(1, Math.min(6, Number(cellDraft.workpiecePositionerAxes || 3)))}" ${cellDraft.workpiecePositionerEnabled === false ? 'disabled' : ''} oninput="updatePptTemplateCellConfig('workpiecePositionerAxes',this.value)">
+          <label class="field-label">Workpiece Positioner Axis</label>
+          <select ${cellDraft.workpiecePositionerEnabled === false ? 'disabled' : ''} onchange="updatePptTemplateCellConfig('workpiecePositionerAxes',this.value)">
+            <option value="1" ${Number(cellDraft.workpiecePositionerAxes || 3)===1?'selected':''}>1-Axis</option>
+            <option value="2" ${Number(cellDraft.workpiecePositionerAxes || 3)===2?'selected':''}>2-Axis</option>
+            <option value="3" ${Number(cellDraft.workpiecePositionerAxes || 3)===3?'selected':''}>3-Axis</option>
+          </select>
         </div>
       </div>
       <div class="ppt-builder-toolbar">
         <button class="mini-btn dark" type="button" onclick="fixPptTemplateCellConfiguration()">Fix Config</button>
       </div>
       <div class="builder-note">${cellCfg.fixed ? `Fixed Config: Robots ${cellCfg.robotCount}, Robot Positioner ${cellCfg.robotPositionerEnabled ? `Y (${cellCfg.robotPositionerAxes} axis)` : 'N'}, Workpiece Positioner ${cellCfg.workpiecePositionerEnabled ? `Y (${cellCfg.workpiecePositionerAxes} axis)` : 'N'}` : 'Config draft is editable. Click Fix Config to apply template-specific Apexiz configuration.'}</div>
+    </div>
+    <div class="ppt-prop-group">
+      <div class="ppt-prop-title">Templates</div>
+      <div class="ppt-builder-list">${templateButtons}</div>
+      <div><label class="field-label">Template Name</label><input type="text" value="${builder.templateName || ''}" ${builder.currentTemplateId==='apexiz'?'readonly':''} oninput="updatePptTemplateName(this.value)"></div>
+      <div class="ppt-builder-toolbar">
+        <button class="mini-btn dark" type="button" onclick="createPptTemplateFromCurrent()">New Template From Current</button>
+        <button class="mini-btn" type="button" onclick="createBlankPptTemplateFromScratch()">New Blank Template</button>
+        <button class="mini-btn dark" type="button" onclick="triggerPptTemplatePptUpload('newTemplate')">Upload Base PPT Template</button>
+        <button class="mini-btn dark" type="button" onclick="triggerPptTemplatePdfUpload()">Upload PDF Background</button>
+        ${builder.currentTemplateId!=='apexiz' ? `<button class="mini-btn warn" type="button" onclick="deleteActivePptTemplate()">Delete Template</button>` : ''}
+      </div>
     </div>
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Template Settings</div>
@@ -2608,11 +2616,11 @@ function updatePptTemplateCellConfig(key, value){
   }else if(key === 'robotPositionerEnabled'){
     cfg.robotPositionerEnabled = !!value;
   }else if(key === 'robotPositionerAxes'){
-    cfg.robotPositionerAxes = Math.max(1, Math.min(6, Number(value || 3)));
+    cfg.robotPositionerAxes = Math.max(1, Math.min(3, Number(value || 3)));
   }else if(key === 'workpiecePositionerEnabled'){
     cfg.workpiecePositionerEnabled = !!value;
   }else if(key === 'workpiecePositionerAxes'){
-    cfg.workpiecePositionerAxes = Math.max(1, Math.min(6, Number(value || 3)));
+    cfg.workpiecePositionerAxes = Math.max(1, Math.min(3, Number(value || 3)));
   }
   builder.cellConfigDraft = cfg;
   renderPptBuilderSidebar();
