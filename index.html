@@ -6579,8 +6579,28 @@ function clampCropRect(rect, sourceWidth, sourceHeight){
   return { x, y, width, height };
 }
 
-function snapshotVideoFrame(video){
+async function snapshotVideoFrame(video){
   if(!video || !video.videoWidth || !video.videoHeight) return null;
+  try{
+    const track = builderCameraStream && typeof builderCameraStream.getVideoTracks === 'function'
+      ? builderCameraStream.getVideoTracks()[0]
+      : null;
+    if(track && typeof ImageCapture === 'function'){
+      const capture = new ImageCapture(track);
+      const bitmap = await capture.grabFrame();
+      if(bitmap && bitmap.width && bitmap.height) return bitmap;
+    }
+  }catch(err){
+    console.warn('ImageCapture.grabFrame failed:', err);
+  }
+  try{
+    if(typeof createImageBitmap === 'function'){
+      const bitmap = await createImageBitmap(video);
+      if(bitmap && bitmap.width && bitmap.height) return bitmap;
+    }
+  }catch(err){
+    console.warn('createImageBitmap(video) failed:', err);
+  }
   const canvas = document.createElement('canvas');
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
@@ -6593,7 +6613,7 @@ function snapshotVideoFrame(video){
 function cropMediaSourceToGuide(source, guideElement, displayElement, outWidth, outHeight){
   const displayRect = displayElement.getBoundingClientRect();
   const guideRect = guideElement.getBoundingClientRect();
-  const cropSource = (source && String(source.tagName || '').toUpperCase() === 'VIDEO') ? (snapshotVideoFrame(source) || source) : source;
+  const cropSource = source;
   const sourceWidth = cropSource.videoWidth || cropSource.naturalWidth || cropSource.width;
   const sourceHeight = cropSource.videoHeight || cropSource.naturalHeight || cropSource.height;
   if(!sourceWidth || !sourceHeight || !displayRect.width || !displayRect.height) return null;
@@ -6623,12 +6643,17 @@ function cropMediaSourceToGuide(source, guideElement, displayElement, outWidth, 
   return canvas.toDataURL('image/png');
 }
 
-function captureCameraFrame(){
+async function captureCameraFrame(){
   const video = document.getElementById('cameraVideo');
   const guide = document.querySelector('#cameraOverlay .camera-crop-guide');
   if(!video || !video.videoWidth || !guide || video.readyState < 2) return;
   const config = getCaptureTargetConfig(builderCameraTarget);
-  const fileLikeDataUrl = cropMediaSourceToGuide(video, guide, video, config.width, config.height);
+  const frozenFrame = await snapshotVideoFrame(video);
+  if(!frozenFrame) return;
+  const fileLikeDataUrl = cropMediaSourceToGuide(frozenFrame, guide, video, config.width, config.height);
+  if(frozenFrame && typeof frozenFrame.close === 'function'){
+    try{ frozenFrame.close(); }catch(_err){}
+  }
   if(!fileLikeDataUrl) return;
   closeCameraCapture();
   if(builderCameraTarget === 'part'){
