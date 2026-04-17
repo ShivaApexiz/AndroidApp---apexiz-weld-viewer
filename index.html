@@ -133,6 +133,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .tbl-btn.copy:hover{background:var(--g4);}
 .tbl-btn.manage{background:#1A73E8;color:var(--white);}
 .tbl-btn.manage:hover{background:#1558B0;}
+.tbl-btn.active-tool,.tbl-btn.selected,.tbl-btn[aria-pressed="true"]{background:var(--orange)!important;color:var(--white)!important;box-shadow:0 0 0 2px rgba(255,85,0,0.2);}
 .create-form{background:var(--g1);border-radius:8px;border:1px solid var(--g2);padding:18px;display:flex;flex-direction:column;gap:12px;}
 .folder-zone{border:2px dashed var(--g2);border-radius:8px;padding:24px 18px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;background:var(--white);}
 .folder-zone:hover,.folder-zone.drag-over{border-color:var(--orange);background:var(--orange-light);}
@@ -170,6 +171,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .mini-btn.primary{background:var(--orange);color:var(--white);}
 .mini-btn.dark{background:var(--black);color:var(--white);}
 .mini-btn.warn{background:#F8D7DA;color:var(--red);}
+.mini-btn.active-tool,.mini-btn.selected,.mini-btn[aria-pressed="true"]{background:var(--orange)!important;color:var(--white)!important;box-shadow:0 0 0 2px rgba(255,85,0,0.2);}
 .builder-actions{display:flex;gap:8px;flex-wrap:wrap;}
 .field-inline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .annotation-shell{display:flex;flex-direction:column;gap:10px;}
@@ -194,6 +196,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .action-btn{padding:9px 22px;background:var(--orange);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border:none;border-radius:30px;cursor:pointer;transition:background 0.15s;align-self:flex-start;}
 .action-btn:hover{background:var(--orange-dark);}
 .action-btn:disabled{background:var(--g2);color:var(--g3);cursor:not-allowed;}
+.action-btn.active-tool,.action-btn.selected,.action-btn[aria-pressed="true"]{background:var(--orange)!important;color:var(--white)!important;box-shadow:0 0 0 2px rgba(255,85,0,0.2);}
 .empty-state{text-align:center;padding:36px 18px;color:var(--g3);}
 .empty-state-icon{font-size:32px;margin-bottom:8px;display:block;}
 .empty-state-text{font-size:12px;}
@@ -2366,8 +2369,8 @@ function renderPptBuilderSidebar(){
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Dynamic Elements</div>
       <div class="ppt-builder-toolbar">
-        <button class="mini-btn ${builder.dynamicScopeMode==='all'?'primary':''}" type="button" onclick="setPptTemplateDynamicScopeMode('all')">ALL</button>
-        <button class="mini-btn ${builder.dynamicScopeMode==='slide'?'primary':''}" type="button" onclick="setPptTemplateDynamicScopeMode('slide')">Slide</button>
+        <button class="mini-btn ${builder.dynamicScopeMode==='all'?'primary':''}" aria-pressed="${builder.dynamicScopeMode==='all'?'true':'false'}" type="button" onclick="setPptTemplateDynamicScopeMode('all')">ALL</button>
+        <button class="mini-btn ${builder.dynamicScopeMode==='slide'?'primary':''}" aria-pressed="${builder.dynamicScopeMode==='slide'?'true':'false'}" type="button" onclick="setPptTemplateDynamicScopeMode('slide')">Slide</button>
         <button class="mini-btn dark" type="button" onclick="autoFillDynamicElementsForSlide()">Auto Fill</button>
       </div>
       <div class="ppt-prop-grid">
@@ -2395,8 +2398,8 @@ function renderPptBuilderSidebar(){
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Actions</div>
       <div class="ppt-builder-toolbar">
-        <button class="mini-btn ${builder.interactionMode==='move'?'primary':''}" type="button" onclick="setPptTemplateInteractionMode('move')">Move</button>
-        <button class="mini-btn ${builder.interactionMode==='select'?'primary':''}" type="button" onclick="setPptTemplateInteractionMode('select')">Select</button>
+        <button class="mini-btn ${builder.interactionMode==='move'?'primary':''}" aria-pressed="${builder.interactionMode==='move'?'true':'false'}" type="button" onclick="setPptTemplateInteractionMode('move')">Move</button>
+        <button class="mini-btn ${builder.interactionMode==='select'?'primary':''}" aria-pressed="${builder.interactionMode==='select'?'true':'false'}" type="button" onclick="setPptTemplateInteractionMode('select')">Select</button>
         <button class="mini-btn" type="button" onclick="undoPptTemplateHistory()">Undo</button>
         <button class="mini-btn" type="button" onclick="redoPptTemplateHistory()">Redo</button>
         <button class="mini-btn warn" type="button" onclick="resetPptTemplateCurrentSlide()">Reset Slide</button>
@@ -5720,16 +5723,22 @@ function setInteractionMode(mode){
 
 function updateToolSelectionState(){
   document.querySelectorAll('[data-tool]').forEach(btn => {
-    btn.classList.toggle('active-tool', projectWizardState.interactionMode === 'annotate' && btn.getAttribute('data-tool') === projectWizardState.drawTool);
+    const isActive = projectWizardState.interactionMode === 'annotate' && btn.getAttribute('data-tool') === projectWizardState.drawTool;
+    btn.classList.toggle('active-tool', isActive);
+    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
   });
   document.querySelectorAll('[data-mode]').forEach(btn => {
-    btn.classList.toggle('active-tool', btn.getAttribute('data-mode') === projectWizardState.interactionMode);
+    const isActive = btn.getAttribute('data-mode') === projectWizardState.interactionMode;
+    btn.classList.toggle('active-tool', isActive);
+    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
   });
 }
 
 function highlightWeldAction(action){
   document.querySelectorAll('[data-weld-action]').forEach(btn => {
-    btn.classList.toggle('active-tool', btn.getAttribute('data-weld-action') === action);
+    const isActive = btn.getAttribute('data-weld-action') === action;
+    btn.classList.toggle('active-tool', isActive);
+    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
   });
 }
 
@@ -5748,12 +5757,12 @@ function updateStampButtons(){
   const overlayBoldBtn = document.getElementById('overlayStampBoldBtn');
   const overlayItalicBtn = document.getElementById('overlayStampItalicBtn');
   const overlayUnderlineBtn = document.getElementById('overlayStampUnderlineBtn');
-  if(boldBtn) boldBtn.classList.toggle('active-tool', !!projectWizardState.stampBold);
-  if(italicBtn) italicBtn.classList.toggle('active-tool', !!projectWizardState.stampItalic);
-  if(underlineBtn) underlineBtn.classList.toggle('active-tool', !!projectWizardState.stampUnderline);
-  if(overlayBoldBtn) overlayBoldBtn.classList.toggle('active-tool', !!projectWizardState.stampBold);
-  if(overlayItalicBtn) overlayItalicBtn.classList.toggle('active-tool', !!projectWizardState.stampItalic);
-  if(overlayUnderlineBtn) overlayUnderlineBtn.classList.toggle('active-tool', !!projectWizardState.stampUnderline);
+  if(boldBtn){ boldBtn.classList.toggle('active-tool', !!projectWizardState.stampBold); boldBtn.setAttribute('aria-pressed', projectWizardState.stampBold ? 'true' : 'false'); }
+  if(italicBtn){ italicBtn.classList.toggle('active-tool', !!projectWizardState.stampItalic); italicBtn.setAttribute('aria-pressed', projectWizardState.stampItalic ? 'true' : 'false'); }
+  if(underlineBtn){ underlineBtn.classList.toggle('active-tool', !!projectWizardState.stampUnderline); underlineBtn.setAttribute('aria-pressed', projectWizardState.stampUnderline ? 'true' : 'false'); }
+  if(overlayBoldBtn){ overlayBoldBtn.classList.toggle('active-tool', !!projectWizardState.stampBold); overlayBoldBtn.setAttribute('aria-pressed', projectWizardState.stampBold ? 'true' : 'false'); }
+  if(overlayItalicBtn){ overlayItalicBtn.classList.toggle('active-tool', !!projectWizardState.stampItalic); overlayItalicBtn.setAttribute('aria-pressed', projectWizardState.stampItalic ? 'true' : 'false'); }
+  if(overlayUnderlineBtn){ overlayUnderlineBtn.classList.toggle('active-tool', !!projectWizardState.stampUnderline); overlayUnderlineBtn.setAttribute('aria-pressed', projectWizardState.stampUnderline ? 'true' : 'false'); }
 }
 
 function selectAnnotation(index){
