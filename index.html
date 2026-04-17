@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="mobile-builder.css">
 <style>
@@ -210,6 +211,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .ppt-preview-shell{display:flex;flex-direction:column;gap:10px;min-width:0;}
 .ppt-preview-frame{position:relative;width:100%;max-width:980px;margin:0 auto;aspect-ratio:16/10;border-radius:18px;border:1px solid var(--g2);background:#ddd;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.6);}
 .ppt-preview-canvas{position:absolute;inset:0;background:#fff;overflow:hidden;font-family:'Segoe UI',sans-serif;}
+.ppt-preview-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:0;}
 .ppt-preview-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(26,26,26,0.04) 1px, transparent 1px),linear-gradient(90deg, rgba(26,26,26,0.04) 1px, transparent 1px);background-size:10% 10%;pointer-events:none;}
 .ppt-preview-el{position:absolute;user-select:none;cursor:move;overflow:hidden;}
 .ppt-preview-el.selected{outline:2px solid var(--orange);outline-offset:1px;box-shadow:0 0 0 2px rgba(255,85,0,0.18);}
@@ -1429,7 +1431,7 @@ function makeImportedPptTemplate(layout){
   template.templateType = 'imported';
   template.layout = layout || 'LAYOUT_16x10';
   PPT_TEMPLATE_SLIDES.forEach(key => {
-    template.slides[key] = {backgroundColor:'#FFFFFF',slots:{},extras:[]};
+    template.slides[key] = {backgroundColor:'#FFFFFF',backgroundImageData:'',slots:{},extras:[]};
   });
   return template;
 }
@@ -1760,6 +1762,7 @@ function makeDefaultPptTemplate(){
 function makeBlankPptSlide(slideName){
   return {
     backgroundColor:'#FFFFFF',
+    backgroundImageData:'',
     slots:{
       titlePlaceholder:{
         id:'titlePlaceholder',
@@ -1789,6 +1792,7 @@ function makeBlankPptTemplate(){
     logoData:'',
     sourcePptName:'',
     sourcePptData:'',
+    sourcePdfName:'',
     slides:{
       title:makeBlankPptSlide('Title Slide'),
       overview:makeBlankPptSlide('Overview Slide'),
@@ -1815,9 +1819,11 @@ function hydratePptTemplate(raw){
   base.logoData = raw.logoData || '';
   base.sourcePptName = raw.sourcePptName || '';
   base.sourcePptData = raw.sourcePptData || '';
+  base.sourcePdfName = raw.sourcePdfName || '';
   PPT_TEMPLATE_SLIDES.forEach(slideKey => {
     const sourceSlide = raw.slides && raw.slides[slideKey] ? raw.slides[slideKey] : {};
     base.slides[slideKey].backgroundColor = sourceSlide.backgroundColor || base.slides[slideKey].backgroundColor;
+    base.slides[slideKey].backgroundImageData = sourceSlide.backgroundImageData || base.slides[slideKey].backgroundImageData || '';
     if(sourceSlide && Object.prototype.hasOwnProperty.call(sourceSlide,'slots')){
       const baseSlots = base.slides[slideKey].slots || {};
       const sourceSlots = sourceSlide.slots && typeof sourceSlide.slots === 'object' ? sourceSlide.slots : {};
@@ -2128,7 +2134,8 @@ function renderPptBuilderPreview(){
   const elements = getPptTemplateElements(builder.slideKey);
   frame.style.aspectRatio = builder.template.layout === 'LAYOUT_WIDE' ? '16 / 9' : '16 / 10';
   const scale = Math.max(frame.clientWidth, 1) / 960;
-  frame.innerHTML = `<div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}"><div class="ppt-preview-grid"></div>${elements.map(item => buildPptTemplatePreviewElement(item, context, builder, scale, true)).join('')}</div>`;
+  const bgMarkup = slide.backgroundImageData ? `<img class="ppt-preview-bg" src="${slide.backgroundImageData}" alt="Slide background">` : '';
+  frame.innerHTML = `<div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}">${bgMarkup}<div class="ppt-preview-grid"></div>${elements.map(item => buildPptTemplatePreviewElement(item, context, builder, scale, true)).join('')}</div>`;
   frame.setAttribute('tabindex','0');
   if(frame.dataset.focusBound !== '1'){
     frame.dataset.focusBound = '1';
@@ -2166,6 +2173,7 @@ function renderPptBuilderSidebar(){
         <button class="mini-btn dark" type="button" onclick="createPptTemplateFromCurrent()">New Template From Current</button>
         <button class="mini-btn" type="button" onclick="createBlankPptTemplateFromScratch()">New Blank Template</button>
         <button class="mini-btn dark" type="button" onclick="triggerPptTemplatePptUpload('newTemplate')">Upload Base PPT Template</button>
+        <button class="mini-btn dark" type="button" onclick="triggerPptTemplatePdfUpload()">Upload PDF Background</button>
         ${builder.currentTemplateId!=='apexiz' ? `<button class="mini-btn warn" type="button" onclick="deleteActivePptTemplate()">Delete Template</button>` : ''}
       </div>
     </div>
@@ -2173,6 +2181,7 @@ function renderPptBuilderSidebar(){
       <div class="ppt-prop-title">Template Settings</div>
       <div><label class="field-label">Company Name</label><input type="text" value="${builder.template.companyName || 'Apexiz'}" oninput="updatePptTemplateCompanyName(this.value)"></div>
       <div class="builder-note">${builder.template.sourcePptName ? `Source PPT: ${builder.template.sourcePptName}` : 'No source PPT uploaded yet.'}</div>
+      <div class="builder-note">${builder.template.sourcePdfName ? `Source PDF Background: ${builder.template.sourcePdfName}` : 'No PDF background uploaded yet.'}</div>
       ${buildPptColorField('Slide Background', slide.backgroundColor, 'updatePptTemplateSlideColor')}
       <div class="ppt-builder-toolbar">
         <button class="mini-btn dark" type="button" onclick="triggerPptTemplateImageUpload('logo')">Upload Logo</button>
@@ -2387,6 +2396,7 @@ function renderPptTemplateBuilder(el){
     <input id="pptTemplateLogoInput" type="file" accept="image/*" style="display:none" onchange="handlePptTemplateLogoUpload(event)">
     <input id="pptTemplateElementImageInput" type="file" accept="image/*" style="display:none" onchange="handlePptTemplateElementImageUpload(event)">
     <input id="pptTemplatePptInput" type="file" accept=".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" style="display:none" onchange="handlePptTemplatePptUpload(event)">
+    <input id="pptTemplatePdfInput" type="file" accept="application/pdf,.pdf" style="display:none" onchange="handlePptTemplatePdfUpload(event)">
   `;
   syncPptTemplateBuilderUI();
 }
@@ -2498,6 +2508,31 @@ function triggerPptTemplatePptUpload(mode){
   const input = document.getElementById('pptTemplatePptInput');
   if(input){ input.value=''; input.click(); }
 }
+function triggerPptTemplatePdfUpload(){
+  const input = document.getElementById('pptTemplatePdfInput');
+  if(input){ input.value=''; input.click(); }
+}
+async function convertPdfToSlideBackgroundImages(file, maxSlides){
+  if(!window.pdfjsLib) throw new Error('PDF renderer not available.');
+  if(window.pdfjsLib.GlobalWorkerOptions && !window.pdfjsLib.GlobalWorkerOptions.workerSrc){
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  }
+  const buffer = file.arrayBuffer ? await file.arrayBuffer() : await new Promise(resolve => readFileAsArrayBuffer(file, resolve));
+  const pdf = await window.pdfjsLib.getDocument({data:buffer}).promise;
+  const count = Math.min(Number(maxSlides || PPT_TEMPLATE_SLIDES.length), pdf.numPages);
+  const images = [];
+  for(let i = 1; i <= count; i += 1){
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({scale:2});
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    const ctx = canvas.getContext('2d');
+    await page.render({canvasContext:ctx, viewport}).promise;
+    images.push(canvas.toDataURL('image/png'));
+  }
+  return {images, pageCount:pdf.numPages};
+}
 function readFileAsDataUrl(file, callback){
   const reader = new FileReader();
   reader.onload = () => callback(String(reader.result || ''));
@@ -2552,6 +2587,33 @@ async function handlePptTemplatePptUpload(event){
   }catch(err){
     setPptTemplateStatus(`PPTX import failed: ${err.message || err}`);
     alert('PPTX import failed: ' + (err.message || err));
+  }
+}
+async function handlePptTemplatePdfUpload(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const sourceName = file.name || 'uploaded-background.pdf';
+  if(!/\.pdf$/i.test(sourceName)){
+    setPptTemplateStatus('Only PDF files are supported for slide background upload.');
+    alert('Only PDF files are supported for this upload.');
+    return;
+  }
+  try{
+    setPptTemplateStatus('Rendering PDF pages into slide backgrounds...');
+    const {images, pageCount} = await convertPdfToSlideBackgroundImages(file, PPT_TEMPLATE_SLIDES.length);
+    const builder = ensurePptTemplateBuilderState();
+    builder.template.sourcePdfName = sourceName;
+    PPT_TEMPLATE_SLIDES.forEach((slideKey, idx) => {
+      builder.template.slides[slideKey].backgroundImageData = images[idx] || '';
+    });
+    recordPptTemplateHistory();
+    syncPptTemplateBuilderUI();
+    const msg = `PDF background uploaded. Applied ${images.length} page image(s) across ${PPT_TEMPLATE_SLIDES.length} builder slides.${pageCount > PPT_TEMPLATE_SLIDES.length ? ` First ${PPT_TEMPLATE_SLIDES.length} pages were used.` : ''}`;
+    setPptTemplateStatus(msg);
+    alert(msg);
+  }catch(err){
+    setPptTemplateStatus(`PDF background upload failed: ${err.message || err}`);
+    alert('PDF background upload failed: ' + (err.message || err));
   }
 }
 function handlePptTemplateElementImageUpload(event){
@@ -2910,7 +2972,8 @@ function openPptTemplatePreview(){
     const elements = [...Object.values(slide.slots), ...slide.extras].filter(item => !item.previewOnly);
     const previewContext = {...context, slideNumber:String(PPT_TEMPLATE_SLIDES.indexOf(key)+1)};
     const ratio = builder.template.layout === 'LAYOUT_WIDE' ? '16 / 9' : '16 / 10';
-    return `<div class="ppt-modal-slide"><div class="ppt-modal-slide-title">${PPT_TEMPLATE_LABELS[key]}</div><div class="ppt-preview-frame" style="aspect-ratio:${ratio}"><div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}">${elements.map(item => buildPptTemplatePreviewElement({...item,kind:item.kind || 'slot'}, previewContext, {selectedId:'',selectedKind:'',template:builder.template}, 0.34, false)).join('')}</div></div></div>`;
+    const bgMarkup = slide.backgroundImageData ? `<img class="ppt-preview-bg" src="${slide.backgroundImageData}" alt="Slide background">` : '';
+    return `<div class="ppt-modal-slide"><div class="ppt-modal-slide-title">${PPT_TEMPLATE_LABELS[key]}</div><div class="ppt-preview-frame" style="aspect-ratio:${ratio}"><div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}">${bgMarkup}${elements.map(item => buildPptTemplatePreviewElement({...item,kind:item.kind || 'slot'}, previewContext, {selectedId:'',selectedKind:'',template:builder.template}, 0.34, false)).join('')}</div></div></div>`;
   }).join('');
   modal.classList.add('open');
 }
@@ -7467,6 +7530,14 @@ function applyPptTemplateElement(sl, element, context, template){
 function renderPptTemplateSlide(sl, slideKey, template, context){
   const slide = template.slides[slideKey];
   sl.background = {color:pptColor(slide.backgroundColor,'FFFFFF')};
+  if(slide.backgroundImageData){
+    const slideH = getPptTemplateSlideHeight(template);
+    sl.addImage({
+      data:slide.backgroundImageData,
+      x:0,y:0,w:10,h:slideH,
+      sizing:{type:'contain',w:10,h:slideH}
+    });
+  }
   Object.values(slide.slots).forEach(item => applyPptTemplateElement(sl, item, context, template));
   slide.extras.forEach(item => applyPptTemplateElement(sl, item, context, template));
 }
