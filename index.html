@@ -216,6 +216,7 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .ppt-preview-el{position:absolute;user-select:none;cursor:move;overflow:hidden;}
 .ppt-preview-el.selected{outline:2px solid var(--orange);outline-offset:1px;box-shadow:0 0 0 2px rgba(255,85,0,0.18);}
 .ppt-preview-el.locked{cursor:default;}
+.ppt-select-box{position:absolute;border:1px dashed var(--orange);background:rgba(255,85,0,0.12);pointer-events:none;z-index:50;}
 .ppt-preview-text{display:flex;align-items:flex-start;justify-content:flex-start;padding:2px;line-height:1.15;white-space:pre-wrap;word-break:break-word;overflow:visible;}
 .ppt-preview-shape{border-style:solid;}
 .ppt-preview-shape.roundRect{border-radius:14px !important;}
@@ -1873,7 +1874,9 @@ function ensurePptTemplateBuilderState(){
       selectionTokens:['slot:projectName'],
       canvasFocused:true,
       pendingKeyboardMove:false,
-      statusMessage:''
+      statusMessage:'',
+      interactionMode:'move',
+      marquee:null
     };
     recordPptTemplateHistory(true);
   }
@@ -2103,7 +2106,9 @@ function buildPptTemplatePreviewElement(item, context, builder, scale, interacti
   const isInteractive = interactive !== false;
   const ratio = Number(scale || 1);
   const slideH = getPptTemplateSlideHeight(builder.template);
-  const commonStyle = `left:${pptScaleX(item.x)};top:${pptScaleY(item.y,slideH)};width:${pptScaleW(item.w)};height:${pptScaleH(item.h,slideH)};opacity:${(pptOpacity(item.opacity,100)/100).toFixed(2)};`;
+  const cursor = builder.interactionMode === 'select' ? 'crosshair' : 'move';
+  const commonStyle = `left:${pptScaleX(item.x)};top:${pptScaleY(item.y,slideH)};width:${pptScaleW(item.w)};height:${pptScaleH(item.h,slideH)};opacity:${(pptOpacity(item.opacity,100)/100).toFixed(2)};cursor:${item.locked ? 'default' : cursor};`;
+  const refAttrs = `data-kind="${item.kind}" data-id="${item.id}"`;
   const selected = isPptTemplateElementSelected(item.kind, item.id) ? ' selected' : '';
   const locked = item.locked && !isInteractive ? ' locked' : '';
   const down = isInteractive ? `onmousedown="startPptTemplateDrag(event,'${item.kind}','${item.id}')" ontouchstart="startPptTemplateDrag(event,'${item.kind}','${item.id}')"` : '';
@@ -2112,18 +2117,26 @@ function buildPptTemplatePreviewElement(item, context, builder, scale, interacti
     const shapeKey = String(item.shape || 'rect');
     const radius = shapeKey === 'oval' ? '999px' : (shapeKey === 'roundRect' ? '14px' : '0px');
     const extraClass = ['roundRect','triangle','diamond','line'].includes(shapeKey) ? ` ${shapeKey}` : '';
-    return `<div class="ppt-preview-el ppt-preview-shape${extraClass}${selected}${locked}" ${click} ${down} style="${commonStyle}background:${pptCssColor(item.fill,'#FFFFFF')};border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px;border-radius:${radius}"></div>`;
+    return `<div class="ppt-preview-el ppt-preview-shape${extraClass}${selected}${locked}" ${refAttrs} ${click} ${down} style="${commonStyle}background:${pptCssColor(item.fill,'#FFFFFF')};border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px;border-radius:${radius}"></div>`;
   }
   if(item.type === 'logo' || item.type === 'staticImage' || item.type === 'dynamicImage'){
     const src = item.type === 'logo' ? (item.imageData || builder.template.logoData || 'Logo.png') : (item.imageData || '');
     const placeholder = item.type === 'dynamicImage' ? 'Dynamic Image' : (item.type === 'logo' ? 'Logo' : 'Static Image');
     const content = src ? `<img src="${src}" alt="${placeholder}">` : placeholder;
     const klass = src ? 'ppt-preview-image' : 'ppt-preview-image placeholder';
-    return `<div class="ppt-preview-el ${klass}${selected}${locked}" ${click} ${down} style="${commonStyle}border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px">${content}</div>`;
+    return `<div class="ppt-preview-el ${klass}${selected}${locked}" ${refAttrs} ${click} ${down} style="${commonStyle}border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px">${content}</div>`;
   }
   const text = String(resolvePptTemplateText(item, context) || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
   const fontPx = (pptNum(item.fontSize,12) * 1.333333 * ratio).toFixed(2);
-  return `<div class="ppt-preview-el ppt-preview-text${selected}${locked}" ${click} ${down} style="${commonStyle}color:${pptCssColor(item.color,'#000000')};font-family:${item.fontFamily || 'Segoe UI'};font-size:${fontPx}px;font-weight:${item.fontWeight || '700'};font-style:${item.italic ? 'italic' : 'normal'};justify-content:${item.align === 'center' ? 'center' : item.align === 'right' ? 'flex-end' : 'flex-start'};text-align:${item.align || 'left'};">${text}</div>`;
+  return `<div class="ppt-preview-el ppt-preview-text${selected}${locked}" ${refAttrs} ${click} ${down} style="${commonStyle}color:${pptCssColor(item.color,'#000000')};font-family:${item.fontFamily || 'Segoe UI'};font-size:${fontPx}px;font-weight:${item.fontWeight || '700'};font-style:${item.italic ? 'italic' : 'normal'};justify-content:${item.align === 'center' ? 'center' : item.align === 'right' ? 'flex-end' : 'flex-start'};text-align:${item.align || 'left'};">${text}</div>`;
+}
+function buildPptTemplateMarqueeMarkup(marquee){
+  if(!marquee || !marquee.active) return '';
+  const x = Math.min(marquee.startX, marquee.currentX);
+  const y = Math.min(marquee.startY, marquee.currentY);
+  const w = Math.abs(marquee.currentX - marquee.startX);
+  const h = Math.abs(marquee.currentY - marquee.startY);
+  return `<div class="ppt-select-box" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px"></div>`;
 }
 function renderPptBuilderPreview(){
   const builder = ensurePptTemplateBuilderState();
@@ -2135,13 +2148,15 @@ function renderPptBuilderPreview(){
   frame.style.aspectRatio = builder.template.layout === 'LAYOUT_WIDE' ? '16 / 9' : '16 / 10';
   const scale = Math.max(frame.clientWidth, 1) / 960;
   const bgMarkup = slide.backgroundImageData ? `<img class="ppt-preview-bg" src="${slide.backgroundImageData}" alt="Slide background">` : '';
-  frame.innerHTML = `<div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}">${bgMarkup}<div class="ppt-preview-grid"></div>${elements.map(item => buildPptTemplatePreviewElement(item, context, builder, scale, true)).join('')}</div>`;
+  const marqueeMarkup = buildPptTemplateMarqueeMarkup(builder.marquee);
+  frame.innerHTML = `<div class="ppt-preview-canvas" style="background:${pptCssColor(slide.backgroundColor)}">${bgMarkup}<div class="ppt-preview-grid"></div>${elements.map(item => buildPptTemplatePreviewElement(item, context, builder, scale, true)).join('')}${marqueeMarkup}</div>`;
   frame.setAttribute('tabindex','0');
   if(frame.dataset.focusBound !== '1'){
     frame.dataset.focusBound = '1';
     frame.addEventListener('focus', () => { ensurePptTemplateBuilderState().canvasFocused = true; });
     frame.addEventListener('blur', () => { ensurePptTemplateBuilderState().canvasFocused = false; });
     frame.addEventListener('pointerdown', () => { ensurePptTemplateBuilderState().canvasFocused = true; focusPptTemplateCanvas(); });
+    frame.addEventListener('mousedown', startPptTemplateMarquee);
   }
 }
 function renderPptBuilderSidebar(){
@@ -2149,6 +2164,7 @@ function renderPptBuilderSidebar(){
   const host = document.getElementById('pptBuilderSidebar');
   if(!host) return;
   const selected = getPptTemplateSelectedElement();
+  const selectedCount = getPptTemplateSelectedElements().length;
   const slide = builder.template.slides[builder.slideKey];
   const options = Object.entries(slide.slots).map(([key, slot]) => `<option value="${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>${slot.id}</option>`).join('');
   const allOptions = []
@@ -2229,9 +2245,16 @@ function renderPptBuilderSidebar(){
       <div class="ppt-prop-title">Select Any Element (for overlaps)</div>
       <div><select onchange="selectPptTemplateElementByValue(this.value)"><option value="">Select element</option>${allOptions}</select></div>
     </div>
-    ${selected ? buildPptTemplatePropertyMarkup(selected) : `<div class="ppt-builder-empty">Select an element from the preview to edit its properties.</div>`}
+    ${selected ? buildPptTemplatePropertyMarkup(selected, selectedCount) : `<div class="ppt-builder-empty">Select an element from the preview to edit its properties.</div>`}
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Actions</div>
+      <div class="ppt-builder-toolbar">
+        <button class="mini-btn ${builder.interactionMode==='move'?'primary':''}" type="button" onclick="setPptTemplateInteractionMode('move')">Move</button>
+        <button class="mini-btn ${builder.interactionMode==='select'?'primary':''}" type="button" onclick="setPptTemplateInteractionMode('select')">Select</button>
+        <button class="mini-btn" type="button" onclick="undoPptTemplateHistory()">Undo</button>
+        <button class="mini-btn" type="button" onclick="redoPptTemplateHistory()">Redo</button>
+        <button class="mini-btn warn" type="button" onclick="resetPptTemplateCurrentSlide()">Reset Slide</button>
+      </div>
       <div class="ppt-builder-toolbar">
         <button class="mini-btn primary" type="button" onclick="savePptTemplateBuilder()">${builder.currentTemplateId==='apexiz'?'Save As New Template':'Save Template'}</button>
         <button class="mini-btn" type="button" onclick="resetPptTemplateBuilder()">Reset To Default</button>
@@ -2242,10 +2265,10 @@ function renderPptBuilderSidebar(){
     </div>`;
   bindPptTemplateNumberWheel();
 }
-function buildPptTemplatePropertyMarkup(selected){
+function buildPptTemplatePropertyMarkup(selected, selectedCount){
   return `
     <div class="ppt-prop-group">
-      <div class="ppt-prop-title">Selected Element</div>
+      <div class="ppt-prop-title">Selected Element${selectedCount > 1 ? ` (${selectedCount} selected)` : ''}</div>
       <div class="ppt-prop-grid">
         <div><label class="field-label">X</label><input type="number" step="0.01" value="${pptNum(selected.x,0)}" oninput="updatePptTemplateElementProp('x',this.value)"></div>
         <div><label class="field-label">Y</label><input type="number" step="0.01" value="${pptNum(selected.y,0)}" oninput="updatePptTemplateElementProp('y',this.value)"></div>
@@ -2444,13 +2467,142 @@ function updatePptTemplateSlideColor(value){
   updatePptTemplateSlideProp('backgroundColor', normalizePptTemplateColorValue(value, '#FFFFFF'));
 }
 function updatePptTemplateElementProp(prop, value){
-  const selected = getPptTemplateSelectedElement();
-  if(!selected) return;
-  selected[prop] = ['x','y','w','h','fontSize','lineWidth'].includes(prop)
-    ? pptNum(value, selected[prop] || 0)
-    : (prop === 'opacity' ? pptOpacity(value, selected.opacity || 100) : value);
+  const selectedItems = getPptTemplateSelectedElements();
+  if(!selectedItems.length) return;
+  const numericProps = new Set(['x','y','w','h','fontSize','lineWidth']);
+  const genericProps = new Set(['x','y','w','h','opacity']);
+  let changed = false;
+  selectedItems.forEach(item => {
+    const el = item.element;
+    if(!el) return;
+    if(!genericProps.has(prop) && !Object.prototype.hasOwnProperty.call(el, prop)) return;
+    const nextValue = numericProps.has(prop)
+      ? pptNum(value, el[prop] || 0)
+      : (prop === 'opacity' ? pptOpacity(value, el.opacity || 100) : value);
+    if(el[prop] === nextValue) return;
+    el[prop] = nextValue;
+    changed = true;
+  });
+  if(!changed) return;
   recordPptTemplateHistory();
+  syncPptTemplateBuilderUI();
+}
+function setPptTemplateInteractionMode(mode){
+  const builder = ensurePptTemplateBuilderState();
+  builder.interactionMode = mode === 'select' ? 'select' : 'move';
+  if(builder.interactionMode !== 'select') builder.marquee = null;
+  syncPptTemplateBuilderUI();
+}
+function resetPptTemplateCurrentSlide(){
+  const builder = ensurePptTemplateBuilderState();
+  const slide = builder.template.slides[builder.slideKey];
+  if(!slide) return;
+  if(!confirm(`Reset ${PPT_TEMPLATE_LABELS[builder.slideKey]} slide edits? This clears added elements on this slide.`)) return;
+  slide.extras = [];
+  builder.marquee = null;
+  const slotKeys = Object.keys(slide.slots || {});
+  if(slotKeys.length){
+    builder.selectedKind = 'slot';
+    builder.selectedId = slotKeys[0];
+    builder.selectionTokens = [makePptTemplateSelectionToken('slot', slotKeys[0])];
+  }else{
+    builder.selectedKind = 'slot';
+    builder.selectedId = '';
+    builder.selectionTokens = [];
+  }
+  recordPptTemplateHistory();
+  setPptTemplateStatus(`${PPT_TEMPLATE_LABELS[builder.slideKey]} slide reset complete.`);
+  syncPptTemplateBuilderUI();
+}
+function normalizePptTemplateMarqueeSelectionTokens(tokens, additive){
+  const builder = ensurePptTemplateBuilderState();
+  if(additive){
+    const merged = new Set([...(builder.selectionTokens || []), ...tokens]);
+    builder.selectionTokens = Array.from(merged);
+  }else{
+    builder.selectionTokens = tokens.slice();
+  }
+  normalizePptTemplateSelection();
+  const last = parsePptTemplateSelectionToken((builder.selectionTokens || [])[builder.selectionTokens.length - 1] || '');
+  if(last){
+    builder.selectedKind = last.kind;
+    builder.selectedId = last.id;
+  }else{
+    builder.selectedKind = 'slot';
+    builder.selectedId = '';
+  }
+}
+function getPptTemplateMarqueeHitTokens(frame, marquee){
+  if(!frame || !marquee) return [];
+  const left = Math.min(marquee.startX, marquee.currentX);
+  const top = Math.min(marquee.startY, marquee.currentY);
+  const right = Math.max(marquee.startX, marquee.currentX);
+  const bottom = Math.max(marquee.startY, marquee.currentY);
+  const frameRect = frame.getBoundingClientRect();
+  const absLeft = frameRect.left + left;
+  const absTop = frameRect.top + top;
+  const absRight = frameRect.left + right;
+  const absBottom = frameRect.top + bottom;
+  const tokens = [];
+  frame.querySelectorAll('.ppt-preview-el[data-kind][data-id]').forEach(el => {
+    const r = el.getBoundingClientRect();
+    const intersects = r.right >= absLeft && r.left <= absRight && r.bottom >= absTop && r.top <= absBottom;
+    if(!intersects) return;
+    const kind = el.getAttribute('data-kind');
+    const id = el.getAttribute('data-id');
+    if(kind && id) tokens.push(makePptTemplateSelectionToken(kind, id));
+  });
+  return tokens;
+}
+function startPptTemplateMarquee(event){
+  const builder = ensurePptTemplateBuilderState();
+  if(builder.interactionMode !== 'select') return;
+  if(event.button !== 0) return;
+  const frame = document.getElementById('pptBuilderPreviewFrame');
+  if(!frame) return;
+  const target = event.target && event.target.nodeType === 3 ? event.target.parentElement : event.target;
+  if(target && target.closest && target.closest('.ppt-preview-el')) return;
+  const rect = frame.getBoundingClientRect();
+  const startX = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+  const startY = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+  builder.marquee = {
+    active:true,
+    startX,
+    startY,
+    currentX:startX,
+    currentY:startY,
+    additive:!!(event.ctrlKey || event.metaKey || event.shiftKey)
+  };
+  builder.canvasFocused = true;
   renderPptBuilderPreview();
+  document.addEventListener('mousemove', movePptTemplateMarquee);
+  document.addEventListener('mouseup', endPptTemplateMarquee);
+  if(event.cancelable) event.preventDefault();
+}
+function movePptTemplateMarquee(event){
+  const builder = ensurePptTemplateBuilderState();
+  if(!builder.marquee || !builder.marquee.active) return;
+  const frame = document.getElementById('pptBuilderPreviewFrame');
+  if(!frame) return;
+  const rect = frame.getBoundingClientRect();
+  builder.marquee.currentX = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+  builder.marquee.currentY = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
+  renderPptBuilderPreview();
+}
+function endPptTemplateMarquee(){
+  const builder = ensurePptTemplateBuilderState();
+  if(!builder.marquee || !builder.marquee.active){
+    document.removeEventListener('mousemove', movePptTemplateMarquee);
+    document.removeEventListener('mouseup', endPptTemplateMarquee);
+    return;
+  }
+  const frame = document.getElementById('pptBuilderPreviewFrame');
+  const tokens = getPptTemplateMarqueeHitTokens(frame, builder.marquee);
+  normalizePptTemplateMarqueeSelectionTokens(tokens, builder.marquee.additive);
+  builder.marquee = null;
+  document.removeEventListener('mousemove', movePptTemplateMarquee);
+  document.removeEventListener('mouseup', endPptTemplateMarquee);
+  syncPptTemplateBuilderUI();
 }
 function updatePptTemplateTextColor(value){
   updatePptTemplateElementProp('color', normalizePptTemplateColorValue(value, '#000000'));
@@ -2817,6 +2969,8 @@ function savePptTemplateBuilder(){
 }
 function resetPptTemplateBuilder(){
   setActivePptTemplateBuilderTemplate(builderCurrentTemplateId());
+  ensurePptTemplateBuilderState().marquee = null;
+  ensurePptTemplateBuilderState().interactionMode = 'move';
   syncPptTemplateBuilderUI();
   const status = document.getElementById('pptTemplateStatus');
   if(status) status.innerText = 'Template reset to the saved/base version.';
@@ -2902,6 +3056,10 @@ function getPptPointer(event){
 }
 function startPptTemplateDrag(event, kind, id){
   const builder = ensurePptTemplateBuilderState();
+  if(builder.interactionMode === 'select'){
+    selectPptTemplateElement(event, kind, id);
+    return;
+  }
   const frame = document.getElementById('pptBuilderPreviewFrame');
   if(!frame) return;
   const point = getPptPointer(event);
