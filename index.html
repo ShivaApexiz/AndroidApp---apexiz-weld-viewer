@@ -665,6 +665,10 @@ const S = {
   activeCell: null,
   logob64: null,
   currentProjectId: null,
+  currentProjectTemplateId: 'apexiz',
+  projectTemplateAssignments: new Map(),
+  projectTemplatePayloads: new Map(),
+  myProjectsSortMode: 'created_desc',
   createMode: 'builder',
   mobileDraft: null,
   pendingUploads: [],
@@ -1146,7 +1150,7 @@ async function renderOverview(el){
 
 async function renderMyProjects(el){
   const uid=S.profile.id; const role=S.profile.role;
-  let q=sb.from('projects').select('id,name,created_at,parts,access_requests(id,status)').order('created_at',{ascending:false});
+  let q=sb.from('projects').select('id,name,created_at,parts,owner_id,access_requests(id,status,user_id,profiles(name,company_name))').order('created_at',{ascending:false});
   if(role==='engineer') q=q.eq('owner_id',uid);
   else if(role==='company_admin'){
     const {data:myEngs=[]}=await sb.from('profiles').select('id').eq('company_admin_id',uid);
@@ -1154,6 +1158,33 @@ async function renderMyProjects(el){
     q=q.in('owner_id',engIds);
   }
   const {data:projects=[]}=await q;
+  const ownerIds = [...new Set(projects.map(p => p.owner_id).filter(Boolean))];
+  const ownerMap = new Map();
+  if(ownerIds.length){
+    const {data:owners=[]} = await sb.from('profiles').select('id,name,company_name').in('id', ownerIds);
+    owners.forEach(o => ownerMap.set(o.id, o));
+  }
+  const assignedTemplateIds = await Promise.all(projects.map(p => getAssignedPptTemplateForProject(p.id).catch(() => 'apexiz')));
+  const augmented = projects.map((p, idx) => {
+    const approvedReqs = (p.access_requests || []).filter(r => r.status === 'approved');
+    const pendingReqs = (p.access_requests || []).filter(r => r.status === 'pending');
+    const customerNames = approvedReqs.map(r => String(r.profiles?.name || '').trim()).filter(Boolean);
+    const customerCompanies = approvedReqs.map(r => String(r.profiles?.company_name || '').trim()).filter(Boolean);
+    const ownerCompany = String(ownerMap.get(p.owner_id)?.company_name || '').trim();
+    const templateId = assignedTemplateIds[idx] || 'apexiz';
+    return {
+      ...p,
+      assignedTemplateId: templateId,
+      _templateLabel: getPptTemplateDisplayName(templateId),
+      _approvedCount: approvedReqs.length,
+      _pendingCount: pendingReqs.length,
+      _partCount: (p.parts || []).length,
+      _customerKey: customerNames.join(', ') || '~',
+      _companyKey: customerCompanies.join(', ') || ownerCompany || '~'
+    };
+  });
+  const sortedProjects = sortMyProjectsList(augmented, S.myProjectsSortMode);
+  const sortMode = normalizeProjectSortMode(S.myProjectsSortMode);
   el.innerHTML=`
     <div class="flex-row"><div class="panel-title">${role==='company_admin'?'Company Projects':'My Projects'}</div>
     <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
@@ -1161,8 +1192,23 @@ async function renderMyProjects(el){
       ${role==='engineer'?`<button class="action-btn" onclick="showPanel('create')">+ New Project</button>`:''}
     </div></div>
     ${projects.length===0?'<div class="empty-state"><div class="empty-state-text">No projects yet.</div></div>':`
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 12px 0">
+      <label class="field-label" style="margin:0">Sort Projects</label>
+      <select class="field-select" style="width:260px" onchange="setMyProjectsSortMode(this.value)">
+        <option value="created_desc" ${sortMode==='created_desc'?'selected':''}>Newest First</option>
+        <option value="created_asc" ${sortMode==='created_asc'?'selected':''}>Oldest First</option>
+        <option value="name_asc" ${sortMode==='name_asc'?'selected':''}>Project Name (A-Z)</option>
+        <option value="name_desc" ${sortMode==='name_desc'?'selected':''}>Project Name (Z-A)</option>
+        <option value="customers_desc" ${sortMode==='customers_desc'?'selected':''}>Most Customers</option>
+        <option value="pending_desc" ${sortMode==='pending_desc'?'selected':''}>Most Pending Requests</option>
+        <option value="customer_asc" ${sortMode==='customer_asc'?'selected':''}>Customer Name (A-Z)</option>
+        <option value="company_asc" ${sortMode==='company_asc'?'selected':''}>Company (A-Z)</option>
+        <option value="parts_desc" ${sortMode==='parts_desc'?'selected':''}>Most Parts</option>
+        <option value="template_asc" ${sortMode==='template_asc'?'selected':''}>PPT Template Name (A-Z)</option>
+      </select>
+    </div>
     <table class="data-table"><thead><tr><th>Project</th><th>Parts</th><th>Customers</th><th>Pending</th><th>Actions</th></tr></thead>
-    <tbody>${projects.map(p=>projRow(p)).join('')}</tbody></table>`}`;
+    <tbody>${sortedProjects.map(p=>projRow(p)).join('')}</tbody></table>`}`;
 }
 
 const PPT_TEMPLATE_STORAGE_KEY = 'apexiz_custom_ppt_templates_v2';
@@ -3420,8 +3466,10 @@ function projRow(p){
   const approved=(p.access_requests||[]).filter(r=>r.status==='approved').length;
   const pending=(p.access_requests||[]).filter(r=>r.status==='pending').length;
   const safeName = String(p.name || 'PROJECT').replace(/'/g,"\\'");
+  const templateId = p.assignedTemplateId || 'apexiz';
+  const templateLabel = p._templateLabel || getPptTemplateDisplayName(templateId);
   return `<tr>
-    <td><strong>${p.name}</strong></td>
+    <td><strong>${p.name}</strong><div style="font-size:10px;color:var(--g3);margin-top:3px">PPT: ${templateLabel}</div></td>
     <td>${(p.parts||[]).length}</td>
     <td><span class="tbl-badge approved">${approved}</span></td>
     <td>${pending>0?`<span class="tbl-badge pending">${pending}</span>`:'-'}</td>
@@ -3432,6 +3480,7 @@ function projRow(p){
       <button class="tbl-btn manage" onclick="downloadProjectSource('${p.id}','${safeName}')">Download</button>
       <button class="tbl-btn copy" onclick="showShare('${p.id}')">Share</button>
       <button class="tbl-btn manage" onclick="showAccess('${p.id}','${p.name}')">Access</button>
+      <button class="tbl-btn manage" onclick="assignProjectPptTemplate('${p.id}','${safeName}','${templateId}')">PPT</button>
       <button class="tbl-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
     </td></tr>`;
 }
@@ -3590,6 +3639,157 @@ async function revokeInvite(id,containerId,role){
 
 function copyText(elId){
   navigator.clipboard.writeText(document.getElementById(elId).innerText).then(()=>alert('Copied!'));
+}
+
+function getPptTemplateDisplayName(id){
+  if(!id || id === 'apexiz') return 'Apexiz Template';
+  const rec = getPptTemplateRecordById(id);
+  return rec?.name || 'Custom Template';
+}
+function getProjectSettingsPath(projectId){
+  return `${projectId}/meta/project_settings.json`;
+}
+async function readProjectSettings(projectId){
+  try{
+    const {data:blob,error} = await sb.storage.from('projects').download(getProjectSettingsPath(projectId));
+    if(error || !blob) return {};
+    const text = await blob.text();
+    if(!text.trim()) return {};
+    const parsed = JSON.parse(text);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  }catch(_err){
+    return {};
+  }
+}
+async function writeProjectSettings(projectId, settings){
+  const payload = JSON.stringify(settings || {}, null, 2);
+  const blob = new Blob([payload], {type:'application/json'});
+  const {error} = await sb.storage.from('projects').upload(getProjectSettingsPath(projectId), blob, {
+    upsert:true,
+    contentType:'application/json'
+  });
+  if(error) throw error;
+}
+async function getAssignedPptTemplateForProject(projectId, forceRefresh){
+  if(!projectId) return 'apexiz';
+  if(!forceRefresh && S.projectTemplateAssignments?.has(projectId)){
+    return S.projectTemplateAssignments.get(projectId) || 'apexiz';
+  }
+  const settings = await readProjectSettings(projectId);
+  const templateId = settings.pptTemplateId || 'apexiz';
+  if(settings.pptTemplateData && typeof settings.pptTemplateData === 'object'){
+    S.projectTemplatePayloads.set(projectId, {
+      id:templateId,
+      name:settings.pptTemplateName || getPptTemplateDisplayName(templateId),
+      template:settings.pptTemplateData
+    });
+  }else{
+    S.projectTemplatePayloads.delete(projectId);
+  }
+  S.projectTemplateAssignments.set(projectId, templateId);
+  return templateId;
+}
+async function setAssignedPptTemplateForProject(projectId, templateId){
+  if(!projectId) throw new Error('Project id missing');
+  const current = await readProjectSettings(projectId);
+  const assignedId = templateId || 'apexiz';
+  const next = {...current, pptTemplateId: assignedId};
+  if(assignedId !== 'apexiz'){
+    const resolved = getResolvedPptTemplate(assignedId);
+    next.pptTemplateName = getPptTemplateDisplayName(assignedId);
+    next.pptTemplateData = resolved;
+    S.projectTemplatePayloads.set(projectId, {
+      id:assignedId,
+      name:next.pptTemplateName,
+      template:resolved
+    });
+  }else{
+    delete next.pptTemplateName;
+    delete next.pptTemplateData;
+    S.projectTemplatePayloads.delete(projectId);
+  }
+  await writeProjectSettings(projectId, next);
+  S.projectTemplateAssignments.set(projectId, next.pptTemplateId || 'apexiz');
+  return next.pptTemplateId || 'apexiz';
+}
+function getProjectAssignedTemplateSnapshot(projectId){
+  return S.projectTemplatePayloads.get(projectId) || null;
+}
+function resolveTemplateForProjectExport(templateId, projectId){
+  const chosenId = templateId || 'apexiz';
+  if(chosenId === 'apexiz') return makeDefaultPptTemplate();
+  const localRec = getPptTemplateRecordById(chosenId);
+  if(localRec) return getResolvedPptTemplate(chosenId);
+  const assigned = getProjectAssignedTemplateSnapshot(projectId);
+  if(assigned && assigned.id === chosenId && assigned.template){
+    return hydratePptTemplate(assigned.template);
+  }
+  return makeDefaultPptTemplate();
+}
+function normalizeProjectSortMode(mode){
+  const allowed = new Set([
+    'created_desc','created_asc','name_asc','name_desc',
+    'parts_desc','customers_desc','pending_desc',
+    'customer_asc','company_asc','template_asc'
+  ]);
+  return allowed.has(mode) ? mode : 'created_desc';
+}
+function setMyProjectsSortMode(mode){
+  S.myProjectsSortMode = normalizeProjectSortMode(mode);
+  showPanel('projects');
+}
+function sortMyProjectsList(projects, mode){
+  const list = [...(projects || [])];
+  const m = normalizeProjectSortMode(mode);
+  const cmp = (a,b) => (a > b ? 1 : a < b ? -1 : 0);
+  list.sort((a,b) => {
+    if(m === 'created_desc') return (new Date(b.created_at).getTime() || 0) - (new Date(a.created_at).getTime() || 0);
+    if(m === 'created_asc') return (new Date(a.created_at).getTime() || 0) - (new Date(b.created_at).getTime() || 0);
+    if(m === 'name_asc') return cmp(String(a.name || '').toLowerCase(), String(b.name || '').toLowerCase());
+    if(m === 'name_desc') return cmp(String(b.name || '').toLowerCase(), String(a.name || '').toLowerCase());
+    if(m === 'parts_desc') return (b._partCount || 0) - (a._partCount || 0);
+    if(m === 'customers_desc') return (b._approvedCount || 0) - (a._approvedCount || 0);
+    if(m === 'pending_desc') return (b._pendingCount || 0) - (a._pendingCount || 0);
+    if(m === 'customer_asc') return cmp(String(a._customerKey || '').toLowerCase(), String(b._customerKey || '').toLowerCase());
+    if(m === 'company_asc') return cmp(String(a._companyKey || '').toLowerCase(), String(b._companyKey || '').toLowerCase());
+    if(m === 'template_asc') return cmp(String(a._templateLabel || '').toLowerCase(), String(b._templateLabel || '').toLowerCase());
+    return 0;
+  });
+  return list;
+}
+async function assignProjectPptTemplate(projectId, projectName, currentTemplateId){
+  const records = getPptTemplateRecords();
+  const overlay = document.createElement('div');
+  overlay.className = 'ppt-modal open';
+  overlay.innerHTML = `
+    <div class="ppt-modal-card" style="width:min(540px,92vw)">
+      <div class="panel-title">Assign PPT Template</div>
+      <div class="builder-note" style="margin-top:10px">Project: <strong>${String(projectName || 'Project')}</strong><br>This template will be used as default for report download.</div>
+      <div style="margin-top:14px">
+        <label class="field-label">Template</label>
+        <select id="projectPptAssignSelect" class="field-select">
+          <option value="apexiz" ${(!currentTemplateId || currentTemplateId==='apexiz') ? 'selected' : ''}>Apexiz Template</option>
+          ${records.map(item => `<option value="${item.id}" ${currentTemplateId===item.id?'selected':''}>${item.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="ppt-builder-toolbar" style="margin-top:18px;justify-content:flex-end">
+        <button class="mini-btn" type="button" id="projectPptAssignCancelBtn">Cancel</button>
+        <button class="mini-btn primary" type="button" id="projectPptAssignSaveBtn">Save Assignment</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#projectPptAssignCancelBtn').onclick = () => overlay.remove();
+  overlay.querySelector('#projectPptAssignSaveBtn').onclick = async () => {
+    try{
+      const templateId = overlay.querySelector('#projectPptAssignSelect').value || 'apexiz';
+      await setAssignedPptTemplateForProject(projectId, templateId);
+      overlay.remove();
+      alert(`Assigned template "${getPptTemplateDisplayName(templateId)}" to ${projectName}.`);
+      showPanel('projects');
+    }catch(err){
+      alert('Template assignment failed: ' + (err.message || err));
+    }
+  };
 }
 
 /*  Admin: Companies  */
@@ -7604,11 +7804,17 @@ async function openViewer(projId){
   loading(true,'Loading project files');
   S.currentProjectId=projId;
   S.currentProjectName='';
+  S.currentProjectTemplateId='apexiz';
   S.csvFiles=new Map(); S.imageFiles=new Map();
   S.welds1=[]; S.welds2=[]; S.activeCell=null;
   const {data:proj}=await sb.from('projects').select('*').eq('id',projId).single();
   if(!proj){ loading(false); alert('Project not found.'); return; }
   S.currentProjectName = String(proj.name || '').trim();
+  try{
+    S.currentProjectTemplateId = await getAssignedPptTemplateForProject(projId);
+  }catch(_err){
+    S.currentProjectTemplateId = 'apexiz';
+  }
   loading(true,'Loading CSV data');
   const {data:csvList}=await sb.storage.from('projects').list(`${projId}/csv`,{limit:500});
   for(const f of csvList||[]){
@@ -7884,20 +8090,29 @@ function formatAxisValuesForPpt(text, typeLabel){
 function getActiveCustomPptTemplate(id){
   return id && id !== 'apexiz' ? getResolvedPptTemplate(id) : null;
 }
-function choosePptTemplateForExport(){
+function choosePptTemplateForExport(defaultTemplateId='apexiz', projectId=''){
   return new Promise(resolve => {
     const records = getPptTemplateRecords();
+    const defaultId = defaultTemplateId || 'apexiz';
+    const assignedSnapshot = getProjectAssignedTemplateSnapshot(projectId);
+    const defaultLabel = assignedSnapshot && assignedSnapshot.id === defaultId
+      ? (assignedSnapshot.name || getPptTemplateDisplayName(defaultId))
+      : getPptTemplateDisplayName(defaultId);
+    const options = [`<option value="apexiz" ${defaultId==='apexiz'?'selected':''}>Apexiz Template</option>`]
+      .concat(records.map(item => `<option value="${item.id}" ${defaultId===item.id?'selected':''}>${item.name}</option>`));
+    if(assignedSnapshot && assignedSnapshot.id && !records.some(item => item.id === assignedSnapshot.id) && assignedSnapshot.id !== 'apexiz'){
+      options.push(`<option value="${assignedSnapshot.id}" ${defaultId===assignedSnapshot.id?'selected':''}>${assignedSnapshot.name || 'Assigned Project Template'} (Assigned)</option>`);
+    }
     const overlay = document.createElement('div');
     overlay.className = 'ppt-modal open';
     overlay.innerHTML = `
       <div class="ppt-modal-card" style="width:min(520px,92vw)">
         <div class="panel-title">Choose PPT Template</div>
-        <div class="builder-note" style="margin-top:10px">Select which template should be used for this report. Apexiz Template stays the default.</div>
+        <div class="builder-note" style="margin-top:10px">Select which template should be used for this report. Assigned default: <strong>${defaultLabel}</strong>.</div>
         <div style="margin-top:14px">
           <label class="field-label">Template</label>
           <select id="pptExportTemplateSelect" class="field-select">
-            <option value="apexiz">Apexiz Template</option>
-            ${records.map(item => `<option value="${item.id}">${item.name}</option>`).join('')}
+            ${options.join('')}
           </select>
         </div>
         <div class="ppt-builder-toolbar" style="margin-top:18px;justify-content:flex-end">
@@ -8111,10 +8326,11 @@ function getPptPartMeta(part){
 }
 
 async function exportToPPT(templateChoiceId){
-  const chosenTemplateId = templateChoiceId || await choosePptTemplateForExport();
+  const assignedTemplateId = S.currentProjectTemplateId || 'apexiz';
+  const chosenTemplateId = templateChoiceId || await choosePptTemplateForExport(assignedTemplateId, S.currentProjectId || '');
   if(!chosenTemplateId) return;
   if(chosenTemplateId !== 'apexiz'){
-    return exportToPPTWithCustomTemplate(getResolvedPptTemplate(chosenTemplateId));
+    return exportToPPTWithCustomTemplate(resolveTemplateForProjectExport(chosenTemplateId, S.currentProjectId || ''));
   }
   const btn=document.getElementById('exportBtn');
   btn.disabled=true;btn.innerText=' Generating';
