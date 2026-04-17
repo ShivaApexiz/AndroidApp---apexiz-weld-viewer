@@ -252,6 +252,12 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
   color:var(--white)!important;
   box-shadow:0 0 0 2px rgba(255,85,0,0.22);
 }
+.ppt-builder-shell button:active,
+#pptTemplatePreviewModal button:active{
+  background:var(--orange)!important;
+  color:var(--white)!important;
+  box-shadow:0 0 0 2px rgba(255,85,0,0.22);
+}
 .update-tag{
   position:fixed;right:10px;bottom:8px;z-index:2100;
   padding:4px 8px;border-radius:999px;
@@ -1202,13 +1208,14 @@ const PPT_TEMPLATE_DYNAMIC_KEYS = [
   {key:'weldRobotPosValue',label:'Weld Robot Positioner',kind:'text'},
   {key:'weldWorkPosValue',label:'Weld Workpiece Positioner',kind:'text'},
   {key:'weldNotesValue',label:'Weld Notes',kind:'text'},
+  {key:'logoImage',label:'Logo Image',kind:'image'},
   {key:'partImage',label:'Part Image',kind:'image'},
   {key:'weldImage',label:'Weld Image',kind:'image'}
 ];
 const PPT_TEMPLATE_DYNAMIC_BY_SLIDE = {
   title:{
     text:['projectName','partName','reportDate','companyName'],
-    image:[]
+    image:['logoImage']
   },
   overview:{
     text:[
@@ -1220,11 +1227,11 @@ const PPT_TEMPLATE_DYNAMIC_BY_SLIDE = {
       'overviewRobot4Label','overviewRobot4Welds',
       'overviewTotalWelds','overviewDateValue'
     ],
-    image:['partImage']
+    image:['logoImage','partImage']
   },
   robot:{
     text:['projectName','partName','reportDate','companyName','robotLabel'],
-    image:[]
+    image:['logoImage']
   },
   weld:{
     text:[
@@ -1232,11 +1239,11 @@ const PPT_TEMPLATE_DYNAMIC_BY_SLIDE = {
       'weldHeader','weldSubtitle','weldJobValue','weldNoValue','weldRobotValue',
       'weldRobotPosValue','weldWorkPosValue','weldNotesValue'
     ],
-    image:['weldImage']
+    image:['logoImage','weldImage']
   },
   end:{
     text:['projectName','partName','reportDate','companyName'],
-    image:[]
+    image:['logoImage']
   }
 };
 const PPT_TEMPLATE_DEMO = {
@@ -2046,6 +2053,7 @@ function getPptTemplateContext(overrides){
   const cfg = normalizePptCellConfig(builder.template.cellConfig || {});
   const demoRobotPos = cfg.robotPositionerEnabled ? buildDemoAxisValues('Axis', 'mm', cfg.robotPositionerAxes, 100) : '';
   const demoWorkPos = cfg.workpiecePositionerEnabled ? buildDemoAxisValues('Axis', 'Deg', cfg.workpiecePositionerAxes, 10) : '';
+  const demoLogo = builder.template.logoData || S.logob64 || '';
   return {
     ...PPT_TEMPLATE_DEMO,
     companyName:builder.template.companyName || 'Apexiz',
@@ -2070,6 +2078,7 @@ function getPptTemplateContext(overrides){
     weldRobotPosValue:demoRobotPos,
     weldWorkPosValue:demoWorkPos,
     weldNotesValue:PPT_TEMPLATE_DEMO.notes,
+    logoImage:demoLogo,
     weldPreviewBlock:`JOB NAME\n${PPT_TEMPLATE_DEMO.jobName}\n\nWELD NO.\n${PPT_TEMPLATE_DEMO.weldNo}\n\nROBOT\n${PPT_TEMPLATE_DEMO.robotLabel}${cfg.robotPositionerEnabled ? `\n\nROBOT POSITIONER\n${demoRobotPos}` : ''}${cfg.workpiecePositionerEnabled ? `\n\nWORKPIECE POSITIONER\n${demoWorkPos}` : ''}\n\nNOTES\n${PPT_TEMPLATE_DEMO.notes}`,
     ...overrides
   };
@@ -2475,8 +2484,7 @@ function syncPptTemplateBuilderUI(){
 function bindPptTemplatePressFeedback(){
   if(S._pptPressFeedbackBound) return;
   S._pptPressFeedbackBound = true;
-  document.addEventListener('click', e => {
-    if(S.activePanel !== 'pptTemplate') return;
+  document.addEventListener('pointerdown', e => {
     const target = e.target && e.target.nodeType === 3 ? e.target.parentElement : e.target;
     const btn = target && target.closest ? target.closest('button') : null;
     if(!btn || btn.disabled) return;
@@ -2488,7 +2496,7 @@ function bindPptTemplatePressFeedback(){
     btn._pptPressTimer = setTimeout(() => {
       btn.classList.remove('pressed-confirm');
       btn._pptPressTimer = null;
-    }, 260);
+    }, 320);
   }, true);
 }
 function bindPptTemplateShortcuts(){
@@ -8053,7 +8061,7 @@ async function exportToPPTWithCustomTemplate(template){
     try{ await loadLogo(); }catch(_err){}
   }
   const partImage = await imgB64(findImg(part));
-  const baseContext = {projectName:projName,partName:part,reportDate:today,companyName:template.companyName || 'Apexiz',website:'www.apexiz.com'};
+  const baseContext = {projectName:projName,partName:part,reportDate:today,companyName:template.companyName || 'Apexiz',website:'www.apexiz.com',logoImage:(template.logoData || S.logob64 || '')};
 
   let slideNo = 1;
   {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'title',template,{...baseContext,slideNumber:String(slideNo++)});}
