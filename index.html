@@ -237,6 +237,9 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .ppt-prop-group textarea{min-height:76px;resize:vertical;}
 .ppt-color-row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px;align-items:end;}
 .ppt-prop-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.ppt-overlap-box{max-height:170px;overflow:auto;border:1px solid var(--g2);border-radius:10px;background:#fff;padding:6px;display:flex;flex-direction:column;gap:6px;}
+.ppt-overlap-btn{width:100%;text-align:left;border:1px solid var(--g2);border-radius:8px;padding:7px 9px;background:#fff;color:var(--g4);font-size:11px;font-weight:700;line-height:1.25;white-space:normal;word-break:break-word;cursor:pointer;}
+.ppt-overlap-btn.active{background:var(--orange);border-color:var(--orange);color:#fff;}
 .ppt-preview-meta{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;}
 .ppt-preview-tag{padding:6px 10px;border-radius:999px;background:var(--black);color:var(--white);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
 .ppt-builder-empty{padding:22px;border:1px dashed var(--g2);border-radius:14px;background:var(--white);font-size:12px;color:var(--g3);text-align:center;}
@@ -2288,9 +2291,11 @@ function renderPptBuilderSidebar(){
   const visibleSlots = Object.entries(slide.slots).filter(([,slot]) => isPptTemplateElementAllowedForCellConfig(slot, builder.slideKey, builder.template));
   const visibleExtras = (slide.extras || []).filter(item => isPptTemplateElementAllowedForCellConfig(item, builder.slideKey, builder.template));
   const options = visibleSlots.map(([key, slot]) => `<option value="${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>${slot.id}</option>`).join('');
-  const allOptions = []
-    .concat(visibleSlots.map(([key, slot]) => `<option value="slot:${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>[Slot] ${slot.id}</option>`))
-    .concat(visibleExtras.map(item => `<option value="extra:${item.id}" ${builder.selectedKind==='extra'&&builder.selectedId===item.id?'selected':''}>[Extra] ${item.id}</option>`))
+  const overlapItems = []
+    .concat(visibleSlots.map(([key, slot]) => ({value:`slot:${key}`, label:`[Slot] ${slot.id}`, active:builder.selectedKind==='slot'&&builder.selectedId===key})))
+    .concat(visibleExtras.map(item => ({value:`extra:${item.id}`, label:`[Extra] ${item.id}`, active:builder.selectedKind==='extra'&&builder.selectedId===item.id})));
+  const allOptions = overlapItems
+    .map(item => `<button class="ppt-overlap-btn ${item.active ? 'active' : ''}" type="button" onclick="selectPptTemplateElementByValue('${item.value.replace(/'/g, "\\'")}')">${item.label}</button>`)
     .join('');
   const dynTextList = getPptTemplateDynamicOptions('text');
   const dynImageList = getPptTemplateDynamicOptions('image');
@@ -2407,7 +2412,7 @@ function renderPptBuilderSidebar(){
     </div>
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Select Any Element (for overlaps)</div>
-      <div><select onchange="selectPptTemplateElementByValue(this.value)"><option value="">Select element</option>${allOptions}</select></div>
+      <div class="ppt-overlap-box">${allOptions || '<div class="builder-note">No elements on this slide.</div>'}</div>
     </div>
     ${selected ? buildPptTemplatePropertyMarkup(selected, selectedCount) : `<div class="ppt-builder-empty">Select an element from the preview to edit its properties.</div>`}
     <div class="ppt-prop-group">
