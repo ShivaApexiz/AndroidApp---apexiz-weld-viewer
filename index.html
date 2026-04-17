@@ -6391,7 +6391,21 @@ function mountBuilderOverlaysToBody(){
     overlay.style.bottom = '0';
     overlay.style.inset = '0';
     overlay.style.zIndex = '2600';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.padding = '16px';
   });
+}
+
+function openImagePickerInput(target='weld', mode='gallery'){
+  const input = document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput');
+  if(!input) return;
+  if(mode === 'camera'){
+    input.setAttribute('capture','environment');
+  }else{
+    input.removeAttribute('capture');
+  }
+  input.click();
 }
 
 function cropImageDataUrlToAspect(dataUrl, aspectRatio, outWidth, outHeight){
@@ -6432,6 +6446,9 @@ function openImageSourcePicker(target){
   const overlay = document.getElementById('imageSourceOverlay');
   if(overlay){
     overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.padding = '16px';
     overlay.classList.add('open');
   }
 }
@@ -6451,7 +6468,7 @@ function chooseImageSource(mode){
     openCameraCapture(target);
     return;
   }
-  document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput').click();
+  openImagePickerInput(target, 'gallery');
 }
 
 function openAnnotationFullscreen(){
@@ -6477,7 +6494,7 @@ async function openCameraCapture(target='weld'){
   mountBuilderOverlaysToBody();
   builderCameraTarget = target;
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput').click();
+    openImagePickerInput(target, 'camera');
     return;
   }
   try{
@@ -6497,7 +6514,7 @@ async function openCameraCapture(target='weld'){
     }
   }catch(err){
     console.warn(err);
-    document.getElementById(target === 'part' ? 'partImageInput' : 'weldImageInput').click();
+    openImagePickerInput(target, 'camera');
   }
 }
 
