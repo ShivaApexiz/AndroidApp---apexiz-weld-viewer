@@ -1658,7 +1658,10 @@ function makeDefaultPptTemplate(){
     cellConfig:{
       robotCount:4,
       robotPositionerEnabled:true,
-      workpiecePositionerEnabled:true
+      robotPositionerAxes:3,
+      workpiecePositionerEnabled:true,
+      workpiecePositionerAxes:3,
+      fixed:false
     },
     logoData:'',
     sourcePptName:'',
@@ -1798,7 +1801,10 @@ function makeBlankPptTemplate(){
     cellConfig:{
       robotCount:4,
       robotPositionerEnabled:true,
-      workpiecePositionerEnabled:true
+      robotPositionerAxes:3,
+      workpiecePositionerEnabled:true,
+      workpiecePositionerAxes:3,
+      fixed:false
     },
     logoData:'',
     sourcePptName:'',
@@ -1831,7 +1837,10 @@ function hydratePptTemplate(raw){
   base.cellConfig = {
     robotCount: Math.max(1, Math.min(8, Number(cfg.robotCount || base.cellConfig?.robotCount || 4))),
     robotPositionerEnabled: cfg.robotPositionerEnabled !== false,
-    workpiecePositionerEnabled: cfg.workpiecePositionerEnabled !== false
+    robotPositionerAxes: Math.max(1, Math.min(6, Number(cfg.robotPositionerAxes || base.cellConfig?.robotPositionerAxes || 3))),
+    workpiecePositionerEnabled: cfg.workpiecePositionerEnabled !== false,
+    workpiecePositionerAxes: Math.max(1, Math.min(6, Number(cfg.workpiecePositionerAxes || base.cellConfig?.workpiecePositionerAxes || 3))),
+    fixed: !!cfg.fixed
   };
   base.logoData = raw.logoData || '';
   base.sourcePptName = raw.sourcePptName || '';
@@ -1892,7 +1901,8 @@ function ensurePptTemplateBuilderState(){
       pendingKeyboardMove:false,
       statusMessage:'',
       interactionMode:'move',
-      marquee:null
+      marquee:null,
+      cellConfigDraft: normalizePptCellConfig(getResolvedPptTemplate(templateId).cellConfig || {})
     };
     recordPptTemplateHistory(true);
   }
@@ -1988,11 +1998,31 @@ function isPptTemplateElementAllowedForCellConfig(element, slideKey, template){
   }
   return true;
 }
+function normalizePptCellConfig(input){
+  const cfg = input || {};
+  return {
+    robotCount: Math.max(1, Math.min(8, Number(cfg.robotCount || 4))),
+    robotPositionerEnabled: cfg.robotPositionerEnabled !== false,
+    robotPositionerAxes: Math.max(1, Math.min(6, Number(cfg.robotPositionerAxes || 3))),
+    workpiecePositionerEnabled: cfg.workpiecePositionerEnabled !== false,
+    workpiecePositionerAxes: Math.max(1, Math.min(6, Number(cfg.workpiecePositionerAxes || 3))),
+    fixed: !!cfg.fixed
+  };
+}
+function buildDemoAxisValues(prefix, unit, count, startValue){
+  const axisCount = Math.max(1, Math.min(6, Number(count || 3)));
+  const out = [];
+  for(let i=1;i<=axisCount;i+=1){
+    out.push(`Axis ${i}: ${Number(startValue || 10) * i} ${unit}`);
+  }
+  return out.join('\n');
+}
 function setActivePptTemplateBuilderTemplate(id){
   const builder = ensurePptTemplateBuilderState();
   builder.currentTemplateId = id || 'apexiz';
   builder.templateName = id === 'apexiz' ? 'Apexiz Template' : ((getPptTemplateRecordById(id) || {}).name || 'Custom Template');
   builder.template = deepClone(getResolvedPptTemplate(builder.currentTemplateId));
+  builder.cellConfigDraft = normalizePptCellConfig(builder.template.cellConfig || {});
   builder.slideKey = 'title';
   builder.selectedKind = 'slot';
   builder.selectedId = Object.keys(builder.template.slides.title.slots)[0] || '';
@@ -2004,6 +2034,9 @@ function setActivePptTemplateBuilderTemplate(id){
 }
 function getPptTemplateContext(overrides){
   const builder = ensurePptTemplateBuilderState();
+  const cfg = normalizePptCellConfig(builder.template.cellConfig || {});
+  const demoRobotPos = cfg.robotPositionerEnabled ? buildDemoAxisValues('Axis', 'mm', cfg.robotPositionerAxes, 100) : '';
+  const demoWorkPos = cfg.workpiecePositionerEnabled ? buildDemoAxisValues('Axis', 'Deg', cfg.workpiecePositionerAxes, 10) : '';
   return {
     ...PPT_TEMPLATE_DEMO,
     companyName:builder.template.companyName || 'Apexiz',
@@ -2025,10 +2058,10 @@ function getPptTemplateContext(overrides){
     weldJobValue:PPT_TEMPLATE_DEMO.jobName,
     weldNoValue:PPT_TEMPLATE_DEMO.weldNo,
     weldRobotValue:PPT_TEMPLATE_DEMO.robotLabel,
-    weldRobotPosValue:PPT_TEMPLATE_DEMO.robotPositioner,
-    weldWorkPosValue:PPT_TEMPLATE_DEMO.workpiecePositioner,
+    weldRobotPosValue:demoRobotPos,
+    weldWorkPosValue:demoWorkPos,
     weldNotesValue:PPT_TEMPLATE_DEMO.notes,
-    weldPreviewBlock:`JOB NAME\n${PPT_TEMPLATE_DEMO.jobName}\n\nWELD NO.\n${PPT_TEMPLATE_DEMO.weldNo}\n\nROBOT\n${PPT_TEMPLATE_DEMO.robotLabel}\n\nROBOT POSITIONER\n${PPT_TEMPLATE_DEMO.robotPositioner}\n\nWORKPIECE POSITIONER\n${PPT_TEMPLATE_DEMO.workpiecePositioner}\n\nNOTES\n${PPT_TEMPLATE_DEMO.notes}`,
+    weldPreviewBlock:`JOB NAME\n${PPT_TEMPLATE_DEMO.jobName}\n\nWELD NO.\n${PPT_TEMPLATE_DEMO.weldNo}\n\nROBOT\n${PPT_TEMPLATE_DEMO.robotLabel}${cfg.robotPositionerEnabled ? `\n\nROBOT POSITIONER\n${demoRobotPos}` : ''}${cfg.workpiecePositionerEnabled ? `\n\nWORKPIECE POSITIONER\n${demoWorkPos}` : ''}\n\nNOTES\n${PPT_TEMPLATE_DEMO.notes}`,
     ...overrides
   };
 }
@@ -2232,7 +2265,8 @@ function renderPptBuilderSidebar(){
   const selected = getPptTemplateSelectedElement();
   const selectedCount = getPptTemplateSelectedElements().length;
   const slide = builder.template.slides[builder.slideKey];
-  const cellCfg = builder.template.cellConfig || {robotCount:4,robotPositionerEnabled:true,workpiecePositionerEnabled:true};
+  const cellCfg = normalizePptCellConfig(builder.template.cellConfig || {});
+  const cellDraft = normalizePptCellConfig(builder.cellConfigDraft || cellCfg);
   const visibleSlots = Object.entries(slide.slots).filter(([,slot]) => isPptTemplateElementAllowedForCellConfig(slot, builder.slideKey, builder.template));
   const visibleExtras = (slide.extras || []).filter(item => isPptTemplateElementAllowedForCellConfig(item, builder.slideKey, builder.template));
   const options = visibleSlots.map(([key, slot]) => `<option value="${key}" ${builder.selectedKind==='slot'&&builder.selectedId===key?'selected':''}>${slot.id}</option>`).join('');
@@ -2263,6 +2297,41 @@ function renderPptBuilderSidebar(){
       </div>
     </div>
     <div class="ppt-prop-group">
+      <div class="ppt-prop-title">Cell Configuration</div>
+      <div class="ppt-prop-grid">
+        <div>
+          <label class="field-label">No. of Robots</label>
+          <input type="number" min="1" max="8" step="1" value="${Math.max(1, Math.min(8, Number(cellDraft.robotCount || 4)))}" oninput="updatePptTemplateCellConfig('robotCount',this.value)">
+        </div>
+        <div>
+          <label class="field-label">Robot Positioner</label>
+          <select onchange="updatePptTemplateCellConfig('robotPositionerEnabled',this.value==='Y')">
+            <option value="Y" ${cellDraft.robotPositionerEnabled !== false ? 'selected' : ''}>Y</option>
+            <option value="N" ${cellDraft.robotPositionerEnabled === false ? 'selected' : ''}>N</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Robot Positioner Axes</label>
+          <input type="number" min="1" max="6" step="1" value="${Math.max(1, Math.min(6, Number(cellDraft.robotPositionerAxes || 3)))}" ${cellDraft.robotPositionerEnabled === false ? 'disabled' : ''} oninput="updatePptTemplateCellConfig('robotPositionerAxes',this.value)">
+        </div>
+        <div>
+          <label class="field-label">Workpiece Positioner</label>
+          <select onchange="updatePptTemplateCellConfig('workpiecePositionerEnabled',this.value==='Y')">
+            <option value="Y" ${cellDraft.workpiecePositionerEnabled !== false ? 'selected' : ''}>Y</option>
+            <option value="N" ${cellDraft.workpiecePositionerEnabled === false ? 'selected' : ''}>N</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Workpiece Positioner Axes</label>
+          <input type="number" min="1" max="6" step="1" value="${Math.max(1, Math.min(6, Number(cellDraft.workpiecePositionerAxes || 3)))}" ${cellDraft.workpiecePositionerEnabled === false ? 'disabled' : ''} oninput="updatePptTemplateCellConfig('workpiecePositionerAxes',this.value)">
+        </div>
+      </div>
+      <div class="ppt-builder-toolbar">
+        <button class="mini-btn dark" type="button" onclick="fixPptTemplateCellConfiguration()">Fix Config</button>
+      </div>
+      <div class="builder-note">${cellCfg.fixed ? `Fixed Config: Robots ${cellCfg.robotCount}, Robot Positioner ${cellCfg.robotPositionerEnabled ? `Y (${cellCfg.robotPositionerAxes} axis)` : 'N'}, Workpiece Positioner ${cellCfg.workpiecePositionerEnabled ? `Y (${cellCfg.workpiecePositionerAxes} axis)` : 'N'}` : 'Config draft is editable. Click Fix Config to apply template-specific Apexiz configuration.'}</div>
+    </div>
+    <div class="ppt-prop-group">
       <div class="ppt-prop-title">Template Settings</div>
       <div><label class="field-label">Company Name</label><input type="text" value="${builder.template.companyName || 'Apexiz'}" oninput="updatePptTemplateCompanyName(this.value)"></div>
       <div class="builder-note">${builder.template.sourcePptName ? `Source PPT: ${builder.template.sourcePptName}` : 'No source PPT uploaded yet.'}</div>
@@ -2272,30 +2341,6 @@ function renderPptBuilderSidebar(){
         <button class="mini-btn dark" type="button" onclick="triggerPptTemplateImageUpload('logo')">Upload Logo</button>
         <button class="mini-btn" type="button" onclick="openPptTemplatePreview()">Preview PPT</button>
       </div>
-    </div>
-    <div class="ppt-prop-group">
-      <div class="ppt-prop-title">Cell Configuration</div>
-      <div class="ppt-prop-grid">
-        <div>
-          <label class="field-label">No. of Robots</label>
-          <input type="number" min="1" max="8" step="1" value="${Math.max(1, Math.min(8, Number(cellCfg.robotCount || 4)))}" oninput="updatePptTemplateCellConfig('robotCount',this.value)">
-        </div>
-        <div>
-          <label class="field-label">Robot Positioner</label>
-          <select onchange="updatePptTemplateCellConfig('robotPositionerEnabled',this.value==='Y')">
-            <option value="Y" ${cellCfg.robotPositionerEnabled !== false ? 'selected' : ''}>Y</option>
-            <option value="N" ${cellCfg.robotPositionerEnabled === false ? 'selected' : ''}>N</option>
-          </select>
-        </div>
-        <div>
-          <label class="field-label">Workpiece Positioner</label>
-          <select onchange="updatePptTemplateCellConfig('workpiecePositionerEnabled',this.value==='Y')">
-            <option value="Y" ${cellCfg.workpiecePositionerEnabled !== false ? 'selected' : ''}>Y</option>
-            <option value="N" ${cellCfg.workpiecePositionerEnabled === false ? 'selected' : ''}>N</option>
-          </select>
-        </div>
-      </div>
-      <div class="builder-note">Used to customize Apexiz dynamic options and slide visibility rules for overview/weld positioner blocks.</div>
     </div>
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Add Elements</div>
@@ -2557,16 +2602,29 @@ function updatePptTemplateCompanyName(value){
 }
 function updatePptTemplateCellConfig(key, value){
   const builder = ensurePptTemplateBuilderState();
-  const cfg = builder.template.cellConfig || {robotCount:4,robotPositionerEnabled:true,workpiecePositionerEnabled:true};
+  const cfg = normalizePptCellConfig(builder.cellConfigDraft || builder.template.cellConfig || {});
   if(key === 'robotCount'){
     cfg.robotCount = Math.max(1, Math.min(8, Number(value || 4)));
   }else if(key === 'robotPositionerEnabled'){
     cfg.robotPositionerEnabled = !!value;
+  }else if(key === 'robotPositionerAxes'){
+    cfg.robotPositionerAxes = Math.max(1, Math.min(6, Number(value || 3)));
   }else if(key === 'workpiecePositionerEnabled'){
     cfg.workpiecePositionerEnabled = !!value;
+  }else if(key === 'workpiecePositionerAxes'){
+    cfg.workpiecePositionerAxes = Math.max(1, Math.min(6, Number(value || 3)));
   }
+  builder.cellConfigDraft = cfg;
+  renderPptBuilderSidebar();
+}
+function fixPptTemplateCellConfiguration(){
+  const builder = ensurePptTemplateBuilderState();
+  const cfg = normalizePptCellConfig(builder.cellConfigDraft || builder.template.cellConfig || {});
+  cfg.fixed = true;
   builder.template.cellConfig = cfg;
+  builder.cellConfigDraft = {...cfg};
   recordPptTemplateHistory();
+  setPptTemplateStatus(`Configuration fixed: ${cfg.robotCount} robot(s), Robot Positioner ${cfg.robotPositionerEnabled ? `Y (${cfg.robotPositionerAxes} axis)` : 'N'}, Workpiece Positioner ${cfg.workpiecePositionerEnabled ? `Y (${cfg.workpiecePositionerAxes} axis)` : 'N'}.`);
   syncPptTemplateBuilderUI();
 }
 function updatePptTemplateName(value){ ensurePptTemplateBuilderState().templateName = value || 'Custom Template'; }
