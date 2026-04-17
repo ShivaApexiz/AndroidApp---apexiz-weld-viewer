@@ -2117,7 +2117,8 @@ function buildPptTemplatePreviewElement(item, context, builder, scale, interacti
     const shapeKey = String(item.shape || 'rect');
     const radius = shapeKey === 'oval' ? '999px' : (shapeKey === 'roundRect' ? '14px' : '0px');
     const extraClass = ['roundRect','triangle','diamond','line'].includes(shapeKey) ? ` ${shapeKey}` : '';
-    return `<div class="ppt-preview-el ppt-preview-shape${extraClass}${selected}${locked}" ${refAttrs} ${click} ${down} style="${commonStyle}background:${pptCssColor(item.fill,'#FFFFFF')};border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px;border-radius:${radius}"></div>`;
+    const fillCss = item.noFill ? 'transparent' : pptCssColor(item.fill,'#FFFFFF');
+    return `<div class="ppt-preview-el ppt-preview-shape${extraClass}${selected}${locked}" ${refAttrs} ${click} ${down} style="${commonStyle}background:${fillCss};border-color:${pptCssColor(item.lineColor,'#CCCCCC')};border-width:${pptNum(item.lineWidth,1)}px;border-radius:${radius}"></div>`;
   }
   if(item.type === 'logo' || item.type === 'staticImage' || item.type === 'dynamicImage'){
     const src = item.type === 'logo' ? (item.imageData || builder.template.logoData || 'Logo.png') : (item.imageData || '');
@@ -2290,11 +2291,16 @@ function buildPptTemplatePropertyMarkup(selected, selectedCount){
       ${selected.type === 'shape' || selected.type === 'logo' || selected.type === 'staticImage' || selected.type === 'dynamicImage' ? `
       <div class="ppt-prop-grid">
         ${selected.type === 'shape' ? `<div><label class="field-label">Shape</label><select onchange="updatePptTemplateElementProp('shape',this.value)"><option value="rect" ${String(selected.shape||'rect')==='rect'?'selected':''}>Rectangle</option><option value="roundRect" ${selected.shape==='roundRect'?'selected':''}>Rounded Rectangle</option><option value="oval" ${selected.shape==='oval'?'selected':''}>Oval</option><option value="triangle" ${selected.shape==='triangle'?'selected':''}>Triangle</option><option value="diamond" ${selected.shape==='diamond'?'selected':''}>Diamond</option><option value="line" ${selected.shape==='line'?'selected':''}>Line</option></select></div>` : ''}
+        ${selected.type === 'shape' ? `<div><label class="field-label">Fill Mode</label><select onchange="updatePptTemplateElementProp('noFill',this.value==='true')"><option value="false" ${!selected.noFill?'selected':''}>Fill</option><option value="true" ${selected.noFill?'selected':''}>No Fill</option></select></div>` : ''}
         ${buildPptColorField('Fill / Background', selected.fill || '#FFFFFF', 'updatePptTemplateFillColor')}
         ${buildPptColorField('Border Color', selected.lineColor || '#CCCCCC', 'updatePptTemplateBorderColor')}
         <div><label class="field-label">Border Width</label><input type="number" step="0.1" value="${pptNum(selected.lineWidth,1)}" oninput="updatePptTemplateElementProp('lineWidth',this.value)"></div>
         ${(selected.type === 'logo' || selected.type === 'staticImage' || selected.type === 'dynamicImage') ? `<div><label class="field-label">Image</label><button class="mini-btn dark" type="button" onclick="triggerPptTemplateImageUpload('element')">${selected.type === 'logo' ? 'Upload This Logo' : 'Upload Image'}</button>${selected.type === 'logo' ? `<button class="mini-btn" type="button" onclick="clearPptTemplateElementImage()" style="margin-top:6px">Use Global Logo</button>` : ''}</div>` : ''}
       </div>` : ''}
+      <div class="ppt-builder-toolbar">
+        <button class="mini-btn" type="button" onclick="sendPptTemplateSelectionToBack()">Bring Back</button>
+        <button class="mini-btn" type="button" onclick="bringPptTemplateSelectionToFront()">Bring Front</button>
+      </div>
       <button class="mini-btn warn" type="button" onclick="deletePptTemplateSelectedElement()">Delete Selected</button>
     </div>`;
 }
@@ -2470,7 +2476,7 @@ function updatePptTemplateElementProp(prop, value){
   const selectedItems = getPptTemplateSelectedElements();
   if(!selectedItems.length) return;
   const numericProps = new Set(['x','y','w','h','fontSize','lineWidth','opacity']);
-  const genericProps = new Set(['x','y','w','h','fontSize','lineWidth','opacity']);
+  const genericProps = new Set(['x','y','w','h','fontSize','lineWidth','opacity','noFill']);
   const active = getPptTemplateSelectedElement();
   const supportsDelta = numericProps.has(prop) && selectedItems.length > 1 && active && typeof active[prop] !== 'undefined';
   const baseCurrent = supportsDelta ? Number(active[prop] || 0) : 0;
@@ -2482,6 +2488,7 @@ function updatePptTemplateElementProp(prop, value){
   selectedItems.forEach(item => {
     const el = item.element;
     if(!el) return;
+    if(prop === 'noFill' && el.type !== 'shape') return;
     if(!genericProps.has(prop) && !Object.prototype.hasOwnProperty.call(el, prop)) return;
     let nextValue;
     if(supportsDelta && typeof el[prop] !== 'undefined'){
@@ -3144,6 +3151,34 @@ function movePptTemplateSelection(dx, dy, commitHistory){
   }
   renderPptBuilderPreview();
   renderPptBuilderSidebar();
+}
+function reorderPptTemplateSelectionExtras(mode){
+  const builder = ensurePptTemplateBuilderState();
+  const slide = builder.template.slides[builder.slideKey];
+  if(!slide) return;
+  const selectedExtraIds = new Set(
+    getPptTemplateSelectedRefs()
+      .filter(ref => ref.kind === 'extra')
+      .map(ref => ref.id)
+  );
+  if(!selectedExtraIds.size){
+    setPptTemplateStatus('Select extra elements to change layering.');
+    return;
+  }
+  const selected = slide.extras.filter(item => selectedExtraIds.has(item.id));
+  const unselected = slide.extras.filter(item => !selectedExtraIds.has(item.id));
+  slide.extras = mode === 'back'
+    ? [...selected, ...unselected]
+    : [...unselected, ...selected];
+  recordPptTemplateHistory();
+  setPptTemplateStatus(mode === 'back' ? 'Selected elements moved to back.' : 'Selected elements moved to front.');
+  syncPptTemplateBuilderUI();
+}
+function bringPptTemplateSelectionToFront(){
+  reorderPptTemplateSelectionExtras('front');
+}
+function sendPptTemplateSelectionToBack(){
+  reorderPptTemplateSelectionExtras('back');
 }
 function openPptTemplatePreview(){
   const grid = document.getElementById('pptTemplatePreviewGrid');
@@ -7347,10 +7382,12 @@ async function loadCustomerProjects(){
 async function openViewer(projId){
   loading(true,'Loading project files');
   S.currentProjectId=projId;
+  S.currentProjectName='';
   S.csvFiles=new Map(); S.imageFiles=new Map();
   S.welds1=[]; S.welds2=[]; S.activeCell=null;
   const {data:proj}=await sb.from('projects').select('*').eq('id',projId).single();
   if(!proj){ loading(false); alert('Project not found.'); return; }
+  S.currentProjectName = String(proj.name || '').trim();
   loading(true,'Loading CSV data');
   const {data:csvList}=await sb.storage.from('projects').list(`${projId}/csv`,{limit:500});
   for(const f of csvList||[]){
@@ -7669,9 +7706,12 @@ function applyPptTemplateElement(sl, element, context, template){
   const shapeMap = {oval:ovalShape,roundrect:roundRectShape,triangle:triangleShape,diamond:diamondShape,line:lineShape,rect:rectShape};
   const shapeType = shapeMap[shapeKey] || rectShape;
   if(element.type === 'shape'){
+    const shapeFill = element.noFill
+      ? {color:'FFFFFF',transparency:100}
+      : {color:pptColor(element.fill,'FFFFFF'),transparency:pptTransparencyFromOpacity(element.opacity,100)};
     sl.addShape(shapeType,{
       x:pptNum(element.x,0),y:pptNum(element.y,0),w:pptNum(element.w,1),h:pptNum(element.h,1),
-      fill:{color:pptColor(element.fill,'FFFFFF'),transparency:pptTransparencyFromOpacity(element.opacity,100)},
+      fill:shapeFill,
       line:{color:pptColor(element.lineColor,'CCCCCC'),pt:pptNum(element.lineWidth,1),transparency:pptTransparencyFromOpacity(element.opacity,100)}
     });
     return;
@@ -7780,7 +7820,7 @@ function buildCustomWeldFields(w, robotLabel){
 }
 async function exportToPPTWithCustomTemplate(template){
   const part=document.getElementById('partDropdown').value;
-  const projName=S.currentProjectName||'PROJECT';
+  const projName=(S.currentProjectName || document.getElementById('viewerTitle')?.innerText || 'PROJECT').trim();
   const btn=document.getElementById('exportBtn');
   btn.disabled=true;btn.innerText='Generating PPT...';
   const pptx=new PptxGenJS();
