@@ -6855,7 +6855,7 @@ async function captureCameraFrame(){
     frameCtx.drawImage(video, 0, 0, frameCanvas.width, frameCanvas.height);
     captureSource = frameCanvas;
   }
-  const fileLikeDataUrl = cropMediaSourceCenterToAspect(captureSource, config.width, config.height, config.aspect);
+  const fileLikeDataUrl = cropMediaSourceToGuide(captureSource, guide, video, config.width, config.height);
   if(!fileLikeDataUrl) return;
   closeCameraCapture();
   if(builderCameraTarget === 'part'){
