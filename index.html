@@ -1268,6 +1268,8 @@ async function renderMyProjects(el){
 }
 
 const PPT_TEMPLATE_STORAGE_KEY = 'apexiz_custom_ppt_templates_v2';
+const PPT_TEMPLATE_FILE_FORMAT = 'apexiz-weld-viewer-ppt-template';
+const PPT_TEMPLATE_FILE_VERSION = 1;
 const PPT_TEMPLATE_SLIDES = ['title','overview','robot','weld','end'];
 const PPT_TEMPLATE_LABELS = {
   title:'Title Slide',
@@ -1744,6 +1746,13 @@ function getPptTemplateStorage(){
 }
 function setPptTemplateStorage(store){ localStorage.setItem(PPT_TEMPLATE_STORAGE_KEY, JSON.stringify(store)); }
 function getPptTemplateRecords(){ return getPptTemplateStorage().templates || []; }
+function sanitizePptTemplateFilename(name){
+  return String(name || 'Apexiz_Template')
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, '_')
+    .replace(/\s+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'Apexiz_Template';
+}
 function savePptTemplateStoreRecord(record){
   const store = getPptTemplateStorage();
   const idx = store.templates.findIndex(item => item.id === record.id);
@@ -2460,9 +2469,12 @@ function renderPptBuilderSidebar(){
         <button class="mini-btn dark" type="button" onclick="createPptTemplateFromCurrent()">New Template From Current</button>
         <button class="mini-btn" type="button" onclick="createBlankPptTemplateFromScratch()">New Blank Template</button>
         <button class="mini-btn dark" type="button" onclick="triggerPptTemplatePptUpload('newTemplate')">Upload Base PPT Template</button>
+        <button class="mini-btn dark" type="button" onclick="downloadActivePptTemplateFile()">Download Template File</button>
+        <button class="mini-btn dark" type="button" onclick="triggerPptTemplateFileUpload()">Upload Template File</button>
         <button class="mini-btn dark" type="button" onclick="triggerPptTemplatePdfUpload()">Upload PDF Background</button>
         ${builder.currentTemplateId!=='apexiz' ? `<button class="mini-btn warn" type="button" onclick="deleteActivePptTemplate()">Delete Template</button>` : ''}
       </div>
+      <div class="builder-note">Template file format: .avppt.json. Uploaded files are added to the template list and can be assigned to projects or selected during PPT export.</div>
     </div>
     <div class="ppt-prop-group">
       <div class="ppt-prop-title">Template Settings</div>
@@ -2715,6 +2727,7 @@ function renderPptTemplateBuilder(el){
     <input id="pptTemplateElementImageInput" type="file" accept="image/*" style="display:none" onchange="handlePptTemplateElementImageUpload(event)">
     <input id="pptTemplatePptInput" type="file" accept=".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" style="display:none" onchange="handlePptTemplatePptUpload(event)">
     <input id="pptTemplatePdfInput" type="file" accept="application/pdf,.pdf" style="display:none" onchange="handlePptTemplatePdfUpload(event)">
+    <input id="pptTemplateFileInput" type="file" accept=".avppt.json,application/json" style="display:none" onchange="handlePptTemplateFileUpload(event)">
   `;
   syncPptTemplateBuilderUI();
 }
@@ -2997,6 +3010,10 @@ function triggerPptTemplatePptUpload(mode){
   const input = document.getElementById('pptTemplatePptInput');
   if(input){ input.value=''; input.click(); }
 }
+function triggerPptTemplateFileUpload(){
+  const input = document.getElementById('pptTemplateFileInput');
+  if(input){ input.value=''; input.click(); }
+}
 function triggerPptTemplatePdfUpload(){
   const input = document.getElementById('pptTemplatePdfInput');
   if(input){ input.value=''; input.click(); }
@@ -3026,6 +3043,11 @@ function readFileAsDataUrl(file, callback){
   const reader = new FileReader();
   reader.onload = () => callback(String(reader.result || ''));
   reader.readAsDataURL(file);
+}
+function readFileAsText(file, callback){
+  const reader = new FileReader();
+  reader.onload = () => callback(String(reader.result || ''));
+  reader.readAsText(file);
 }
 function handlePptTemplateLogoUpload(event){
   const file = event.target.files && event.target.files[0];
@@ -3104,6 +3126,80 @@ async function handlePptTemplatePdfUpload(event){
     setPptTemplateStatus(`PDF background upload failed: ${err.message || err}`);
     alert('PDF background upload failed: ' + (err.message || err));
   }
+}
+function buildPptTemplateFilePayload(record){
+  return {
+    format:PPT_TEMPLATE_FILE_FORMAT,
+    version:PPT_TEMPLATE_FILE_VERSION,
+    exportedAt:new Date().toISOString(),
+    app:'Apexiz Weld Viewer',
+    record:{
+      id:record.id || `tpl_${Date.now()}`,
+      name:record.name || 'Custom Template',
+      template:hydratePptTemplate(record.template || makeDefaultPptTemplate())
+    }
+  };
+}
+function downloadActivePptTemplateFile(){
+  const builder = ensurePptTemplateBuilderState();
+  const record = {
+    id:builder.currentTemplateId || `tpl_${Date.now()}`,
+    name:builder.templateName || (builder.currentTemplateId === 'apexiz' ? 'Apexiz Template' : 'Custom Template'),
+    template:deepClone(builder.template || makeDefaultPptTemplate())
+  };
+  const payload = buildPptTemplateFilePayload(record);
+  const filename = `${sanitizePptTemplateFilename(payload.record.name)}.avppt.json`;
+  downloadBlobFile(new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8'}), filename);
+  setPptTemplateStatus(`Template file downloaded: ${filename}`);
+}
+function normalizeUploadedPptTemplateRecord(parsed, sourceName){
+  if(!parsed || typeof parsed !== 'object') throw new Error('Template file is empty or invalid JSON.');
+  let name = '';
+  let template = null;
+  if(parsed.format === PPT_TEMPLATE_FILE_FORMAT && parsed.record){
+    name = String(parsed.record.name || '').trim();
+    template = parsed.record.template;
+  }else if(parsed.template && parsed.name){
+    name = String(parsed.name || '').trim();
+    template = parsed.template;
+  }else if(parsed.slides){
+    name = String(parsed.name || sourceName || 'Uploaded PPT Template').replace(/\.avppt\.json$/i,'').replace(/\.json$/i,'').trim();
+    template = parsed;
+  }
+  if(!template || !template.slides) throw new Error('Template JSON must contain a valid template.slides object.');
+  const safeName = name || String(sourceName || 'Uploaded PPT Template').replace(/\.avppt\.json$/i,'').replace(/\.json$/i,'') || 'Uploaded PPT Template';
+  return {
+    id:`tpl_${Date.now()}`,
+    name:safeName,
+    template:hydratePptTemplate(template)
+  };
+}
+function handlePptTemplateFileUpload(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const sourceName = file.name || 'uploaded-template.avppt.json';
+  if(!/(\.avppt\.json|\.json)$/i.test(sourceName)){
+    alert('Please upload an Apexiz PPT template file in .avppt.json format.');
+    setPptTemplateStatus('Template upload failed: unsupported file format. Use .avppt.json.');
+    return;
+  }
+  readFileAsText(file, text => {
+    try{
+      const parsed = JSON.parse(text);
+      const record = normalizeUploadedPptTemplateRecord(parsed, sourceName);
+      const promptedName = prompt('Template name', record.name);
+      if(!promptedName) return;
+      record.name = promptedName.trim() || record.name;
+      savePptTemplateStoreRecord(record);
+      setActivePptTemplateBuilderTemplate(record.id);
+      setPptTemplateStatus(`Template file uploaded and added: ${record.name}. It is now available in the builder, project assignment, and PPT export.`);
+      alert(`Template "${record.name}" uploaded successfully.`);
+      syncPptTemplateBuilderUI();
+    }catch(err){
+      setPptTemplateStatus(`Template upload failed: ${err.message || err}`);
+      alert('Template upload failed: ' + (err.message || err));
+    }
+  });
 }
 function handlePptTemplateElementImageUpload(event){
   const file = event.target.files && event.target.files[0];
