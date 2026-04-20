@@ -7238,6 +7238,8 @@ function redrawBuilderCanvases(){
 }
 
 function applyAnnotationCanvasZoom(){
+  const annotationOverlay = document.getElementById('annotationOverlay');
+  const fullscreenOpen = !!(annotationOverlay && annotationOverlay.classList.contains('open'));
   ['weldCanvas','fullWeldCanvas'].forEach(canvasId => {
     const canvas = document.getElementById(canvasId);
     if(!canvas) return;
@@ -7250,6 +7252,11 @@ function applyAnnotationCanvasZoom(){
     const aspect = (canvas.height || 958) / Math.max(1, canvas.width || 1510);
     const displayHeight = Math.round(displayWidth * aspect);
     const zoomSurface = canvasId === 'fullWeldCanvas' ? document.getElementById('fullWeldZoomSurface') : null;
+    if(fullscreenOpen && canvasId === 'weldCanvas'){
+      canvas.style.setProperty('transform', 'none', 'important');
+      canvas.style.setProperty('zoom', '1', 'important');
+      return;
+    }
     if(zoomSurface){
       zoomSurface.style.setProperty('width', `${displayWidth}px`, 'important');
       zoomSurface.style.setProperty('height', `${displayHeight}px`, 'important');
