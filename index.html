@@ -6475,9 +6475,12 @@ function openImageSourcePicker(target){
   if(card){
     card.style.background = '#ffffff';
     card.style.opacity = '1';
-    card.style.margin = '10px';
+    card.style.margin = '14px';
     card.style.border = '2px solid #FF5500';
-    card.style.borderRadius = '22px';
+    card.style.borderRadius = '24px';
+    card.style.padding = '26px';
+    card.style.width = 'min(96vw, 520px)';
+    card.style.maxWidth = '520px';
   }
 }
 
@@ -6640,6 +6643,32 @@ function cropMediaSourceToGuide(source, guideElement, displayElement, outWidth, 
   return canvas.toDataURL('image/png');
 }
 
+function cropMediaSourceCenterToAspect(source, outWidth, outHeight, aspectRatio){
+  const sourceWidth = source.videoWidth || source.naturalWidth || source.width;
+  const sourceHeight = source.videoHeight || source.naturalHeight || source.height;
+  if(!sourceWidth || !sourceHeight) return null;
+  let sx = 0;
+  let sy = 0;
+  let sw = sourceWidth;
+  let sh = sourceHeight;
+  const sourceAspect = sourceWidth / sourceHeight;
+  if(sourceAspect > aspectRatio){
+    sw = Math.round(sourceHeight * aspectRatio);
+    sx = Math.round((sourceWidth - sw) / 2);
+  }else{
+    sh = Math.round(sourceWidth / aspectRatio);
+    sy = Math.round((sourceHeight - sh) / 2);
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = outWidth;
+  canvas.height = outHeight;
+  const ctx = canvas.getContext('2d');
+  if(!ctx) return null;
+  console.log('[camera] center crop', { sourceWidth, sourceHeight, sx, sy, sw, sh, outWidth, outHeight });
+  ctx.drawImage(source, sx, sy, sw, sh, 0, 0, outWidth, outHeight);
+  return canvas.toDataURL('image/png');
+}
+
 function isDesktopCameraCaptureMode(){
   const ua = navigator.userAgent || '';
   const coarsePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
@@ -6720,7 +6749,7 @@ async function captureCameraFrame(){
     frameCtx.drawImage(video, 0, 0, frameCanvas.width, frameCanvas.height);
     captureSource = frameCanvas;
   }
-  const fileLikeDataUrl = cropMediaSourceToGuide(captureSource, guide, video, config.width, config.height);
+  const fileLikeDataUrl = cropMediaSourceCenterToAspect(captureSource, config.width, config.height, config.aspect);
   if(!fileLikeDataUrl) return;
   closeCameraCapture();
   if(builderCameraTarget === 'part'){
