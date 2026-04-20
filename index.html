@@ -5401,7 +5401,9 @@ function renderCreateProject(el){
           <input id="overlayColor" type="color" value="#ff5a00" aria-label="Overlay Draw Color">
         </div>
         <div class="fullscreen-canvas-wrap" id="fullWeldCanvasShell">
-          <canvas id="fullWeldCanvas" width="1510" height="958"></canvas>
+          <div class="annotation-zoom-surface">
+            <canvas id="fullWeldCanvas" width="1510" height="958"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -7241,9 +7243,19 @@ function applyAnnotationCanvasZoom(){
     const displayWidth = Math.round(fitWidth * zoom);
     const aspect = (canvas.height || 958) / Math.max(1, canvas.width || 1510);
     const displayHeight = Math.round(displayWidth * aspect);
-    canvas.style.setProperty('width', `${displayWidth}px`, 'important');
-    canvas.style.setProperty('height', `${displayHeight}px`, 'important');
-    canvas.style.setProperty('flex', `0 0 ${displayWidth}px`, 'important');
+    const zoomSurface = canvas.closest('.annotation-zoom-surface');
+    if(zoomSurface){
+      zoomSurface.style.setProperty('width', `${displayWidth}px`, 'important');
+      zoomSurface.style.setProperty('height', `${displayHeight}px`, 'important');
+      zoomSurface.style.setProperty('flex', `0 0 ${displayWidth}px`, 'important');
+      canvas.style.setProperty('width', '100%', 'important');
+      canvas.style.setProperty('height', '100%', 'important');
+      canvas.style.setProperty('flex', '0 0 auto', 'important');
+    }else{
+      canvas.style.setProperty('width', `${displayWidth}px`, 'important');
+      canvas.style.setProperty('height', `${displayHeight}px`, 'important');
+      canvas.style.setProperty('flex', `0 0 ${displayWidth}px`, 'important');
+    }
     canvas.style.setProperty('min-width', '0', 'important');
     canvas.style.setProperty('max-width', 'none', 'important');
     canvas.style.setProperty('transform-origin', 'top left', 'important');
