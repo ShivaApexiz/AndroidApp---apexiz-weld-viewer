@@ -5401,10 +5401,8 @@ function renderCreateProject(el){
           <input id="overlayColor" type="color" value="#ff5a00" aria-label="Overlay Draw Color">
         </div>
         <div class="fullscreen-canvas-wrap" id="fullWeldCanvasShell">
-          <div id="fullWeldZoomStage" class="annotation-zoom-stage">
-            <div id="fullWeldZoomSurface" class="annotation-zoom-surface">
-              <canvas id="fullWeldCanvas" width="1510" height="958"></canvas>
-            </div>
+          <div id="fullWeldZoomSurface" class="annotation-zoom-surface">
+            <canvas id="fullWeldCanvas" width="1510" height="958"></canvas>
           </div>
         </div>
       </div>
@@ -6614,7 +6612,7 @@ function openAnnotationFullscreen(){
   const tools = overlay ? overlay.querySelector('.full-tools') : null;
   if(tools){
     tools.style.setProperty('transform', 'none', 'important');
-    tools.style.setProperty('zoom', '1', 'important');
+    tools.style.removeProperty('zoom');
   }
   redrawBuilderCanvases();
 }
@@ -7256,32 +7254,26 @@ function applyAnnotationCanvasZoom(){
     const aspect = (canvas.height || 958) / Math.max(1, canvas.width || 1510);
     const displayHeight = Math.round(displayWidth * aspect);
     const zoomSurface = canvasId === 'fullWeldCanvas' ? document.getElementById('fullWeldZoomSurface') : null;
-    const zoomStage = canvasId === 'fullWeldCanvas' ? document.getElementById('fullWeldZoomStage') : null;
-    const webFullscreenZoom = !!(fullscreenOpen && canvasId === 'fullWeldCanvas' && annotationOverlay?.classList.contains('web-annotation-overlay') && zoomStage && zoomSurface);
+    const webFullscreenZoom = !!(fullscreenOpen && canvasId === 'fullWeldCanvas' && annotationOverlay?.classList.contains('web-annotation-overlay') && zoomSurface);
     if(fullscreenOpen && canvasId === 'weldCanvas'){
       canvas.style.setProperty('transform', 'none', 'important');
-      canvas.style.setProperty('zoom', '1', 'important');
+      canvas.style.removeProperty('zoom');
       return;
     }
     if(webFullscreenZoom){
-      const baseWidth = Math.round(fitWidth);
-      const baseHeight = Math.round(baseWidth * aspect);
-      zoomStage.style.setProperty('width', `${displayWidth}px`, 'important');
-      zoomStage.style.setProperty('height', `${displayHeight}px`, 'important');
-      zoomStage.style.setProperty('flex', `0 0 ${displayWidth}px`, 'important');
-      zoomStage.style.setProperty('transform', 'none', 'important');
-      zoomStage.style.setProperty('zoom', '1', 'important');
-      zoomSurface.style.setProperty('width', `${baseWidth}px`, 'important');
-      zoomSurface.style.setProperty('height', `${baseHeight}px`, 'important');
-      zoomSurface.style.setProperty('flex', `0 0 ${baseWidth}px`, 'important');
+      const fullWidth = Math.round((canvas.width || 1510) * zoom);
+      const fullHeight = Math.round((canvas.height || 958) * zoom);
+      zoomSurface.style.setProperty('width', `${fullWidth}px`, 'important');
+      zoomSurface.style.setProperty('height', `${fullHeight}px`, 'important');
+      zoomSurface.style.setProperty('flex', `0 0 ${fullWidth}px`, 'important');
       zoomSurface.style.setProperty('transform-origin', 'top left', 'important');
-      zoomSurface.style.setProperty('transform', `scale(${zoom})`, 'important');
-      zoomSurface.style.setProperty('zoom', '1', 'important');
+      zoomSurface.style.setProperty('transform', 'none', 'important');
+      zoomSurface.style.removeProperty('zoom');
       canvas.style.setProperty('width', '100%', 'important');
       canvas.style.setProperty('height', '100%', 'important');
       canvas.style.setProperty('flex', '0 0 auto', 'important');
       canvas.style.setProperty('transform', 'none', 'important');
-      canvas.style.setProperty('zoom', '1', 'important');
+      canvas.style.removeProperty('zoom');
       canvas.dataset.zoom = String(zoom);
       return;
     }
@@ -7290,7 +7282,7 @@ function applyAnnotationCanvasZoom(){
       zoomSurface.style.setProperty('height', `${displayHeight}px`, 'important');
       zoomSurface.style.setProperty('flex', `0 0 ${displayWidth}px`, 'important');
       zoomSurface.style.setProperty('transform', 'none', 'important');
-      zoomSurface.style.setProperty('zoom', '1', 'important');
+      zoomSurface.style.removeProperty('zoom');
       canvas.style.setProperty('width', '100%', 'important');
       canvas.style.setProperty('height', '100%', 'important');
       canvas.style.setProperty('flex', '0 0 auto', 'important');
@@ -7303,7 +7295,7 @@ function applyAnnotationCanvasZoom(){
     canvas.style.setProperty('max-width', 'none', 'important');
     canvas.style.setProperty('transform-origin', 'top left', 'important');
     canvas.style.setProperty('transform', canvasId === 'fullWeldCanvas' ? 'none' : 'translateZ(0)', 'important');
-    canvas.style.setProperty('zoom', '1', 'important');
+    canvas.style.removeProperty('zoom');
     canvas.dataset.zoom = String(zoom);
   });
 }
