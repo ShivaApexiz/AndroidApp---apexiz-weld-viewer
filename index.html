@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Apexiz Weld Viewer</title>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
@@ -16,13 +16,19 @@
   --black:#1A1A1A;--white:#FFFFFF;
   --g1:#F5F5F5;--g2:#E8E8E8;--g3:#767676;--g4:#4D4D4D;
   --red:#D93025;--green:#1E8E3E;
+  --safe-top:env(safe-area-inset-top, 0px);
+  --safe-right:env(safe-area-inset-right, 0px);
+  --safe-bottom:env(safe-area-inset-bottom, 0px);
+  --safe-left:env(safe-area-inset-left, 0px);
+  --app-vh:100vh;
 }
+@supports (height:100dvh){:root{--app-vh:100dvh;}}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{font-size:14px;}
-body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--black);width:100vw;height:100vh;overflow:auto;display:flex;flex-direction:column;}
+html{font-size:14px;min-height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--black);width:100%;min-height:var(--app-vh);height:var(--app-vh);overflow:auto;display:flex;flex-direction:column;}
 
 /*  PAGES  */
-.page{width:100vw;height:100vh;display:none;flex-direction:column;overflow:auto;}
+.page{width:100%;height:var(--app-vh);display:none;flex-direction:column;overflow:auto;}
 .page.active{display:flex;}
 
 /*  TOPBAR  */
@@ -713,6 +719,7 @@ function isNativeAppRuntime(){
 
 function applyRuntimeChrome(){
   const nativeRuntime = isNativeAppRuntime();
+  document.body.classList.toggle('native-runtime', nativeRuntime);
   document.body.classList.toggle('web-runtime', !nativeRuntime);
   const mobileNav = document.getElementById('mobileBottomNav');
   if(mobileNav){
