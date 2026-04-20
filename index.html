@@ -5401,7 +5401,7 @@ function renderCreateProject(el){
           <input id="overlayColor" type="color" value="#ff5a00" aria-label="Overlay Draw Color">
         </div>
         <div class="fullscreen-canvas-wrap" id="fullWeldCanvasShell">
-          <div class="annotation-zoom-surface">
+          <div id="fullWeldZoomSurface" class="annotation-zoom-surface">
             <canvas id="fullWeldCanvas" width="1510" height="958"></canvas>
           </div>
         </div>
@@ -6576,9 +6576,10 @@ function openImageSourcePicker(target){
     card.style.margin = '14px';
     card.style.border = '2px solid #FF5500';
     card.style.borderRadius = '24px';
-    card.style.padding = '26px';
-    card.style.width = 'min(96vw, 520px)';
-    card.style.maxWidth = '520px';
+    card.style.padding = '30px';
+    card.style.width = 'min(96vw, 560px)';
+    card.style.maxWidth = '560px';
+    card.style.boxShadow = '0 22px 52px rgba(0,0,0,.26)';
   }
 }
 
@@ -6606,6 +6607,11 @@ function openAnnotationFullscreen(){
   if(overlay){
     overlay.style.display = 'flex';
     overlay.classList.add('open');
+  }
+  const tools = overlay ? overlay.querySelector('.full-tools') : null;
+  if(tools){
+    tools.style.setProperty('transform', 'none', 'important');
+    tools.style.setProperty('zoom', '1', 'important');
   }
   redrawBuilderCanvases();
 }
@@ -7243,11 +7249,13 @@ function applyAnnotationCanvasZoom(){
     const displayWidth = Math.round(fitWidth * zoom);
     const aspect = (canvas.height || 958) / Math.max(1, canvas.width || 1510);
     const displayHeight = Math.round(displayWidth * aspect);
-    const zoomSurface = canvas.closest('.annotation-zoom-surface');
+    const zoomSurface = canvasId === 'fullWeldCanvas' ? document.getElementById('fullWeldZoomSurface') : null;
     if(zoomSurface){
       zoomSurface.style.setProperty('width', `${displayWidth}px`, 'important');
       zoomSurface.style.setProperty('height', `${displayHeight}px`, 'important');
       zoomSurface.style.setProperty('flex', `0 0 ${displayWidth}px`, 'important');
+      zoomSurface.style.setProperty('transform', 'none', 'important');
+      zoomSurface.style.setProperty('zoom', '1', 'important');
       canvas.style.setProperty('width', '100%', 'important');
       canvas.style.setProperty('height', '100%', 'important');
       canvas.style.setProperty('flex', '0 0 auto', 'important');
@@ -7259,7 +7267,8 @@ function applyAnnotationCanvasZoom(){
     canvas.style.setProperty('min-width', '0', 'important');
     canvas.style.setProperty('max-width', 'none', 'important');
     canvas.style.setProperty('transform-origin', 'top left', 'important');
-    canvas.style.setProperty('transform', 'translateZ(0)', 'important');
+    canvas.style.setProperty('transform', canvasId === 'fullWeldCanvas' ? 'none' : 'translateZ(0)', 'important');
+    canvas.style.setProperty('zoom', '1', 'important');
     canvas.dataset.zoom = String(zoom);
   });
 }
