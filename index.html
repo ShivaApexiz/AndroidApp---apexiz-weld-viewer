@@ -6607,6 +6607,7 @@ function openAnnotationFullscreen(){
   if(overlay){
     overlay.style.display = 'flex';
     overlay.classList.add('open');
+    overlay.classList.toggle('web-annotation-overlay', !isNativeAppRuntime());
   }
   const tools = overlay ? overlay.querySelector('.full-tools') : null;
   if(tools){
@@ -6621,6 +6622,7 @@ function closeAnnotationFullscreen(){
   if(overlay){
     overlay.style.display = 'none';
     overlay.classList.remove('open');
+    overlay.classList.remove('web-annotation-overlay');
   }
   redrawBuilderCanvases();
 }
