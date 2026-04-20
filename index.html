@@ -5532,20 +5532,20 @@ function initProjectBuilderBindings(){
     renderWeldAxisFields();
     updateSetupSummary();
   });
-  builderZoom.addEventListener('input', () => {
+  const handleZoomInput = source => {
     const prevZoom = projectWizardState.currentZoom || 1;
-    projectWizardState.currentZoom = parseFloat(builderZoom.value || '1');
-    overlayZoom.value = builderZoom.value;
-    recenterCanvasViews(prevZoom, projectWizardState.currentZoom);
+    const nextZoom = Math.max(1, Math.min(6, parseFloat(source.value || '1') || 1));
+    projectWizardState.currentZoom = nextZoom;
+    builderZoom.value = String(nextZoom);
+    overlayZoom.value = String(nextZoom);
+    applyAnnotationCanvasZoom();
+    recenterCanvasViews(prevZoom, nextZoom);
     redrawBuilderCanvases();
-  });
-  overlayZoom.addEventListener('input', () => {
-    const prevZoom = projectWizardState.currentZoom || 1;
-    projectWizardState.currentZoom = parseFloat(overlayZoom.value || '1');
-    builderZoom.value = overlayZoom.value;
-    recenterCanvasViews(prevZoom, projectWizardState.currentZoom);
-    redrawBuilderCanvases();
-  });
+  };
+  builderZoom.addEventListener('input', () => handleZoomInput(builderZoom));
+  builderZoom.addEventListener('change', () => handleZoomInput(builderZoom));
+  overlayZoom.addEventListener('input', () => handleZoomInput(overlayZoom));
+  overlayZoom.addEventListener('change', () => handleZoomInput(overlayZoom));
   builderThickness.addEventListener('input', () => {
     projectWizardState.currentThickness = parseInt(builderThickness.value || '4', 10);
     overlayThickness.value = builderThickness.value;
@@ -7226,19 +7226,35 @@ function redrawBuilderCanvases(){
   ensureBaseImageLoaded();
   redrawSingleCanvas('weldCanvas');
   redrawSingleCanvas('fullWeldCanvas');
+  applyAnnotationCanvasZoom();
+}
+
+function applyAnnotationCanvasZoom(){
+  ['weldCanvas','fullWeldCanvas'].forEach(canvasId => {
+    const canvas = document.getElementById(canvasId);
+    if(!canvas) return;
+    const shellId = canvasId === 'fullWeldCanvas' ? 'fullWeldCanvasShell' : 'weldCanvasShell';
+    const shell = document.getElementById(shellId) || canvas.parentElement;
+    const shellWidth = Math.max(1, shell?.clientWidth || canvas.parentElement?.clientWidth || 360);
+    const fitWidth = Math.min(shellWidth, canvas.width || 1510);
+    const zoom = Math.max(1, Math.min(6, projectWizardState.currentZoom || 1));
+    const displayWidth = Math.round(fitWidth * zoom);
+    const aspect = (canvas.height || 958) / Math.max(1, canvas.width || 1510);
+    const displayHeight = Math.round(displayWidth * aspect);
+    canvas.style.setProperty('width', `${displayWidth}px`, 'important');
+    canvas.style.setProperty('height', `${displayHeight}px`, 'important');
+    canvas.style.setProperty('flex', `0 0 ${displayWidth}px`, 'important');
+    canvas.style.setProperty('min-width', '0', 'important');
+    canvas.style.setProperty('max-width', 'none', 'important');
+    canvas.style.setProperty('transform-origin', 'top left', 'important');
+    canvas.style.setProperty('transform', 'translateZ(0)', 'important');
+    canvas.dataset.zoom = String(zoom);
+  });
 }
 
 function redrawSingleCanvas(canvasId){
   const canvas = document.getElementById(canvasId);
   if(!canvas) return;
-  const shellId = canvasId === 'fullWeldCanvas' ? 'fullWeldCanvasShell' : 'weldCanvasShell';
-  const shell = document.getElementById(shellId) || canvas.parentElement;
-  const baseWidth = Math.max(1, shell?.clientWidth || canvas.parentElement?.clientWidth || canvas.width);
-  const displayWidth = Math.round(baseWidth * (projectWizardState.currentZoom || 1));
-  canvas.style.width = `${displayWidth}px`;
-  canvas.style.height = 'auto';
-  canvas.style.minWidth = '0';
-  canvas.style.maxWidth = 'none';
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#f6f6f6';
