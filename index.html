@@ -7231,7 +7231,14 @@ function redrawBuilderCanvases(){
 function redrawSingleCanvas(canvasId){
   const canvas = document.getElementById(canvasId);
   if(!canvas) return;
-  canvas.style.width = `${projectWizardState.currentZoom * 100}%`;
+  const shellId = canvasId === 'fullWeldCanvas' ? 'fullWeldCanvasShell' : 'weldCanvasShell';
+  const shell = document.getElementById(shellId) || canvas.parentElement;
+  const baseWidth = Math.max(1, shell?.clientWidth || canvas.parentElement?.clientWidth || canvas.width);
+  const displayWidth = Math.round(baseWidth * (projectWizardState.currentZoom || 1));
+  canvas.style.width = `${displayWidth}px`;
+  canvas.style.height = 'auto';
+  canvas.style.minWidth = '0';
+  canvas.style.maxWidth = 'none';
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#f6f6f6';
