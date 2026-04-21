@@ -5188,9 +5188,13 @@ function resetProjectWizardState(){
 }
 
 function getProjectDraftKey(){
-  const id = projectWizardState?.projectId || 'new';
-  const name = String(projectWizardState?.projectName || document.getElementById('newProjName')?.value || 'UNTITLED').trim().toUpperCase() || 'UNTITLED';
-  return `weldViewerProjectDraft:${id}:${name}`;
+  return getProjectDraftKeyFor(projectWizardState?.projectId || '', projectWizardState?.projectName || document.getElementById('newProjName')?.value || 'UNTITLED');
+}
+
+function getProjectDraftKeyFor(projectId='', projectName='UNTITLED'){
+  const id = projectId || 'new';
+  const name = String(projectName || 'UNTITLED').trim().toUpperCase() || 'UNTITLED';
+  return projectId ? `weldViewerProjectDraft:${id}` : `weldViewerProjectDraft:${id}:${name}`;
 }
 
 function openProjectDraftDb(){
@@ -5261,6 +5265,7 @@ async function saveProjectDraft(){
       projectName:draft.projectName || 'UNSAVED PROJECT',
       draftUpdatedAt:draft.draftUpdatedAt
     }));
+    if(draft.projectId) localStorage.setItem(`weldViewerProjectDraft:project:${draft.projectId}`, key);
   }catch(err){
     console.warn('Project draft save skipped:', err);
     updateCreateStatus('Draft could not be saved on this device. Browser storage may be blocked or full.');
@@ -5279,6 +5284,7 @@ async function clearProjectDraft(){
     await deleteProjectDraftRecord(getProjectDraftKey());
     const lastKey = localStorage.getItem('weldViewerProjectDraft:lastKey');
     if(lastKey) await deleteProjectDraftRecord(lastKey);
+    if(projectWizardState?.projectId) localStorage.removeItem(`weldViewerProjectDraft:project:${projectWizardState.projectId}`);
     localStorage.removeItem('weldViewerProjectDraft:lastKey');
     localStorage.removeItem('weldViewerProjectDraft:lastMeta');
   }catch(_err){}
@@ -5293,6 +5299,50 @@ async function getRecoverableProjectDraft(){
   }catch(_err){
     return null;
   }
+}
+
+async function getProjectSpecificDraft(projectId){
+  if(!projectId) return null;
+  try{
+    const key = localStorage.getItem(`weldViewerProjectDraft:project:${projectId}`) || getProjectDraftKeyFor(projectId);
+    const record = await getProjectDraftRecord(key);
+    return record?.draft || null;
+  }catch(_err){
+    return null;
+  }
+}
+
+function prepareDraftForEditMode(draft, mode, projectId, copyName=''){
+  const recovered = JSON.parse(JSON.stringify(draft || {}));
+  recovered.baseImageElement = null;
+  recovered.interaction = { mode:'idle', annotationIndex:-1, pointKey:null };
+  recovered.drawing = false;
+  recovered.draftTimer = null;
+  if(mode === 'copy'){
+    recovered.projectId = '';
+    recovered.projectName = copyName.trim().toUpperCase();
+  }else{
+    recovered.projectId = projectId;
+  }
+  return recovered;
+}
+
+async function promptProjectDraftRecovery(projectId, projectName, sourceLabel='open'){
+  const draft = await getProjectSpecificDraft(projectId);
+  if(!draft || !draft.draftUpdatedAt) return false;
+  const when = new Date(draft.draftUpdatedAt).toLocaleString();
+  if(!confirm(`A draft exists for "${projectName || draft.projectName || 'PROJECT'}" saved at ${when}.\n\nDo you want to recover this draft?`)) return false;
+  const action = String(prompt('Type OVERWRITE to continue editing this project, or COPY to create a new copied project from the draft:', 'OVERWRITE') || '').trim().toUpperCase();
+  if(action !== 'OVERWRITE' && action !== 'COPY') return false;
+  let copyName = '';
+  if(action === 'COPY'){
+    copyName = String(prompt('Enter name for copied draft project:', `${draft.projectName || projectName || 'PROJECT'}_DRAFT_COPY`) || '').trim();
+    if(!copyName) return false;
+  }
+  projectWizardState = prepareDraftForEditMode(draft, action === 'COPY' ? 'copy' : 'overwrite', projectId, copyName);
+  pendingProjectWizardState = projectWizardState;
+  await showPanel('create');
+  return true;
 }
 
 function restoreProjectDraft(draft){
@@ -8062,6 +8112,7 @@ async function editProject(projectId){
   try{
     const {data:proj,error:projErr}=await sb.from('projects').select('*').eq('id',projectId).single();
     if(projErr || !proj) throw new Error(projErr?.message || 'Project not found');
+    if(await promptProjectDraftRecovery(projectId, proj.name || 'PROJECT', 'edit')) return;
     const {data:csvList=[]}=await sb.storage.from('projects').list(`${projectId}/csv`,{limit:500});
     const {data:imageList=[]}=await sb.storage.from('projects').list(`${projectId}/images`,{limit:1000});
     resetProjectWizardState();
@@ -8833,6 +8884,10 @@ async function openViewer(projId){
   S.welds1=[]; S.welds2=[]; S.activeCell=null;
   const {data:proj}=await sb.from('projects').select('*').eq('id',projId).single();
   if(!proj){ loading(false); alert('Project not found.'); return; }
+  if(await promptProjectDraftRecovery(projId, proj.name || 'PROJECT', 'view')){
+    loading(false);
+    return;
+  }
   S.currentProjectName = String(proj.name || '').trim();
   try{
     S.currentProjectTemplateId = await getAssignedPptTemplateForProject(projId);
