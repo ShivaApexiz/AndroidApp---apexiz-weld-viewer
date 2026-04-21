@@ -5306,10 +5306,21 @@ async function getProjectSpecificDraft(projectId){
   try{
     const key = localStorage.getItem(`weldViewerProjectDraft:project:${projectId}`) || getProjectDraftKeyFor(projectId);
     const record = await getProjectDraftRecord(key);
-    return record?.draft || null;
+    return record?.draft ? {key, draft:record.draft} : null;
   }catch(_err){
     return null;
   }
+}
+
+async function clearProjectDraftByKey(key, projectId=''){
+  try{
+    if(key) await deleteProjectDraftRecord(key);
+    if(projectId) localStorage.removeItem(`weldViewerProjectDraft:project:${projectId}`);
+    if(localStorage.getItem('weldViewerProjectDraft:lastKey') === key){
+      localStorage.removeItem('weldViewerProjectDraft:lastKey');
+      localStorage.removeItem('weldViewerProjectDraft:lastMeta');
+    }
+  }catch(_err){}
 }
 
 function prepareDraftForEditMode(draft, mode, projectId, copyName=''){
@@ -5327,19 +5338,65 @@ function prepareDraftForEditMode(draft, mode, projectId, copyName=''){
   return recovered;
 }
 
+function showProjectDraftRecoveryDialog({projectName, draftName, when}){
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'builder-overlay';
+    overlay.style.display = 'flex';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.zIndex = '3600';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.background = 'rgba(0,0,0,.45)';
+    overlay.innerHTML = `
+      <div class="builder-overlay-card source-picker-card" style="background:#fff;border:2px solid #ff5500;border-radius:18px;padding:18px;max-width:460px;width:calc(100vw - 32px);box-shadow:0 22px 52px rgba(0,0,0,.22)">
+        <div class="builder-overlay-head">
+          <strong>Recover Project Draft</strong>
+        </div>
+        <div class="builder-note" style="margin:10px 0 14px;line-height:1.55">
+          A draft exists for <strong>${projectName || draftName || 'PROJECT'}</strong><br>
+          Saved: <strong>${when}</strong><br><br>
+          Choose how to use this draft.
+        </div>
+        <div class="builder-actions" style="justify-content:flex-start">
+          <button class="action-btn" type="button" data-draft-action="overwrite">Overwrite</button>
+          <button class="action-btn sec" type="button" data-draft-action="copy">Create Copy</button>
+          <button class="action-btn sec" type="button" data-draft-action="cancel">Cancel</button>
+        </div>
+      </div>
+    `;
+    overlay.querySelectorAll('[data-draft-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.getAttribute('data-draft-action');
+        overlay.remove();
+        resolve(action);
+      });
+    });
+    document.body.appendChild(overlay);
+  });
+}
+
 async function promptProjectDraftRecovery(projectId, projectName, sourceLabel='open'){
-  const draft = await getProjectSpecificDraft(projectId);
+  const draftRecord = await getProjectSpecificDraft(projectId);
+  const draft = draftRecord?.draft;
   if(!draft || !draft.draftUpdatedAt) return false;
   const when = new Date(draft.draftUpdatedAt).toLocaleString();
-  if(!confirm(`A draft exists for "${projectName || draft.projectName || 'PROJECT'}" saved at ${when}.\n\nDo you want to recover this draft?`)) return false;
-  const action = String(prompt('Type OVERWRITE to continue editing this project, or COPY to create a new copied project from the draft:', 'OVERWRITE') || '').trim().toUpperCase();
-  if(action !== 'OVERWRITE' && action !== 'COPY') return false;
-  let copyName = '';
-  if(action === 'COPY'){
-    copyName = String(prompt('Enter name for copied draft project:', `${draft.projectName || projectName || 'PROJECT'}_DRAFT_COPY`) || '').trim();
-    if(!copyName) return false;
+  const action = await showProjectDraftRecoveryDialog({projectName, draftName:draft.projectName, when});
+  if(action === 'cancel' || !action){
+    await clearProjectDraftByKey(draftRecord.key, projectId);
+    return false;
   }
-  projectWizardState = prepareDraftForEditMode(draft, action === 'COPY' ? 'copy' : 'overwrite', projectId, copyName);
+  let copyName = '';
+  if(action === 'copy'){
+    copyName = String(prompt('Enter name for copied draft project:', `${draft.projectName || projectName || 'PROJECT'}_DRAFT_COPY`) || '').trim();
+    if(!copyName){
+      await clearProjectDraftByKey(draftRecord.key, projectId);
+      return false;
+    }
+  }
+  await clearProjectDraftByKey(draftRecord.key, projectId);
+  projectWizardState = prepareDraftForEditMode(draft, action === 'copy' ? 'copy' : 'overwrite', projectId, copyName);
   pendingProjectWizardState = projectWizardState;
   await showPanel('create');
   return true;
