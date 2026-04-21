@@ -179,6 +179,15 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .mini-btn.warn{background:#F8D7DA;color:var(--red);}
 .mini-btn.active-tool,.mini-btn.selected,.mini-btn[aria-pressed="true"]{background:var(--orange)!important;color:var(--white)!important;box-shadow:0 0 0 2px rgba(255,85,0,0.2);}
 .builder-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.source-upload-stage{position:relative;padding-right:260px;min-height:520px;}
+.source-download-actions{position:absolute;top:18px;right:22px;display:flex;flex-direction:column;gap:26px;align-items:flex-end;z-index:2;}
+.source-download-actions .action-btn{min-width:210px;text-align:center;justify-content:center;}
+.source-upload-stage .source-guide-card{min-height:320px;}
+@media(max-width:900px){
+  .source-upload-stage{padding-right:0;min-height:0;}
+  .source-download-actions{position:static;margin:0 0 14px 0;align-items:stretch;gap:10px;}
+  .source-download-actions .action-btn{width:100%;min-width:0;}
+}
 .field-inline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .annotation-shell{display:flex;flex-direction:column;gap:10px;}
 .annotation-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
@@ -5451,16 +5460,20 @@ async function renderCreateProject(el){
         <button class="action-btn ${projectWizardState.createEntryMode === 'source' ? '' : 'sec'}" type="button" onclick="switchCreateEntryMode('source')">Source Folder Upload</button>
       </div>
 
-      <div id="sourceUploadStage" class="wizard-stage" style="display:none">
+      <div id="sourceUploadStage" class="wizard-stage source-upload-stage" style="display:none">
+        <div class="source-download-actions">
+          <button class="action-btn" type="button" onclick="downloadSourceFolderGuide()">Download Guide</button>
+          <button class="action-btn" type="button" onclick="downloadSampleSourceFolder()">Download Sample Source</button>
+        </div>
         <div class="setup-summary-card source-guide-card">
           <div class="builder-subtitle">Source Folder Structure</div>
           <div class="builder-note">Use this option for the original website-style upload flow.</div>
           <div class="source-guide-grid">
-            <div><strong>Folder Layout</strong><br>Source/<br>Weld_Data/<br>Weld_Images/Robot1<br>Weld_Images/Robot2<br>Part_Images/</div>
-            <div><strong>Part CSV</strong><br><code>part_data.csv</code><br>Part rows define parts, robots, and axis names.</div>
-            <div><strong>Robot CSV</strong><br><code>&lt;part&gt;_robot1.csv</code><br><code>&lt;part&gt;_robot2.csv</code></div>
+            <div><strong>Folder Layout</strong><br>Source/<br>Weld_Data/<br>Weld_Images/Robot1/<br>Weld_Images/Robot2/<br>Weld_Images/Robot3/<br>Part_Images/</div>
+            <div><strong>Part CSV</strong><br><code>part_data.csv</code><br>Use <code>PART_NO, PART_NAME, PART_IMAGE, ROBOTS, ROBOT_POSITIONER, WORKPIECE_POSITIONER, ROBOT_AXIS_NAMES, WORKPIECE_AXIS_NAMES, ROBOT_NAMES</code>.</div>
+            <div><strong>Robot CSV</strong><br><code>&lt;PART_NAME&gt;_robot1.csv</code><br><code>&lt;PART_NAME&gt;_robot2.csv</code><br>Repeat one file for each robot.</div>
             <div><strong>Part Image</strong><br><code>&lt;PART_NAME&gt;_part.png</code></div>
-            <div><strong>Weld Image</strong><br><code>&lt;part&gt;_robot1_&lt;weldId&gt;.png</code></div>
+            <div><strong>Weld Image</strong><br><code>&lt;PART_NAME&gt;_robot1_&lt;WELD_ID&gt;.png</code><br>Store under the matching <code>Weld_Images/RobotN/</code> folder.</div>
             <div><strong>SYNC Row</strong><br><code>WeldNo=SYNC</code>, <code>ImageId=TSync</code></div>
           </div>
         </div>
@@ -5474,8 +5487,6 @@ async function renderCreateProject(el){
         <div id="sourceCreateStatus" class="builder-note" style="margin-top:8px"></div>
         <div id="sourceStructureInfo" class="info-msg" style="display:none;margin-top:10px"></div>
         <div class="builder-actions">
-          <button class="action-btn sec" type="button" onclick="downloadSourceFolderGuide()">Download Guide</button>
-          <button class="action-btn sec" type="button" onclick="downloadSampleSourceFolder()">Download Sample Source</button>
           <button class="action-btn" id="sourceCreateProjBtn" type="button" onclick="uploadSourceProject()" disabled>Upload Source Project</button>
         </div>
       </div>
@@ -6293,17 +6304,22 @@ function downloadSourceFolderGuide(){
   const guide = [
     'APEXIZ WELD VIEWER SOURCE FOLDER GUIDE',
     '',
+    'Use one top-level Source folder. Upload that folder directly from Source Folder Upload.',
+    '',
     'Folder structure:',
     'Source/',
     '  Weld_Data/',
     '    part_data.csv',
-    '    <part>_robot1.csv',
-    '    <part>_robot2.csv',
+    '    <PART_NAME>_robot1.csv',
+    '    <PART_NAME>_robot2.csv',
+    '    <PART_NAME>_robot3.csv',
     '  Weld_Images/',
     '    Robot1/',
-    '      <part>_robot1_<weldId>.png',
+    '      <PART_NAME>_robot1_<WELD_ID>.png',
     '    Robot2/',
-    '      <part>_robot2_<weldId>.png',
+    '      <PART_NAME>_robot2_<WELD_ID>.png',
+    '    Robot3/',
+    '      <PART_NAME>_robot3_<WELD_ID>.png',
     '  Part_Images/',
     '    <PART_NAME>_part.png',
     '',
@@ -6313,14 +6329,29 @@ function downloadSourceFolderGuide(){
     '- matching weld images and part images',
     '',
     'part_data.csv columns:',
-    'PROJECT_NAME,PART_NAME,ROBOT_COUNT,ROBOT_POSITIONER,WORKPIECE_POSITIONER,ROBOT_AXIS_NAMES,WORKPIECE_AXIS_NAMES,PART_IMAGE,ROBOT_NAMES',
+    'PART_NO,PART_NAME,PART_IMAGE,ROBOTS,ROBOT_POSITIONER,WORKPIECE_POSITIONER,ROBOT_AXIS_NAMES,WORKPIECE_AXIS_NAMES,ROBOT_NAMES',
+    '',
+    'part_data.csv example:',
+    'PART_A,PART_A,PART_A_part.png,Robot 1|Robot 2,3-Axis,3-Axis,Axis 1|Axis 2|Axis 3,Axis 1|Axis 2|Axis 3,Robot 1|Robot 2',
+    '',
+    'Notes:',
+    '- ROBOTS is a pipe-separated robot list.',
+    '- ROBOT_NAMES is optional but recommended when custom robot names are needed.',
+    '- Use blank values for no positioner.',
+    '- Use 1-Axis, 2-Axis, or 3-Axis for positioners.',
     '',
     'Robot CSV columns:',
     'WeldNo,JobName,ImageId,Notes,PartNo,RobotPositionerValues,WorkpiecePositionerValues',
     '',
+    'Robot CSV image rule:',
+    '- ImageId should match the weld image filename without the extension.',
+    '- Example ImageId: PART_A_robot1_R101',
+    '- Matching file: Weld_Images/Robot1/PART_A_robot1_R101.png',
+    '',
     'SYNC row rule:',
     '- WeldNo = SYNC',
     '- ImageId = TSync',
+    '- SYNC rows do not require image, job, notes, or positioner values.',
     '',
     'Axis values format examples:',
     '- Robot Positioner: Axis 1: 1000|Axis 2: 500|Axis 3: 100',
@@ -6329,7 +6360,12 @@ function downloadSourceFolderGuide(){
     'Naming examples:',
     '- CHASSIS_part.png',
     '- Weld_Images/Robot1/CHASSIS_robot1_R101.png',
-    '- Weld_Images/Robot2/CHASSIS_robot2_R201.png'
+    '- Weld_Images/Robot2/CHASSIS_robot2_R201.png',
+    '',
+    'Tips:',
+    '- Keep each robot weld image inside its RobotN folder for easier maintenance.',
+    '- Repeat Robot4, Robot5, and so on if the project has more robots.',
+    '- Do not include logo files in the source folder; the PPT logo is handled separately.'
   ].join('\r\n');
   downloadBlobFile(new Blob([guide], {type:'text/plain;charset=utf-8'}), 'APEXIZ_SOURCE_FOLDER_GUIDE.txt');
 }
@@ -6343,18 +6379,18 @@ async function downloadSampleSourceFolder(){
     root.folder('Weld_Images');
     root.folder('Part_Images');
     root.file('Weld_Data/part_data.csv', [
-      'PROJECT_NAME,PART_NAME,ROBOT_COUNT,ROBOT_POSITIONER,WORKPIECE_POSITIONER,ROBOT_AXIS_NAMES,WORKPIECE_AXIS_NAMES,PART_IMAGE,ROBOT_NAMES',
-      'SAMPLE_PROJECT,PART_A,2,Y,Y,Axis 1|Axis 2|Axis 3,Axis 1|Axis 2|Axis 3,PART_A_part.png,Robot 1|Robot 2'
+      'PART_NO,PART_NAME,PART_IMAGE,ROBOTS,ROBOT_POSITIONER,WORKPIECE_POSITIONER,ROBOT_AXIS_NAMES,WORKPIECE_AXIS_NAMES,ROBOT_NAMES',
+      'PART_A,PART_A,PART_A_part.png,Robot 1|Robot 2,3-Axis,3-Axis,Axis 1|Axis 2|Axis 3,Axis 1|Axis 2|Axis 3,Robot 1|Robot 2'
     ].join('\r\n'));
     root.file('Weld_Data/PART_A_robot1.csv', [
       'WeldNo,JobName,ImageId,Notes,PartNo,RobotPositionerValues,WorkpiecePositionerValues',
-      'R101,JOB001,PART_A_robot1_R101.png,Sample weld note,PART_A,Axis 1: 1000|Axis 2: 500|Axis 3: 100,Axis 1: 10|Axis 2: 20|Axis 3: 30',
+      'R101,JOB001,PART_A_robot1_R101,Sample weld note,PART_A,Axis 1: 1000|Axis 2: 500|Axis 3: 100,Axis 1: 10|Axis 2: 20|Axis 3: 30',
       'SYNC,,TSync,,PART_A,,',
-      'R102,JOB002,PART_A_robot1_R102.png,Second weld note,PART_A,Axis 1: 1200|Axis 2: 520|Axis 3: 110,Axis 1: 15|Axis 2: 25|Axis 3: 35'
+      'R102,JOB002,PART_A_robot1_R102,Second weld note,PART_A,Axis 1: 1200|Axis 2: 520|Axis 3: 110,Axis 1: 15|Axis 2: 25|Axis 3: 35'
     ].join('\r\n'));
     root.file('Weld_Data/PART_A_robot2.csv', [
       'WeldNo,JobName,ImageId,Notes,PartNo,RobotPositionerValues,WorkpiecePositionerValues',
-      'R201,JOB003,PART_A_robot2_R201.png,Robot 2 weld note,PART_A,Axis 1: 900|Axis 2: 450|Axis 3: 90,Axis 1: 12|Axis 2: 18|Axis 3: 28'
+      'R201,JOB003,PART_A_robot2_R201,Robot 2 weld note,PART_A,Axis 1: 900|Axis 2: 450|Axis 3: 90,Axis 1: 12|Axis 2: 18|Axis 3: 28'
     ].join('\r\n'));
     const pngData = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9oN8pVgAAAAASUVORK5CYII=';
     const sampleBlob = await fetch(`data:image/png;base64,${pngData}`).then(r => r.blob());
