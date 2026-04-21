@@ -740,6 +740,8 @@ function applyRuntimeChrome(){
     updateTag.innerText = getWebsiteUpdateTag();
     updateTag.style.display = nativeRuntime ? 'none' : 'inline-flex';
   }
+  const pptNav = document.getElementById('nav-pptTemplate');
+  if(pptNav) pptNav.style.display = nativeRuntime ? 'none' : '';
 }
 function loading(on,txt='Loading...'){ document.getElementById('loadingText').innerText=txt; document.getElementById('loadingOverlay').classList.toggle('show',on); }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
@@ -1117,6 +1119,7 @@ function setNav(panel){
 }
 
 async function showPanel(panel){
+  if(panel === 'pptTemplate' && isNativeAppRuntime()) panel = 'projects';
   setNav(panel);
   const main=document.getElementById('dashMain');
   main.innerHTML='<div class="empty-state"><span class="empty-state-icon"></span></div>';
@@ -1239,10 +1242,13 @@ async function renderMyProjects(el){
   const engineerFilterOptions = [`<option value="all" ${myFilters.engineer==='all'?'selected':''}>Engineer: All</option>`]
     .concat(engineerOptions.map(name => `<option value="${name.replace(/"/g,'&quot;')}" ${myFilters.engineer===name?'selected':''}>${name}</option>`))
     .join('');
+  const pptBuilderAction = isNativeAppRuntime()
+    ? ''
+    : `<button class="action-btn" onclick="showPanel('pptTemplate')" style="background:var(--black)">PPT Template Builder</button>`;
   el.innerHTML=`
     <div class="flex-row"><div class="panel-title">${role==='company_admin'?'Company Projects':'My Projects'}</div>
     <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="action-btn" onclick="showPanel('pptTemplate')" style="background:var(--black)">PPT Template Builder</button>
+      ${pptBuilderAction}
       ${(role==='engineer'||role==='company_admin'||role==='admin')?`<button class="action-btn" onclick="showPanel('create')">+ New Project</button>`:''}
     </div></div>
     ${projects.length===0?'<div class="empty-state"><div class="empty-state-text">No projects yet.</div></div>':`
@@ -3649,7 +3655,7 @@ function projRow(p){
       <button class="tbl-btn manage" onclick="downloadProjectSource('${p.id}','${safeName}')">Download</button>
       <button class="tbl-btn copy" onclick="showShare('${p.id}')">Share</button>
       <button class="tbl-btn manage" onclick="showAccess('${p.id}','${p.name}')">Access</button>
-      <button class="tbl-btn manage" onclick="assignProjectPptTemplate('${p.id}','${safeName}','${templateId}')">PPT</button>
+      ${isNativeAppRuntime() ? '' : `<button class="tbl-btn manage" onclick="assignProjectPptTemplate('${p.id}','${safeName}','${templateId}')">PPT</button>`}
       <button class="tbl-btn manage" onclick="openProjectBackupsModal('${p.id}','${safeName}')">Backups</button>
       <button class="tbl-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
     </td></tr>`;
@@ -6292,7 +6298,16 @@ async function downloadProjectSource(projectId, projectName='PROJECT'){
   }
 }
 
-function downloadBlobFile(blob, filename){
+async function downloadBlobFile(blob, filename){
+  if(isNativeAppRuntime()){
+    try{
+      const file = new File([blob], filename, {type:blob.type || 'application/octet-stream'});
+      if(navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
+        await navigator.share({files:[file], title:filename});
+        return;
+      }
+    }catch(_err){}
+  }
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   link.href = url;
@@ -6300,6 +6315,7 @@ function downloadBlobFile(blob, filename){
   document.body.appendChild(link);
   link.click();
   link.remove();
+  if(isNativeAppRuntime()) setTimeout(() => window.open(url, '_blank'), 80);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
@@ -9269,6 +9285,7 @@ function getActiveCustomPptTemplate(id){
   return id && id !== 'apexiz' ? getResolvedPptTemplate(id) : null;
 }
 function choosePptTemplateForExport(defaultTemplateId='apexiz', projectId=''){
+  if(isNativeAppRuntime()) return Promise.resolve(defaultTemplateId || 'apexiz');
   return new Promise(resolve => {
     const records = getPptTemplateRecords();
     const defaultId = defaultTemplateId || 'apexiz';
@@ -9306,6 +9323,22 @@ function choosePptTemplateForExport(defaultTemplateId='apexiz', projectId=''){
       resolve(selectedId);
     };
   });
+}
+async function savePptxReport(pptx, fileName){
+  if(isNativeAppRuntime()){
+    let blob;
+    try{
+      blob = await pptx.write({outputType:'blob'});
+    }catch(_err){
+      blob = await pptx.write('blob');
+    }
+    if(!(blob instanceof Blob)){
+      blob = new Blob([blob], {type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+    }
+    await downloadBlobFile(blob, fileName);
+    return;
+  }
+  await pptx.writeFile({fileName});
 }
 function applyPptTemplateElement(sl, element, context, template){
   if(!element || element.previewOnly) return;
@@ -9474,7 +9507,7 @@ async function exportToPPTWithCustomTemplate(template){
     }
   }
   {const sl=pptx.addSlide(); renderPptTemplateSlide(sl,'end',template,{...baseContext,slideNumber:String(slideNo++)});}
-  await pptx.writeFile({fileName:`Apexiz_${projName}_${part}_Weld_Report.pptx`});
+  await savePptxReport(pptx, `Apexiz_${projName}_${part}_Weld_Report.pptx`);
   btn.disabled=false;btn.innerText='Download PPT Report';
 }
 
@@ -9604,7 +9637,7 @@ async function exportToPPT(templateChoiceId){
    sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:5.88,w:10,h:0.37,fill:{color:C.orange},line:{color:C.orange}});
    sl.addText('(c) 2026 Apexiz    CONFIDENTIAL INFORMATION    ALL RIGHTS RESERVED',{x:0,y:5.88,w:10,h:0.37,fontSize:8,color:C.white,align:'center',valign:'middle',fontFace:'Segoe UI'});}
 
-  await pptx.writeFile({fileName:`Apexiz_${projName}_${part}_Weld_Report.pptx`});
+  await savePptxReport(pptx, `Apexiz_${projName}_${part}_Weld_Report.pptx`);
   btn.disabled=false;btn.innerText='Download PPT Report';
 }
 
