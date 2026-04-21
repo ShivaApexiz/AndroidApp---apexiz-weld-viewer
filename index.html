@@ -5211,7 +5211,7 @@ function renderCreateProject(el){
         <label class="field-label" for="partSelect">Select Part</label>
         <div style="display:flex;gap:8px;align-items:center">
           <select id="partSelect" class="field-select"></select>
-          <button class="tbl-btn view" type="button" onclick="addNewPartToProject()">Add Part</button>
+          <button class="tbl-btn view" type="button" onclick="editProjectCellConfiguration()">Edit Cell Configuration</button>
         </div>
         <label class="field-label" for="partNumber">Part Number</label>
         <input id="partNumber" class="field-input" type="text" placeholder="e.g. PART-1001" readonly>
@@ -6009,6 +6009,22 @@ function addNewPartToProject(){
   updateSetupSummary();
   updateWizardStepUI();
   updateCreateStatus(`Added ${projectWizardState.partNames[projectWizardState.selectedPartIndex]} to this project.`);
+}
+
+function editProjectCellConfiguration(){
+  projectWizardState.setupStep = 'setup';
+  ensurePartNames();
+  ensureRobotNames();
+  ensureAxisNames('robot');
+  ensureAxisNames('workpiece');
+  syncSetupFields();
+  renderPartNameFields();
+  renderRobotNameFields();
+  renderPartSelector();
+  syncSelectedPartToForm();
+  updateSetupSummary();
+  updateWizardStepUI();
+  updateCreateStatus('Edit cell configuration, then continue to the weld page to keep editing weld details.');
 }
 
 function renderPartSelector(){
