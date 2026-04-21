@@ -5295,7 +5295,7 @@ async function getRecoverableProjectDraft(){
     const lastKey = localStorage.getItem('weldViewerProjectDraft:lastKey');
     if(!lastKey) return null;
     const record = await getProjectDraftRecord(lastKey);
-    return record?.draft || null;
+    return record?.draft ? {key:lastKey, draft:record.draft} : null;
   }catch(_err){
     return null;
   }
@@ -5417,14 +5417,17 @@ function restoreProjectDraft(draft){
 
 async function promptRecoverProjectDraft(){
   if(pendingProjectWizardState) return false;
-  const draft = await getRecoverableProjectDraft();
+  const draftRecord = await getRecoverableProjectDraft();
+  const draft = draftRecord?.draft;
   if(!draft || !draft.draftUpdatedAt) return false;
   const label = draft.projectName || 'UNSAVED PROJECT';
   const when = new Date(draft.draftUpdatedAt).toLocaleString();
   if(confirm(`Recover draft "${label}" saved at ${when}?`)){
+    await clearProjectDraftByKey(draftRecord.key, draft.projectId || '');
     restoreProjectDraft(draft);
     return true;
   }
+  await clearProjectDraftByKey(draftRecord.key, draft.projectId || '');
   return false;
 }
 
