@@ -3640,6 +3640,7 @@ function projRow(p){
       <button class="tbl-btn copy" onclick="showShare('${p.id}')">Share</button>
       <button class="tbl-btn manage" onclick="showAccess('${p.id}','${p.name}')">Access</button>
       <button class="tbl-btn manage" onclick="assignProjectPptTemplate('${p.id}','${safeName}','${templateId}')">PPT</button>
+      <button class="tbl-btn manage" onclick="openProjectBackupsModal('${p.id}','${safeName}')">Backups</button>
       <button class="tbl-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
     </td></tr>`;
 }
@@ -3749,6 +3750,7 @@ async function renderAllProjects(el){
         <button class="tbl-btn copy" onclick="copyExistingProject('${p.id}')">Copy</button>
         <button class="tbl-btn manage" onclick="downloadProjectSource('${p.id}','${String(p.name || 'PROJECT').replace(/'/g,"\\'")}')">Download</button>
         <button class="tbl-btn manage" onclick="showAccess('${p.id}','${p.name}')">Access</button>
+        <button class="tbl-btn manage" onclick="openProjectBackupsModal('${p.id}','${String(p.name || 'PROJECT').replace(/'/g,"\\'")}')">Backups</button>
         <button class="tbl-btn delete" onclick="deleteProject('${p.id}')">Delete</button>
       </td></tr>`).join('')}</tbody></table>`;
 }
@@ -4806,6 +4808,68 @@ function getCurrentRobotRecords(){
   return projectWizardState.recordsByRobot[projectWizardState.currentRobot];
 }
 
+function getWeldHistorySnapshot(){
+  return {
+    recordsByRobot: JSON.parse(JSON.stringify(projectWizardState.recordsByRobot || {})),
+    selectedRecordIndex: JSON.parse(JSON.stringify(projectWizardState.selectedRecordIndex || {})),
+    insertAfterIndexByRobot: JSON.parse(JSON.stringify(projectWizardState.insertAfterIndexByRobot || {})),
+    currentRobot: projectWizardState.currentRobot,
+    selectedPartIndex: projectWizardState.selectedPartIndex
+  };
+}
+
+function restoreWeldHistorySnapshot(snapshot){
+  if(!snapshot) return;
+  projectWizardState.recordsByRobot = JSON.parse(JSON.stringify(snapshot.recordsByRobot || {}));
+  projectWizardState.selectedRecordIndex = JSON.parse(JSON.stringify(snapshot.selectedRecordIndex || {}));
+  projectWizardState.insertAfterIndexByRobot = JSON.parse(JSON.stringify(snapshot.insertAfterIndexByRobot || {}));
+  projectWizardState.currentRobot = snapshot.currentRobot || projectWizardState.currentRobot || 'Robot 1';
+  projectWizardState.selectedPartIndex = typeof snapshot.selectedPartIndex === 'number' ? snapshot.selectedPartIndex : projectWizardState.selectedPartIndex;
+  renderRobotSelectorOptions();
+  renderPartSelector();
+  const partName = projectWizardState.partNames[projectWizardState.selectedPartIndex] || projectWizardState.partNumber || '';
+  projectWizardState.partNumber = partName;
+  const partEl = document.getElementById('partNumber');
+  if(partEl) partEl.value = partName;
+  projectWizardState.partImageDataUrl = projectWizardState.partImageByPart?.[partName] || '';
+  renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
+  refreshWeldList();
+  loadSelectedWeldRecord();
+  scheduleProjectDraftSave();
+}
+
+function resetWeldHistory(){
+  projectWizardState.weldHistory = [getWeldHistorySnapshot()];
+  projectWizardState.weldHistoryIndex = 0;
+}
+
+function recordWeldHistory(){
+  if(!projectWizardState) return;
+  const snapshot = getWeldHistorySnapshot();
+  const history = Array.isArray(projectWizardState.weldHistory) ? projectWizardState.weldHistory : [];
+  projectWizardState.weldHistory = history.slice(0, (projectWizardState.weldHistoryIndex ?? history.length - 1) + 1);
+  projectWizardState.weldHistory.push(snapshot);
+  if(projectWizardState.weldHistory.length > 40) projectWizardState.weldHistory.shift();
+  projectWizardState.weldHistoryIndex = projectWizardState.weldHistory.length - 1;
+  scheduleProjectDraftSave();
+}
+
+function undoWeldChange(){
+  const history = projectWizardState?.weldHistory || [];
+  if(!history.length || projectWizardState.weldHistoryIndex <= 0) return updateCreateStatus('No weld change to undo.');
+  projectWizardState.weldHistoryIndex -= 1;
+  restoreWeldHistorySnapshot(history[projectWizardState.weldHistoryIndex]);
+  updateCreateStatus('Weld change undone.');
+}
+
+function redoWeldChange(){
+  const history = projectWizardState?.weldHistory || [];
+  if(!history.length || projectWizardState.weldHistoryIndex >= history.length - 1) return updateCreateStatus('No weld change to redo.');
+  projectWizardState.weldHistoryIndex += 1;
+  restoreWeldHistorySnapshot(history[projectWizardState.weldHistoryIndex]);
+  updateCreateStatus('Weld change redone.');
+}
+
 function saveCurrentWeld(){
   const partNo = (document.getElementById('partNumber').value || '').trim().toUpperCase();
   const jobNo = (document.getElementById('jobNumber').value || '').trim();
@@ -4969,6 +5033,8 @@ async function uploadProjectPayload(payload){
   loading(true, projectWizardState.projectId ? 'Updating project...' : 'Creating project...');
   let projId = projectWizardState.projectId;
   if(projId){
+    loading(true, 'Creating backup version...');
+    await backupCurrentProjectVersion(projId, payload.projectName);
     const {error:updateErr}=await sb.from('projects').update({name:payload.projectName,parts:payload.parts}).eq('id',projId);
     if(updateErr) throw updateErr;
     const {data:csvExisting=[]}=await sb.storage.from('projects').list(`${projId}/csv`,{limit:500});
@@ -5045,6 +5111,7 @@ async function createProject(){
       return;
     }
     await uploadProjectPayload(payload);
+    clearProjectDraft();
     updateCreateStatus(`Project ${payload.projectName} saved. CSV ${payload.csvEntries.length}, images ${payload.imageEntries.length}.`);
     alert(`Project "${payload.projectName}" saved successfully.`);
     showPanel('projects');
@@ -5113,11 +5180,97 @@ function resetProjectWizardState(){
     interaction: { mode: 'idle', annotationIndex: -1, pointKey: null },
     baseImageElement: null,
     annotationHistory: [],
-    annotationHistoryIndex: -1
+    annotationHistoryIndex: -1,
+    weldHistory: [],
+    weldHistoryIndex: -1,
+    draftUpdatedAt: ''
   };
 }
 
+function getProjectDraftKey(){
+  const id = projectWizardState?.projectId || 'new';
+  const name = String(projectWizardState?.projectName || document.getElementById('newProjName')?.value || 'UNTITLED').trim().toUpperCase() || 'UNTITLED';
+  return `weldViewerProjectDraft:${id}:${name}`;
+}
+
+function sanitizeProjectDraftState(){
+  if(!projectWizardState) return null;
+  const clone = JSON.parse(JSON.stringify(projectWizardState, (key, value) => {
+    if(['baseImageElement','interaction','drawing','startX','startY','draggingWeldIndex','draftTimer'].includes(key)) return undefined;
+    return value;
+  }));
+  clone.draftUpdatedAt = new Date().toISOString();
+  clone.baseImageElement = null;
+  clone.interaction = { mode:'idle', annotationIndex:-1, pointKey:null };
+  clone.drawing = false;
+  return clone;
+}
+
+function saveProjectDraft(){
+  try{
+    const draft = sanitizeProjectDraftState();
+    if(!draft) return;
+    localStorage.setItem(getProjectDraftKey(), JSON.stringify(draft));
+    localStorage.setItem('weldViewerProjectDraft:lastKey', getProjectDraftKey());
+  }catch(err){
+    console.warn('Project draft save skipped:', err);
+  }
+}
+
+function scheduleProjectDraftSave(){
+  clearTimeout(projectWizardState?.draftTimer);
+  if(projectWizardState){
+    projectWizardState.draftTimer = setTimeout(saveProjectDraft, 300);
+  }
+}
+
+function clearProjectDraft(){
+  try{
+    localStorage.removeItem(getProjectDraftKey());
+    const lastKey = localStorage.getItem('weldViewerProjectDraft:lastKey');
+    if(lastKey) localStorage.removeItem(lastKey);
+    localStorage.removeItem('weldViewerProjectDraft:lastKey');
+  }catch(_err){}
+}
+
+function getRecoverableProjectDraft(){
+  try{
+    const lastKey = localStorage.getItem('weldViewerProjectDraft:lastKey');
+    const raw = lastKey ? localStorage.getItem(lastKey) : '';
+    return raw ? JSON.parse(raw) : null;
+  }catch(_err){
+    return null;
+  }
+}
+
+function restoreProjectDraft(draft){
+  if(!draft) return;
+  projectWizardState = {
+    ...draft,
+    baseImageElement: null,
+    interaction: { mode:'idle', annotationIndex:-1, pointKey:null },
+    drawing: false,
+    draftTimer: null
+  };
+  pendingProjectWizardState = projectWizardState;
+  showPanel('create');
+}
+
+function promptRecoverProjectDraft(){
+  if(pendingProjectWizardState) return false;
+  const draft = getRecoverableProjectDraft();
+  if(!draft || !draft.draftUpdatedAt) return false;
+  const label = draft.projectName || 'UNSAVED PROJECT';
+  const when = new Date(draft.draftUpdatedAt).toLocaleString();
+  if(confirm(`Recover draft "${label}" saved at ${when}?`)){
+    restoreProjectDraft(draft);
+    return true;
+  }
+  return false;
+}
+
 function renderCreateProject(el){
+  if(!pendingProjectWizardState && promptRecoverProjectDraft()) return;
   if(pendingProjectWizardState){
     projectWizardState = pendingProjectWizardState;
     pendingProjectWizardState = null;
@@ -5313,6 +5466,8 @@ function renderCreateProject(el){
         <button class="action-btn sec" data-weld-action="prev" type="button" onclick="highlightWeldAction('prev');prevSavedWeld()">Prev Saved</button>
         <button class="action-btn sec" data-weld-action="nextSaved" type="button" onclick="highlightWeldAction('nextSaved');nextSavedWeld()">Next Saved</button>
         <button class="action-btn sec" data-weld-action="delete" type="button" onclick="highlightWeldAction('delete');deleteCurrentWeld()">Delete Weld</button>
+        <button class="action-btn sec" data-weld-action="undoWeld" type="button" onclick="highlightWeldAction('undoWeld');undoWeldChange()">Undo Weld Change</button>
+        <button class="action-btn sec" data-weld-action="redoWeld" type="button" onclick="highlightWeldAction('redoWeld');redoWeldChange()">Redo Weld Change</button>
       </div>
 
       <div id="weldList" class="queue-list"></div>
@@ -5321,6 +5476,7 @@ function renderCreateProject(el){
       <div class="builder-actions">
         <button class="action-btn" id="createProjBtn" type="button" onclick="createProject()">${projectWizardState.projectId ? 'Save Project Changes' : 'Create and Upload Project'}</button>
         <button class="action-btn sec" type="button" onclick="showPanel('projects')">Back To Projects</button>
+        <button class="action-btn sec" type="button" onclick="saveProjectDraft();updateCreateStatus('Draft saved on this device.')">Save Draft</button>
       </div>
       </div>
     </div>
@@ -5629,8 +5785,17 @@ function initProjectBuilderBindings(){
   if(sourceProjName) sourceProjName.value = projectWizardState.projectName || '';
   if(sourceFolderInput) sourceFolderInput.addEventListener('change', ev => processSourceSelectedFiles(ev.target.files, 'Source folder ready'));
   resetAnnotationHistory();
+  resetWeldHistory();
   redrawBuilderCanvases();
   refreshAnnotationList();
+  const builderRoot = document.getElementById('mobileProjectBuilder');
+  if(builderRoot){
+    builderRoot.addEventListener('input', scheduleProjectDraftSave);
+    builderRoot.addEventListener('change', scheduleProjectDraftSave);
+  }
+  window.onbeforeunload = () => {
+    if(projectWizardState) saveProjectDraft();
+  };
   switchCreateEntryMode(projectWizardState.createEntryMode || 'builder');
 }
 
@@ -5729,8 +5894,10 @@ async function uploadSourceProject(){
 }
 
 async function fetchProjectStorageSnapshot(projectId){
-  const csvPrefix = `${projectId}/csv`;
-  const imagePrefix = `${projectId}/images`;
+  return fetchProjectStorageSnapshotFromPrefixes(`${projectId}/csv`, `${projectId}/images`);
+}
+
+async function fetchProjectStorageSnapshotFromPrefixes(csvPrefix, imagePrefix){
   const {data:csvList=[],error:csvListErr} = await sb.storage.from('projects').list(csvPrefix,{limit:500});
   if(csvListErr) throw new Error(csvListErr.message);
   const {data:imageList=[],error:imageListErr} = await sb.storage.from('projects').list(imagePrefix,{limit:1000});
@@ -5749,6 +5916,133 @@ async function fetchProjectStorageSnapshot(projectId){
     imageEntries.push({name:file.name,blob:data});
   }
   return {csvEntries,imageEntries};
+}
+
+function getBackupTimestampLabel(stamp){
+  return String(stamp || '').replace(/^backup-/, '').replace(/-/g, ':').replace('T', ' ');
+}
+
+function extractPartsFromProjectSnapshot(snapshot, fallbackParts=[]){
+  const partData = snapshot.csvEntries.find(entry => entry.name.toLowerCase() === 'part_data.csv');
+  if(!partData) return fallbackParts;
+  const rows = partData.text.replace(/^\uFEFF/,'').split(/\r?\n/).slice(1).filter(Boolean);
+  const parts = rows.map(row => {
+    const cols = parseCsvLine(row);
+    return String(cols[1] || cols[0] || '').trim().toUpperCase();
+  }).filter(Boolean);
+  return parts.length ? parts : fallbackParts;
+}
+
+async function uploadProjectSnapshotToPrefixes(snapshot, csvPrefix, imagePrefix){
+  for(const csv of snapshot.csvEntries || []){
+    const blob = new Blob([csv.text || ''], {type:'text/csv'});
+    const {error} = await sb.storage.from('projects').upload(`${csvPrefix}/${csv.name}`, blob, {upsert:true, contentType:'text/csv'});
+    if(error) throw new Error(error.message);
+  }
+  for(const image of snapshot.imageEntries || []){
+    const {error} = await sb.storage.from('projects').upload(`${imagePrefix}/${image.name}`, image.blob, {upsert:true, contentType:image.blob?.type || 'image/png'});
+    if(error) throw new Error(error.message);
+  }
+}
+
+async function listProjectBackups(projectId){
+  const {data:list=[],error} = await sb.storage.from('projects').list(`${projectId}/backups`, {limit:50});
+  if(error) throw new Error(error.message);
+  return (list || [])
+    .filter(item => item.name && item.name.startsWith('backup-'))
+    .map(item => ({stamp:item.name, label:getBackupTimestampLabel(item.name)}))
+    .sort((a,b) => b.stamp.localeCompare(a.stamp));
+}
+
+async function removeStoragePrefix(prefix){
+  const paths = [];
+  async function collect(current){
+    const {data:list=[],error} = await sb.storage.from('projects').list(current, {limit:1000});
+    if(error) return;
+    for(const item of list || []){
+      if(item.metadata === null || item.id === null){
+        await collect(`${current}/${item.name}`);
+      }else{
+        paths.push(`${current}/${item.name}`);
+      }
+    }
+  }
+  await collect(prefix);
+  if(paths.length) await sb.storage.from('projects').remove(paths);
+}
+
+async function pruneProjectBackups(projectId, keep=2){
+  const backups = await listProjectBackups(projectId);
+  const stale = backups.slice(keep);
+  for(const backup of stale){
+    await removeStoragePrefix(`${projectId}/backups/${backup.stamp}`);
+  }
+}
+
+async function backupCurrentProjectVersion(projectId, projectName='PROJECT'){
+  if(!projectId) return null;
+  const snapshot = await fetchProjectStorageSnapshot(projectId);
+  const stamp = `backup-${new Date().toISOString().replace(/[:.]/g,'-')}`;
+  const root = `${projectId}/backups/${stamp}`;
+  const settings = await readProjectSettings(projectId);
+  const manifest = {
+    stamp,
+    projectName,
+    parts: extractPartsFromProjectSnapshot(snapshot, []),
+    createdAt: new Date().toISOString()
+  };
+  await uploadProjectSnapshotToPrefixes(snapshot, `${root}/csv`, `${root}/images`);
+  await sb.storage.from('projects').upload(`${root}/meta/manifest.json`, new Blob([JSON.stringify(manifest, null, 2)], {type:'application/json'}), {upsert:true, contentType:'application/json'});
+  await sb.storage.from('projects').upload(`${root}/meta/project_settings.json`, new Blob([JSON.stringify(settings || {}, null, 2)], {type:'application/json'}), {upsert:true, contentType:'application/json'});
+  await pruneProjectBackups(projectId, 2);
+  return stamp;
+}
+
+async function restoreProjectBackup(projectId, stamp){
+  const root = `${projectId}/backups/${stamp}`;
+  const snapshot = await fetchProjectStorageSnapshotFromPrefixes(`${root}/csv`, `${root}/images`);
+  if(!snapshot.csvEntries.length) throw new Error('Backup has no CSV data.');
+  const manifestFile = await sb.storage.from('projects').download(`${root}/meta/manifest.json`);
+  let manifest = {};
+  if(!manifestFile.error && manifestFile.data){
+    try{ manifest = JSON.parse(await manifestFile.data.text()); }catch(_err){}
+  }
+  const parts = manifest.parts?.length ? manifest.parts : extractPartsFromProjectSnapshot(snapshot, []);
+  const projectUpdate = {parts};
+  if(manifest.projectName) projectUpdate.name = manifest.projectName;
+  const {error:updateErr}=await sb.from('projects').update(projectUpdate).eq('id',projectId);
+  if(updateErr) throw updateErr;
+  await removeStoragePrefix(`${projectId}/csv`);
+  await removeStoragePrefix(`${projectId}/images`);
+  await uploadProjectSnapshotToPrefixes(snapshot, `${projectId}/csv`, `${projectId}/images`);
+  const settingsFile = await sb.storage.from('projects').download(`${root}/meta/project_settings.json`);
+  if(!settingsFile.error && settingsFile.data){
+    const text = await settingsFile.data.text();
+    await sb.storage.from('projects').upload(getProjectSettingsPath(projectId), new Blob([text], {type:'application/json'}), {upsert:true, contentType:'application/json'});
+  }
+}
+
+async function openProjectBackupsModal(projectId, projectName='PROJECT'){
+  loading(true, 'Loading backups...');
+  try{
+    const backups = await listProjectBackups(projectId);
+    loading(false);
+    if(!backups.length) return alert('No backup versions found for this project yet. A backup is created before each saved edit.');
+    const choiceText = backups.map((backup, index) => `${index + 1}. ${backup.label}`).join('\n');
+    const answer = prompt(`Choose backup to restore for ${projectName}:\n${choiceText}\n\nEnter backup number:`);
+    const index = Math.max(0, parseInt(answer || '0', 10) - 1);
+    const selected = backups[index];
+    if(!selected) return;
+    if(!confirm(`Restore ${projectName} to backup ${selected.label}? Current project files will be replaced.`)) return;
+    loading(true, 'Restoring backup...');
+    await restoreProjectBackup(projectId, selected.stamp);
+    alert('Project restored from backup.');
+    showPanel('projects');
+  }catch(err){
+    alert('Backup restore failed: ' + (err.message || err));
+  }finally{
+    loading(false);
+  }
 }
 
 async function copyExistingProject(projectId){
@@ -6469,6 +6763,7 @@ async function loadPartImageFile(file){
   if(btn) btn.innerText = file?.name || 'Part Image Ready';
   renderImagePreview('partPreview', projectWizardState.partImageDataUrl);
   updateCreateStatus('Part image loaded.');
+  scheduleProjectDraftSave();
 }
 
 async function loadWeldImageFile(file){
@@ -6484,6 +6779,7 @@ async function loadWeldImageFile(file){
   redrawBuilderCanvases();
   refreshAnnotationList();
   updateCreateStatus('Weld image loaded. Open full screen to annotate.');
+  scheduleProjectDraftSave();
 }
 
 function renderImagePreview(targetId, dataUrl){
@@ -6888,6 +7184,7 @@ async function captureCameraFrame(){
     if(btn) btn.innerText = 'Part Image Ready';
     renderImagePreview('partPreview', fileLikeDataUrl);
     updateCreateStatus('Part photo captured from camera.');
+    scheduleProjectDraftSave();
     return;
   }
   projectWizardState.baseImageDataUrl = fileLikeDataUrl;
@@ -6900,6 +7197,7 @@ async function captureCameraFrame(){
   redrawBuilderCanvases();
   refreshAnnotationList();
   updateCreateStatus('Photo captured from camera.');
+  scheduleProjectDraftSave();
 }
 
 function addSyncMarker(){
@@ -6943,6 +7241,7 @@ function addSyncWeld(){
   redrawBuilderCanvases();
   refreshAnnotationList();
   refreshWeldList();
+  recordWeldHistory();
   updateCreateStatus(`SYNC row added for ${projectWizardState.currentRobot}.`);
 }
 
@@ -7702,6 +8001,7 @@ function addSyncWeld(){
   redrawBuilderCanvases();
   refreshAnnotationList();
   refreshWeldList();
+  recordWeldHistory();
   updateCreateStatus(`SYNC row added for ${projectWizardState.currentRobot}.`);
 }
 
@@ -7926,6 +8226,7 @@ function saveCurrentWeld(){
   projectWizardState.interaction = { mode:'idle', annotationIndex:-1, pointKey:null };
   refreshWeldList();
   recordAnnotationHistory();
+  recordWeldHistory();
   updateCreateStatus(`Saved weld ${weldNo} for ${projectWizardState.currentRobot}.`);
 }
 
@@ -8031,6 +8332,7 @@ function dropWeldReorder(targetIndex){
   projectWizardState.selectedRecordIndex[projectWizardState.currentRobot] = targetIndex;
   projectWizardState.draggingWeldIndex = null;
   refreshWeldList();
+  recordWeldHistory();
 }
 
 function goToNextWeld(){
@@ -8084,6 +8386,7 @@ function deleteCurrentWeld(){
   getCurrentRobotAnnotations().length = 0;
   resetAnnotationHistory();
   refreshWeldList();
+  recordWeldHistory();
   redrawBuilderCanvases();
   refreshAnnotationList();
   updateCreateStatus('Weld deleted.');
