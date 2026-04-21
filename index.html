@@ -1113,7 +1113,7 @@ async function showPanel(panel){
   if(panel==='overview')             await renderOverview(main);
   else if(panel==='projects')        await renderMyProjects(main);
   else if(panel==='pptTemplate')     renderPptTemplateBuilder(main);
-  else if(panel==='create')          renderCreateProject(main);
+  else if(panel==='create')          await renderCreateProject(main);
   else if(panel==='users')           await renderUsers(main);
   else if(panel==='allprojects')     await renderAllProjects(main);
   else if(panel==='companies')       await renderCompanies(main);
@@ -5111,7 +5111,7 @@ async function createProject(){
       return;
     }
     await uploadProjectPayload(payload);
-    clearProjectDraft();
+    await clearProjectDraft();
     updateCreateStatus(`Project ${payload.projectName} saved. CSV ${payload.csvEntries.length}, images ${payload.imageEntries.length}.`);
     alert(`Project "${payload.projectName}" saved successfully.`);
     showPanel('projects');
@@ -5193,6 +5193,49 @@ function getProjectDraftKey(){
   return `weldViewerProjectDraft:${id}:${name}`;
 }
 
+function openProjectDraftDb(){
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('ApexizWeldViewerDrafts', 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if(!db.objectStoreNames.contains('drafts')) db.createObjectStore('drafts', {keyPath:'key'});
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function putProjectDraftRecord(key, draft){
+  const db = await openProjectDraftDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('drafts', 'readwrite');
+    tx.objectStore('drafts').put({key, draft, updatedAt:draft.draftUpdatedAt});
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+async function getProjectDraftRecord(key){
+  const db = await openProjectDraftDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('drafts', 'readonly');
+    const request = tx.objectStore('drafts').get(key);
+    request.onsuccess = () => resolve(request.result || null);
+    tx.oncomplete = () => db.close();
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+async function deleteProjectDraftRecord(key){
+  const db = await openProjectDraftDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('drafts', 'readwrite');
+    tx.objectStore('drafts').delete(key);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
 function sanitizeProjectDraftState(){
   if(!projectWizardState) return null;
   const clone = JSON.parse(JSON.stringify(projectWizardState, (key, value) => {
@@ -5206,14 +5249,21 @@ function sanitizeProjectDraftState(){
   return clone;
 }
 
-function saveProjectDraft(){
+async function saveProjectDraft(){
   try{
     const draft = sanitizeProjectDraftState();
     if(!draft) return;
-    localStorage.setItem(getProjectDraftKey(), JSON.stringify(draft));
-    localStorage.setItem('weldViewerProjectDraft:lastKey', getProjectDraftKey());
+    const key = getProjectDraftKey();
+    await putProjectDraftRecord(key, draft);
+    localStorage.setItem('weldViewerProjectDraft:lastKey', key);
+    localStorage.setItem('weldViewerProjectDraft:lastMeta', JSON.stringify({
+      key,
+      projectName:draft.projectName || 'UNSAVED PROJECT',
+      draftUpdatedAt:draft.draftUpdatedAt
+    }));
   }catch(err){
     console.warn('Project draft save skipped:', err);
+    updateCreateStatus('Draft could not be saved on this device. Browser storage may be blocked or full.');
   }
 }
 
@@ -5224,20 +5274,22 @@ function scheduleProjectDraftSave(){
   }
 }
 
-function clearProjectDraft(){
+async function clearProjectDraft(){
   try{
-    localStorage.removeItem(getProjectDraftKey());
+    await deleteProjectDraftRecord(getProjectDraftKey());
     const lastKey = localStorage.getItem('weldViewerProjectDraft:lastKey');
-    if(lastKey) localStorage.removeItem(lastKey);
+    if(lastKey) await deleteProjectDraftRecord(lastKey);
     localStorage.removeItem('weldViewerProjectDraft:lastKey');
+    localStorage.removeItem('weldViewerProjectDraft:lastMeta');
   }catch(_err){}
 }
 
-function getRecoverableProjectDraft(){
+async function getRecoverableProjectDraft(){
   try{
     const lastKey = localStorage.getItem('weldViewerProjectDraft:lastKey');
-    const raw = lastKey ? localStorage.getItem(lastKey) : '';
-    return raw ? JSON.parse(raw) : null;
+    if(!lastKey) return null;
+    const record = await getProjectDraftRecord(lastKey);
+    return record?.draft || null;
   }catch(_err){
     return null;
   }
@@ -5256,9 +5308,9 @@ function restoreProjectDraft(draft){
   showPanel('create');
 }
 
-function promptRecoverProjectDraft(){
+async function promptRecoverProjectDraft(){
   if(pendingProjectWizardState) return false;
-  const draft = getRecoverableProjectDraft();
+  const draft = await getRecoverableProjectDraft();
   if(!draft || !draft.draftUpdatedAt) return false;
   const label = draft.projectName || 'UNSAVED PROJECT';
   const when = new Date(draft.draftUpdatedAt).toLocaleString();
@@ -5269,8 +5321,8 @@ function promptRecoverProjectDraft(){
   return false;
 }
 
-function renderCreateProject(el){
-  if(!pendingProjectWizardState && promptRecoverProjectDraft()) return;
+async function renderCreateProject(el){
+  if(!pendingProjectWizardState && await promptRecoverProjectDraft()) return;
   if(pendingProjectWizardState){
     projectWizardState = pendingProjectWizardState;
     pendingProjectWizardState = null;
