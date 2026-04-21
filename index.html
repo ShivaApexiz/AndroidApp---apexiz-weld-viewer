@@ -6318,6 +6318,14 @@ async function downloadBlobFile(blob, filename){
   if(isNativeAppRuntime()) setTimeout(() => window.open(url, '_blank'), 80);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+function blobToBase64Payload(blob){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result || '').split(',')[1] || '');
+    reader.onerror = () => reject(reader.error || new Error('Unable to read file data.'));
+    reader.readAsDataURL(blob);
+  });
+}
 
 function downloadSourceFolderGuide(){
   const guide = [
@@ -9334,6 +9342,16 @@ async function savePptxReport(pptx, fileName){
     }
     if(!(blob instanceof Blob)){
       blob = new Blob([blob], {type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+    }
+    if(window.ApexizAndroid && typeof window.ApexizAndroid.savePptToDownloads === 'function'){
+      const base64 = await blobToBase64Payload(blob);
+      window.ApexizAndroid.savePptToDownloads(base64, fileName);
+      return;
+    }
+    if(window.ApexizAndroid && typeof window.ApexizAndroid.saveAndSharePpt === 'function'){
+      const base64 = await blobToBase64Payload(blob);
+      window.ApexizAndroid.saveAndSharePpt(base64, fileName);
+      return;
     }
     await downloadBlobFile(blob, fileName);
     return;
