@@ -4786,6 +4786,14 @@ function fileToDataUrl(file){
   });
 }
 
+function blobToDataUrl(blob){
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(String(e.target.result || ''));
+    reader.readAsDataURL(blob);
+  });
+}
+
 function updateCreateStatus(msg){
   const el = document.getElementById('scanResult');
   if(!el) return;
@@ -4898,6 +4906,7 @@ function deleteCurrentWeld(){
 }
 
 function dataUrlToBlob(dataUrl){
+  if(!String(dataUrl || '').startsWith('data:')) throw new Error('Image data is not embedded for upload.');
   const parts = dataUrl.split(',');
   const mime = (parts[0].match(/:(.*?);/) || [])[1] || 'image/png';
   const binary = atob(parts[1]);
@@ -5991,7 +6000,23 @@ function updateAxisName(group, index, value){
 }
 
 function updatePartName(index, value){
-  projectWizardState.partNames[index] = value.trim().toUpperCase() || `PART-${index + 1}`;
+  const oldName = String(projectWizardState.partNames[index] || '').trim().toUpperCase();
+  const newName = value.trim().toUpperCase() || `PART-${index + 1}`;
+  projectWizardState.partNames[index] = newName;
+  if(oldName && oldName !== newName){
+    if(projectWizardState.partImageByPart?.[oldName] && !projectWizardState.partImageByPart[newName]){
+      projectWizardState.partImageByPart[newName] = projectWizardState.partImageByPart[oldName];
+    }
+    if(projectWizardState.partImageByPart) delete projectWizardState.partImageByPart[oldName];
+    Object.values(projectWizardState.recordsByRobot || {}).forEach(records => {
+      (records || []).forEach(record => {
+        if(String(record.partNo || '').trim().toUpperCase() === oldName) record.partNo = newName;
+      });
+    });
+    if(String(projectWizardState.partNumber || '').trim().toUpperCase() === oldName){
+      projectWizardState.partNumber = newName;
+    }
+  }
   renderPartSelector();
   syncSelectedPartToForm();
 }
@@ -7703,16 +7728,16 @@ async function editProject(projectId){
       const rows = text.replace(/^\uFEFF/,'').split(/\r?\n/).slice(1).filter(Boolean);
       const parts = [];
       rows.forEach(row => {
-        const cols = row.split(',');
-        const partName = (cols[1] || cols[0] || '').replace(/^"|"$/g,'').trim();
+        const cols = parseCsvLine(row);
+        const partName = (cols[1] || cols[0] || '').trim();
         if(partName) parts.push(partName);
         if(cols[4]) projectWizardState.robotPositionerEnabled = cols[4].includes('Axis') ? 'Y' : 'N';
-        if(cols[4]) projectWizardState.robotPositionerAxes = cols[4].replace(/^"|"$/g,'');
+        if(cols[4]) projectWizardState.robotPositionerAxes = cols[4];
         if(cols[5]) projectWizardState.workpiecePositionerEnabled = cols[5].includes('Axis') ? 'Y' : 'N';
-        if(cols[5]) projectWizardState.workpiecePositionerAxes = cols[5].replace(/^"|"$/g,'');
-        if(cols[6]) projectWizardState.robotPositionerAxisNames = cols[6].replace(/^"|"$/g,'').split('|').filter(Boolean);
-        if(cols[7]) projectWizardState.workpiecePositionerAxisNames = cols[7].replace(/^"|"$/g,'').split('|').filter(Boolean);
-        if(cols[8]) projectWizardState.robotNames = cols[8].replace(/^"|"$/g,'').split('|').filter(Boolean);
+        if(cols[5]) projectWizardState.workpiecePositionerAxes = cols[5];
+        if(cols[6]) projectWizardState.robotPositionerAxisNames = cols[6].split('|').filter(Boolean);
+        if(cols[7]) projectWizardState.workpiecePositionerAxisNames = cols[7].split('|').filter(Boolean);
+        if(cols[8]) projectWizardState.robotNames = cols[8].split('|').filter(Boolean);
       });
       if(parts.length){
         projectWizardState.partNames = parts;
@@ -7731,15 +7756,15 @@ async function editProject(projectId){
       const rows = lines.slice(1).filter(Boolean);
       projectWizardState.recordsByRobot[robotName] = [];
       for(const row of rows){
-        const cols = row.split(',');
-        const weldNo = (cols[0] || '').replace(/^"|"$/g,'');
+        const cols = parseCsvLine(row);
+        const weldNo = cols[0] || '';
         const isLegacyAngle = header.includes('workpiecepositionerangle');
-        const jobNo = (cols[isLegacyAngle ? 2 : 1] || '').replace(/^"|"$/g,'');
-        const imageId = (cols[isLegacyAngle ? 3 : 2] || '').replace(/^"|"$/g,'');
-        const notes = (cols[isLegacyAngle ? 4 : 3] || '').replace(/^"|"$/g,'');
-        const partNo = (cols[isLegacyAngle ? 5 : 4] || projectWizardState.partNumber || '').replace(/^"|"$/g,'');
-        const robotPositionerValues = parseAxisValueString((cols[isLegacyAngle ? 6 : 5] || '').replace(/^"|"$/g,''));
-        const workpiecePositionerValues = parseAxisValueString((cols[isLegacyAngle ? 7 : 6] || '').replace(/^"|"$/g,''));
+        const jobNo = cols[isLegacyAngle ? 2 : 1] || '';
+        const imageId = cols[isLegacyAngle ? 3 : 2] || '';
+        const notes = cols[isLegacyAngle ? 4 : 3] || '';
+        const partNo = cols[isLegacyAngle ? 5 : 4] || projectWizardState.partNumber || '';
+        const robotPositionerValues = parseAxisValueString(cols[isLegacyAngle ? 6 : 5] || '');
+        const workpiecePositionerValues = parseAxisValueString(cols[isLegacyAngle ? 7 : 6] || '');
         if(imageId === 'TSync' || weldNo === 'SYNC'){
           projectWizardState.recordsByRobot[robotName].push({partNo:partNo || projectWizardState.partNumber,jobNo,weldNo:'SYNC',notes,robotPositionerValues,workpiecePositionerValues,isSync:true,annotations:[],imageDataUrl:'',baseImageDataUrl:''});
           continue;
@@ -7747,8 +7772,8 @@ async function editProject(projectId){
         const imageEntry = imageList.find(img => img.name.replace(/\.[^.]+$/,'') === imageId);
         let imageUrl = '';
         if(imageEntry){
-          const {data:urlData}=sb.storage.from('projects').getPublicUrl(`${projectId}/images/${imageEntry.name}`);
-          imageUrl = urlData?.publicUrl || '';
+          const {data:imageBlob,error:imageErr}=await sb.storage.from('projects').download(`${projectId}/images/${imageEntry.name}`);
+          if(!imageErr && imageBlob) imageUrl = await blobToDataUrl(imageBlob);
         }
         projectWizardState.recordsByRobot[robotName].push({partNo:partNo || projectWizardState.partNumber,jobNo,weldNo,notes,robotPositionerValues,workpiecePositionerValues,annotations:[],imageDataUrl:imageUrl,baseImageDataUrl:imageUrl});
       }
@@ -7757,8 +7782,8 @@ async function editProject(projectId){
     for(const partName of projectWizardState.partNames){
       const partImageEntry = imageList.find(img => img.name === `${partName}_part.png`);
       if(partImageEntry){
-        const {data:urlData}=sb.storage.from('projects').getPublicUrl(`${projectId}/images/${partImageEntry.name}`);
-        projectWizardState.partImageByPart[partName] = urlData?.publicUrl || '';
+        const {data:partBlob,error:partErr}=await sb.storage.from('projects').download(`${projectId}/images/${partImageEntry.name}`);
+        projectWizardState.partImageByPart[partName] = (!partErr && partBlob) ? await blobToDataUrl(partBlob) : '';
       }
     }
     projectWizardState.partImageDataUrl = projectWizardState.partImageByPart[projectWizardState.partNumber] || '';
@@ -8076,6 +8101,7 @@ function dataUrlToBlob(dataUrl){
 function buildProjectPayload(){
   const projectName = (document.getElementById('newProjName').value || '').trim().toUpperCase();
   const parts = projectWizardState.partNames.map(p => String(p || '').trim().toUpperCase()).filter(Boolean);
+  const partSet = new Set(parts);
   if(!projectName) throw new Error('Project name is required.');
   if(!parts.length) throw new Error('At least one part name is required.');
   const csvEntries = [];
@@ -8097,14 +8123,15 @@ function buildProjectPayload(){
     const rows = ['WeldNo,JobName,ImageId,Notes,PartNo,RobotPositionerValues,WorkpiecePositionerValues'];
     const records = projectWizardState.recordsByRobot[robot];
     records.forEach(r => {
+      const partNo = String(r.partNo || parts[0]).toUpperCase();
+      if(!partSet.has(partNo)) return;
       const robotAxisValueText = serializeAxisValues(r.robotPositionerValues);
       const workAxisValueText = serializeAxisValues(r.workpiecePositionerValues);
       if(r.isSync){
-        rows.push(`${escapeCsvValue('SYNC')},${escapeCsvValue(r.jobNo || '')},${escapeCsvValue('TSync')},${escapeCsvValue(r.notes || '')},${escapeCsvValue(r.partNo || parts[0] || '')},${escapeCsvValue(robotAxisValueText)},${escapeCsvValue(workAxisValueText)}`);
+        rows.push(`${escapeCsvValue('SYNC')},${escapeCsvValue(r.jobNo || '')},${escapeCsvValue('TSync')},${escapeCsvValue(r.notes || '')},${escapeCsvValue(partNo)},${escapeCsvValue(robotAxisValueText)},${escapeCsvValue(workAxisValueText)}`);
         return;
       }
       const safeWeld = String(r.weldNo).replace(/[^a-zA-Z0-9_-]+/g, '_');
-      const partNo = String(r.partNo || parts[0]).toUpperCase();
       const imageBase = `${partNo.toLowerCase()}_robot${i}_${safeWeld}`;
       rows.push(`${escapeCsvValue(r.weldNo)},${escapeCsvValue(r.jobNo || '')},${escapeCsvValue(imageBase)},${escapeCsvValue(r.notes || '')},${escapeCsvValue(partNo)},${escapeCsvValue(robotAxisValueText)},${escapeCsvValue(workAxisValueText)}`);
       imageEntries.push({name: `${imageBase}.png`, dataUrl: r.imageDataUrl, contentType: 'image/png'});
@@ -8118,6 +8145,31 @@ function escapeCsvValue(value){
   const text = String(value || '');
   if(/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
   return text;
+}
+
+function parseCsvLine(line){
+  const cols = [];
+  let current = '';
+  let inQuotes = false;
+  const text = String(line || '');
+  for(let i = 0; i < text.length; i++){
+    const ch = text[i];
+    if(ch === '"'){
+      if(inQuotes && text[i + 1] === '"'){
+        current += '"';
+        i++;
+      }else{
+        inQuotes = !inQuotes;
+      }
+    }else if(ch === ',' && !inQuotes){
+      cols.push(current.trim());
+      current = '';
+    }else{
+      current += ch;
+    }
+  }
+  cols.push(current.trim());
+  return cols;
 }
 
 function serializeAxisValues(values){
@@ -8512,7 +8564,7 @@ function parseCSV(text){
   const welds=[];
   for(let i=1;i<rows.length;i++){
     if(!rows[i].trim()) continue;
-    const c=rows[i].split(',');
+    const c=parseCsvLine(rows[i]);
     welds.push({
       weldNo:c[0]?.trim(),
       jobName:c[isLegacyAngle ? 2 : 1]?.trim(),
