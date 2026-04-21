@@ -179,8 +179,8 @@ body{font-family:'Barlow','Segoe UI',sans-serif;background:#EFEFEF;color:var(--b
 .mini-btn.warn{background:#F8D7DA;color:var(--red);}
 .mini-btn.active-tool,.mini-btn.selected,.mini-btn[aria-pressed="true"]{background:var(--orange)!important;color:var(--white)!important;box-shadow:0 0 0 2px rgba(255,85,0,0.2);}
 .builder-actions{display:flex;gap:8px;flex-wrap:wrap;}
-.source-upload-stage{position:relative;padding-right:calc(260px + clamp(56px, 6vw, 110px));min-height:520px;}
-.source-download-actions{position:absolute;top:18px;right:clamp(56px, 6vw, 110px);display:flex;flex-direction:column;gap:26px;align-items:flex-end;z-index:2;}
+.source-upload-stage{position:relative;padding-right:calc(240px + 24%);min-height:520px;}
+.source-download-actions{position:absolute;top:100px;right:24%;display:flex;flex-direction:column;gap:26px;align-items:flex-end;z-index:2;}
 .source-download-actions .action-btn{min-width:210px;text-align:center;justify-content:center;}
 .source-upload-stage .source-guide-card{min-height:320px;}
 @media(max-width:900px){
@@ -5467,7 +5467,7 @@ async function renderCreateProject(el){
         </div>
         <div class="setup-summary-card source-guide-card">
           <div class="builder-subtitle">Source Folder Structure</div>
-          <div class="builder-note">Use this option for the original website-style upload flow.</div>
+          <div class="builder-note">Upload one Source folder containing Weld_Data, Weld_Images/Robot1, Robot2... and Part_Images.</div>
           <div class="source-guide-grid">
             <div><strong>Folder Layout</strong><br>Source/<br>Weld_Data/<br>Weld_Images/Robot1/<br>Weld_Images/Robot2/<br>Weld_Images/Robot3/<br>Part_Images/</div>
             <div><strong>Part CSV</strong><br><code>part_data.csv</code><br>Use <code>PART_NO, PART_NAME, PART_IMAGE, ROBOTS, ROBOT_POSITIONER, WORKPIECE_POSITIONER, ROBOT_AXIS_NAMES, WORKPIECE_AXIS_NAMES, ROBOT_NAMES</code>.</div>
