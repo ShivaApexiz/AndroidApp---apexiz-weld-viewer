@@ -1,0 +1,11 @@
+node_modules/
+.idea/
+android/.gradle/
+android/build/
+android/app/build/
+web/.DS_Store
+*.log
+_inline_main.js
+_inline_main_check.js
+_script_check.js
+WORK_RESUME_LOG.txt
